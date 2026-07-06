@@ -1,27 +1,14 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { Printer, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/AuthContext'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
+import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/utils'
-import DotField from '@/components/ui/DotField'
-
-const LIGHT_FIELD = {
-  gradientFrom: '#78A4CB',
-  gradientTo:   '#B4E1EB',
-  glowColor:    '#ffffff',
-}
-
-const DARK_FIELD = {
-  gradientFrom: '#78A4CB',
-  gradientTo:   '#95BDD7',
-  glowColor:    '#000000',
-}
+import Aurora from '@/components/ui/Aurora'
 
 function useIsDark() {
   const [dark, setDark] = useState(() =>
@@ -44,42 +31,18 @@ export function Login() {
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const isDark = useIsDark()
-  const field = isDark ? DARK_FIELD : LIGHT_FIELD
 
-  useEffect(() => {
-    if (loading) {
-      setProgress(0)
-      progressRef.current = setInterval(() => {
-        setProgress(p => {
-          if (p < 70) return p + 4
-          if (p < 90) return p + 0.5
-          return p
-        })
-      }, 80)
-    } else {
-      if (progressRef.current) clearInterval(progressRef.current)
-    }
-    return () => { if (progressRef.current) clearInterval(progressRef.current) }
-  }, [loading])
-
-  if (isAuthenticated) {
-    if (progress > 0 && progress < 100) setProgress(100)
-    return <Navigate to="/dashboard" replace />
-  }
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     try {
       await login(email, password)
-      setProgress(100)
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
       toast.error(msg ?? 'Something went wrong. Please try again.')
-      setProgress(0)
     } finally {
       setLoading(false)
     }
@@ -88,28 +51,24 @@ export function Login() {
   return (
     <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-background px-4">
 
-      {/* DotField background — dark mode only */}
+      {/* Aurora background — dark mode only */}
       {isDark && (
         <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-          <DotField
-            dotRadius={1.5}
-            dotSpacing={14}
-            bulgeStrength={67}
-            glowRadius={160}
-            sparkle={false}
-            waveAmplitude={0}
-            gradientFrom={field.gradientFrom}
-            gradientTo={field.gradientTo}
-            glowColor={field.glowColor}
+          <Aurora
+            colorStops={['#355872', '#7AAACE', '#9CD5FF']}
+            amplitude={1.25}
           />
         </div>
       )}
 
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
-        className="relative z-10 mx-auto w-full max-w-sm rounded-2xl border border-white/10 bg-white/8 px-8 py-10 shadow-2xl backdrop-blur-2xl"
+      <div
+        className={cn(
+          "relative z-10 mx-auto w-full max-w-sm rounded-2xl px-8 pt-10 pb-6",
+          isDark
+            ? "border border-white/15 bg-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-2xl backdrop-saturate-150"
+            : "border border-border bg-card shadow-sm"
+        )}
+        style={isDark ? { boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)' } : {}}
       >
         {/* Brand */}
         <div className="mb-8 flex flex-col items-center gap-3">
@@ -134,7 +93,7 @@ export function Login() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              className="border-white/10 bg-white/5 backdrop-blur-sm placeholder:text-muted-foreground/60 focus-visible:ring-white/20"
+              className={isDark ? "border-white/15 bg-white/8 backdrop-blur-md placeholder:text-white/40 text-white focus-visible:ring-white/25 focus-visible:border-white/30" : ""}
             />
           </div>
 
@@ -149,7 +108,7 @@ export function Login() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
-                className="border-white/10 bg-white/5 pr-10 backdrop-blur-sm placeholder:text-muted-foreground/60 focus-visible:ring-white/20"
+                className={isDark ? "border-white/15 bg-white/8 backdrop-blur-md placeholder:text-white/40 text-white pr-10 focus-visible:ring-white/25 focus-visible:border-white/30" : "pr-10"}
               />
               <button
                 type="button"
@@ -162,23 +121,13 @@ export function Login() {
             </div>
           </div>
 
-          <Button type="submit" disabled={loading} className="mt-1 w-full" size="sm">
-            {loading
-              ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-              : 'Sign in'}
+          <div className="mt-8 flex justify-center">
+          <Button type="submit" disabled={loading} className="px-6 border border-transparent hover:border-blue-500 hover:bg-white hover:text-blue-500 transition-colors" size="lg">
+            {loading ? <Spinner className="size-4" /> : 'Sign in'}
           </Button>
+          </div>
         </form>
-
-        {/* Progress bar */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: loading || progress > 0 ? 1 : 0 }}
-          transition={{ duration: 0.15 }}
-          className={cn('mt-6 flex justify-center')}
-        >
-          <Progress value={progress} className="h-1 w-48" />
-        </motion.div>
-      </motion.div>
+      </div>
     </div>
   )
 }

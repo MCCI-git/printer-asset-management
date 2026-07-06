@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Printer Asset Management — Setup & Deployment Guide</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #1a1a2e;
+      background: #fff;
+    }
+
+    /* ── Cover page ─────────────────────────────────────── */
+    .cover {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: white;
+      text-align: center;
+      padding: 60px 40px;
+      page-break-after: always;
+    }
+    .cover-icon {
+      width: 80px; height: 80px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 32px;
+      font-size: 36px;
+    }
+    .cover h1 { font-size: 38px; font-weight: 700; letter-spacing: -1px; margin-bottom: 12px; }
+    .cover h2 { font-size: 18px; font-weight: 400; opacity: 0.7; margin-bottom: 48px; }
+    .cover-meta {
+      display: flex; gap: 32px; justify-content: center; flex-wrap: wrap;
+      margin-top: 48px; opacity: 0.6; font-size: 13px;
+    }
+    .cover-meta span { display: flex; align-items: center; gap: 6px; }
+
+    /* ── TOC ──────────────────────────────────────────────── */
+    .toc-page {
+      padding: 60px 80px;
+      page-break-after: always;
+      min-height: 100vh;
+    }
+    .toc-page h2 { font-size: 28px; font-weight: 700; margin-bottom: 32px; color: #0f3460; }
+    .toc-list { list-style: none; }
+    .toc-list li {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 8px 0; border-bottom: 1px dotted #ddd; font-size: 14px;
+    }
+    .toc-list li a { text-decoration: none; color: #1a1a2e; font-weight: 500; }
+    .toc-list li a:hover { color: #0f3460; }
+    .toc-num { color: #888; font-size: 13px; }
+    .toc-section { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-top: 20px; margin-bottom: 4px; }
+
+    /* ── Content layout ──────────────────────────────────── */
+    .page {
+      padding: 60px 80px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* ── Typography ──────────────────────────────────────── */
+    h1.section-title {
+      font-size: 32px; font-weight: 700; color: #0f3460;
+      margin-bottom: 8px; padding-bottom: 16px;
+      border-bottom: 3px solid #0f3460;
+      page-break-before: always;
+    }
+    h1.section-title.no-break { page-break-before: avoid; }
+    .section-subtitle { font-size: 15px; color: #666; margin-bottom: 36px; }
+
+    h2 { font-size: 20px; font-weight: 700; color: #16213e; margin: 36px 0 12px; }
+    h3 { font-size: 16px; font-weight: 600; color: #0f3460; margin: 24px 0 8px; }
+
+    p { margin-bottom: 14px; color: #333; }
+    ul, ol { padding-left: 22px; margin-bottom: 14px; }
+    li { margin-bottom: 6px; color: #333; }
+
+    strong { color: #1a1a2e; }
+
+    /* ── Code blocks ─────────────────────────────────────── */
+    pre {
+      background: #1a1a2e;
+      color: #e2e8f0;
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin: 16px 0 20px;
+      overflow-x: auto;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      page-break-inside: avoid;
+    }
+    code {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 12.5px;
+      background: #f0f4ff;
+      color: #0f3460;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+    .comment { color: #64748b; }
+    .keyword { color: #93c5fd; }
+    .string { color: #86efac; }
+    .value { color: #fbbf24; }
+
+    /* ── Callout boxes ──────────────────────────────────── */
+    .callout {
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin: 20px 0;
+      display: flex;
+      gap: 14px;
+      page-break-inside: avoid;
+    }
+    .callout-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+    .callout-body { flex: 1; }
+    .callout-body strong { display: block; margin-bottom: 4px; font-size: 14px; }
+    .callout-body p { margin: 0; font-size: 13px; }
+
+    .tip    { background: #f0fdf4; border-left: 4px solid #22c55e; }
+    .tip .callout-body strong { color: #16a34a; }
+    .warn   { background: #fffbeb; border-left: 4px solid #f59e0b; }
+    .warn .callout-body strong { color: #d97706; }
+    .info   { background: #eff6ff; border-left: 4px solid #3b82f6; }
+    .info .callout-body strong { color: #2563eb; }
+    .danger { background: #fef2f2; border-left: 4px solid #ef4444; }
+    .danger .callout-body strong { color: #dc2626; }
+
+    /* ── Tables ─────────────────────────────────────────── */
+    table {
+      width: 100%; border-collapse: collapse;
+      margin: 16px 0 24px; font-size: 13px;
+      page-break-inside: avoid;
+    }
+    th {
+      background: #0f3460; color: white;
+      padding: 10px 14px; text-align: left;
+      font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    td { padding: 10px 14px; border-bottom: 1px solid #eee; vertical-align: top; }
+    tr:nth-child(even) td { background: #f8faff; }
+    tr:last-child td { border-bottom: none; }
+
+    /* ── Step badges ─────────────────────────────────────── */
+    .step {
+      display: flex; gap: 16px; align-items: flex-start;
+      margin: 20px 0; page-break-inside: avoid;
+    }
+    .step-num {
+      width: 32px; height: 32px; flex-shrink: 0;
+      background: #0f3460; color: white;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; margin-top: 2px;
+    }
+    .step-body { flex: 1; }
+    .step-body h3 { margin-top: 0; }
+
+    /* ── Tags ────────────────────────────────────────────── */
+    .tag {
+      display: inline-block;
+      background: #eff6ff; color: #2563eb;
+      border: 1px solid #bfdbfe;
+      padding: 2px 10px; border-radius: 20px;
+      font-size: 12px; font-weight: 500;
+      margin: 2px 3px;
+    }
+    .tag.green { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+    .tag.orange { background: #fffbeb; color: #d97706; border-color: #fde68a; }
+    .tag.red { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+
+    /* ── Architecture diagram ─────────────────────────────── */
+    .arch {
+      display: flex; gap: 0; align-items: stretch;
+      margin: 24px 0; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;
+    }
+    .arch-box {
+      flex: 1; padding: 20px 16px; text-align: center;
+      border-right: 1px solid #e2e8f0;
+    }
+    .arch-box:last-child { border-right: none; }
+    .arch-box-icon { font-size: 28px; margin-bottom: 8px; }
+    .arch-box-title { font-weight: 700; font-size: 13px; color: #1a1a2e; margin-bottom: 4px; }
+    .arch-box-sub { font-size: 11px; color: #666; }
+    .arch-arrow {
+      display: flex; align-items: center; padding: 0 4px;
+      color: #94a3b8; font-size: 20px; flex-shrink: 0;
+    }
+
+    /* ── Divider ─────────────────────────────────────────── */
+    hr { border: none; border-top: 1px solid #eee; margin: 32px 0; }
+
+    /* ── Print ───────────────────────────────────────────── */
+    @media print {
+      body { font-size: 13px; }
+      .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      pre { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      th  { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .callout { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .step-num { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     COVER
+══════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-icon">🖨️</div>
+  <h1>Printer Asset Management</h1>
+  <h2>Complete Setup, Deployment & User Guide</h2>
+  <p style="max-width:520px;opacity:0.75;font-size:15px;line-height:1.8;">
+    A full-stack web application for managing printer fleets, consumables, contracts,
+    budgets, and maintenance — deployed on a Synology NAS using Docker.
+  </p>
+  <div class="cover-meta">
+    <span>⚙️ React + Vite + TypeScript</span>
+    <span>🐘 Laravel 13 + PHP 8.4</span>
+    <span>🐬 MySQL 8</span>
+    <span>🐳 Docker Compose</span>
+    <span>📦 Synology NAS</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     TABLE OF CONTENTS
+══════════════════════════════════════════════════════════ -->
+<div class="toc-page">
+  <h2>Table of Contents</h2>
+  <ul class="toc-list">
+    <p class="toc-section">Introduction</p>
+    <li><a href="#s1">1. What is this application?</a><span class="toc-num">Overview & features</span></li>
+    <li><a href="#s2">2. Technology stack</a><span class="toc-num">Tools & frameworks</span></li>
+    <li><a href="#s3">3. Project structure</a><span class="toc-num">Folder layout</span></li>
+
+    <p class="toc-section">Prerequisites</p>
+    <li><a href="#s4">4. What you need before starting</a><span class="toc-num">Software & accounts</span></li>
+
+    <p class="toc-section">Deployment</p>
+    <li><a href="#s5">5. Preparing the NAS</a><span class="toc-num">Synology setup</span></li>
+    <li><a href="#s6">6. Cloning the repository</a><span class="toc-num">Getting the code</span></li>
+    <li><a href="#s7">7. Environment configuration</a><span class="toc-num">The .env file</span></li>
+    <li><a href="#s8">8. Docker Compose configuration</a><span class="toc-num">Services explained</span></li>
+    <li><a href="#s9">9. Building and starting the containers</a><span class="toc-num">Going live</span></li>
+    <li><a href="#s10">10. Database setup</a><span class="toc-num">Migrations & first user</span></li>
+
+    <p class="toc-section">Usage</p>
+    <li><a href="#s11">11. Accessing the application</a><span class="toc-num">Login & navigation</span></li>
+    <li><a href="#s12">12. Application features</a><span class="toc-num">Each module explained</span></li>
+    <li><a href="#s13">13. User roles</a><span class="toc-num">Permissions</span></li>
+
+    <p class="toc-section">Maintenance</p>
+    <li><a href="#s14">14. Updating the application</a><span class="toc-num">Pulling new versions</span></li>
+    <li><a href="#s15">15. Useful commands</a><span class="toc-num">Day-to-day operations</span></li>
+    <li><a href="#s16">16. Troubleshooting</a><span class="toc-num">Common issues & fixes</span></li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION 1 — WHAT IS THIS?
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 class="section-title no-break" id="s1">1. What is this application?</h1>
+  <p class="section-subtitle">A browser-based tool for managing your entire printer fleet from one place.</p>
+
+  <p>
+    <strong>Printer Asset Management</strong> is a self-hosted web application built to give IT teams and administrators
+    full visibility and control over their printer infrastructure. Instead of spreadsheets and scattered records,
+    everything lives in one place: hardware details, consumable stock, maintenance history, supplier contracts,
+    and budgets.
+  </p>
+
+  <h2>Key Features</h2>
+  <table>
+    <tr><th>Module</th><th>What it does</th></tr>
+    <tr><td><strong>Dashboard</strong></td><td>Live overview of fleet health, stock levels, contract expiries, and budget usage.</td></tr>
+    <tr><td><strong>Printers</strong></td><td>Full inventory of all printers — model, location, status, service dates, page counts, and assigned consumables.</td></tr>
+    <tr><td><strong>Consumables</strong></td><td>Track toner, ink, drums, and other supplies. Monitor stock levels and assign items to specific printers.</td></tr>
+    <tr><td><strong>Contracts</strong></td><td>Store and track supplier contracts with expiry alerts and PDF attachment support.</td></tr>
+    <tr><td><strong>Suppliers</strong></td><td>Manage supplier contact details and logos.</td></tr>
+    <tr><td><strong>Maintenance</strong></td><td>Work order system — create, track, and complete maintenance jobs with full status history.</td></tr>
+    <tr><td><strong>CAPEX / OPEX</strong></td><td>Capital and operational expenditure tracking with depreciation schedules and cost-per-page analysis.</td></tr>
+    <tr><td><strong>Budget</strong></td><td>Set annual budgets and track spending in real time.</td></tr>
+    <tr><td><strong>Reports</strong></td><td>Full activity log of every change made in the system, exportable to CSV.</td></tr>
+    <tr><td><strong>Admin</strong></td><td>User management, email/SMTP configuration, and notification alerts.</td></tr>
+  </table>
+
+  <div class="callout info">
+    <span class="callout-icon">💡</span>
+    <div class="callout-body">
+      <strong>Self-hosted means full control</strong>
+      <p>The application runs entirely on your own hardware (your Synology NAS). No data is sent to any third-party cloud. You own everything.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION 2 — TECH STACK
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 class="section-title" id="s2">2. Technology Stack</h1>
+  <p class="section-subtitle">The tools and frameworks that power the application.</p>
+
+  <div class="arch">
+    <div class="arch-box">
+      <div class="arch-box-icon">🌐</div>
+      <div class="arch-box-title">Frontend</div>
+      <div class="arch-box-sub">React + Vite<br/>TypeScript<br/>Tailwind CSS<br/>shadcn/ui</div>
+    </div>
+    <div class="arch-box">
+      <div class="arch-box-icon">⚙️</div>
+      <div class="arch-box-title">Backend</div>
+      <div class="arch-box-sub">Laravel 13<br/>PHP 8.4<br/>Sanctum Auth<br/>REST API</div>
+    </div>
+    <div class="arch-box">
+      <div class="arch-box-icon">🗄️</div>
+      <div class="arch-box-title">Database</div>
+      <div class="arch-box-sub">MySQL 8.0<br/>Eloquent ORM<br/>Migrations</div>
+    </div>
+    <div class="arch-box">
+      <div class="arch-box-icon">🐳</div>
+      <div class="arch-box-title">Containers</div>
+      <div class="arch-box-sub">Docker<br/>Docker Compose<br/>Nginx<br/>PHP-FPM</div>
+    </div>
+  </div>
+
+  <h2>Why these technologies?</h2>
+
+  <h3>React + Vite (Frontend)</h3>
+  <p>
+    React is a popular JavaScript library for building user interfaces. Vite is the build tool that compiles
+    the React code into static HTML/CSS/JS files that a browser can load. TypeScript adds type safety,
+    catching errors before they become bugs. The frontend communicates with the backend via a REST API.
+  </p>
+
+  <h3>Laravel (Backend)</h3>
+  <p>
+    Laravel is a PHP web framework that handles all business logic, database operations, authentication,
+    and API responses. It runs as a PHP-FPM process inside Docker — meaning it waits for requests and
+    processes them efficiently. Laravel Sanctum handles authentication using Bearer tokens.
+  </p>
+
+  <h3>MySQL (Database)</h3>
+  <p>
+    MySQL stores all persistent data: printers, consumables, contracts, users, activity logs, etc.
+    It runs in its own Docker container and is never exposed directly to the internet — only the
+    backend container can talk to it.
+  </p>
+
+  <h3>Nginx (Web Server)</h3>
+  <p>
+    Nginx serves two purposes: it serves the built React frontend as static files, and it proxies
+    all <code>/api/</code> requests to the Laravel PHP-FPM backend. This single entry point on port
+    8900 handles both the web app and the API.
+  </p>
+
+  <h3>Docker</h3>
+  <p>
+    Docker packages each part of the application into an isolated container. This means the app
+    runs identically on any machine regardless of what's installed on it. Docker Compose orchestrates
+    all three containers (database, backend, nginx) together.
+  </p>
+
+  <table>
+    <tr><th>Component</th><th>Container Name</th><th>Port</th><th>Role</th></tr>
+    <tr><td>MySQL</td><td><code>pam_db</code></td><td>internal only</td><td>Stores all data</td></tr>
+    <tr><td>Laravel / PHP-FPM</td><td><code>pam_backend</code></td><td>9000 (internal)</td><td>Processes API requests</td></tr>
+    <tr><td>Nginx + React</td><td><code>pam_nginx</code></td><td><strong>8900 → public</strong></td><td>Serves the web app</td></tr>
+    <tr><td>phpMyAdmin</td><td><code>pam_phpmyadmin</code></td><td><strong>8901 → public</strong></td><td>Database browser (optional)</td></tr>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION 3 — PROJECT STRUCTURE
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 class="section-title" id="s3">3. Project Structure</h1>
+  <p class="section-subtitle">How the code is organised on disk.</p>
+
+<pre>
+printer-asset-management/
+├── backend/                    ← Laravel PHP application
+│   ├── app/
+│   │   ├── Http/Controllers/   ← API endpoints (one per feature)
+│   │   ├── Models/             ← Database models (Printer, Consumable, etc.)
+│   │   ├── Observers/          ← Auto-log all model changes
+│   │   └── Services/           ← ActivityLogger helper
+│   ├── database/
+│   │   └── migrations/         ← Database table definitions
+│   ├── routes/
+│   │   └── api.php             ← All API routes
+│   ├── bootstrap/
+│   │   └── app.php             ← App configuration & middleware
+│   └── Dockerfile.prod         ← How to build the backend container
+│
+├── frontend/                   ← React TypeScript application
+│   ├── src/
+│   │   ├── pages/              ← One file per page (Dashboard, Printers, etc.)
+│   │   ├── components/         ← Reusable UI components
+│   │   ├── hooks/              ← Data fetching hooks (useData.ts)
+│   │   ├── services/           ← API calls (api.ts)
+│   │   ├── context/            ← Auth state (AuthContext.tsx)
+│   │   └── types/              ← TypeScript type definitions
+│   └── package.json            ← Frontend dependencies
+│
+├── docker-compose.prod.yml     ← Defines all Docker services
+├── Dockerfile.nginx            ← Builds frontend + nginx container
+├── nginx.prod.conf             ← Nginx routing rules
+├── .env.prod.example           ← Template for environment variables
+└── README.md                   ← Quick reference
+</pre>
+
+  <div class="callout tip">
+    <span class="callout-icon">✅</span>
+    <div class="callout-body">
+      <strong>Key file to understand: <code>docker-compose.prod.yml</code></strong>
+      <p>This single file defines how all containers are built, configured, and connected. It is the heart of the deployment. When in doubt about how the app is wired together, start here.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION 4 — PREREQUISITES
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 class="section-title" id="s4">4. What You Need Before Starting</h1>
+  <p class="section-subtitle">Everything that must be in place before deployment.</p>
+
+  <h2>Hardware</h2>
+  <table>
+    <tr><th>Item</th><th>Minimum</th><th>Notes</th></tr>
+    <tr><td>Synology NAS</td><td>DS420+ or similar</td><td>Must support Docker (x86-64 architecture)</td></tr>
+    <tr><td>RAM</td><td>4 GB</td><td>8 GB recommended — MySQL first-run is slow with less</td></tr>
+    <tr><td>Storage</td><td>20 GB free</td><td>For Docker images, database, and uploads</td></tr>
+    <tr><td>Network</td><td>LAN connected</td><td>App is accessed via the NAS IP address</td></tr>
+  </table>
+
+  <h2>Software to install on the NAS (via Package Center)</h2>
+  <table>
+    <tr><th>Package</th><th>Why it's needed</th></tr>
+    <tr><td><strong>Container Manager</strong></td><td>Docker GUI for Synology — manages all containers</td></tr>
+    <tr><td><strong>Git Server</strong></td><td>Provides the <code>git</code> command for cloning the repo</td></tr>
+  </table>
+
+  <h2>DSM Settings to enable</h2>
+  <ul>
+    <li><strong>SSH access:</strong> Control Panel → Terminal & SNMP → Enable SSH service (port 22)</li>
+    <li><strong>Admin account:</strong> You need an admin DSM account to run <code>sudo</code> commands</li>
+  </ul>
+
+  <h2>On your development machine (Mac/PC)</h2>
+  <table>
+    <tr><th>Tool</th><th>Purpose</th></tr>
+    <tr><td>SSH client</td><td>Terminal (Mac/Linux) or PuTTY (Windows) — to connect to the NAS</td></tr>
+    <tr><td>Git</td><td>To push code changes to GitHub</td></tr>
+    <tr><td>GitHub account</td><td>The code is hosted on GitHub; NAS pulls from there</td></tr>
+    <tr><td>Code editor</td><td>VS Code recommended — for making changes to the app</td></tr>
+  </table>
+
+  <h2>Network information you'll need</h2>
+  <ul>
+    <li>Your NAS local IP address (e.g. <code>192.168.10.30</code>) — find it in DSM → Control Panel → Network</li>
+    <li>Your DSM admin username and password</li>
+  </ul>
+
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div class="callout-body">
+      <strong>Check Docker compatibility first</strong>
+      <p>Not all Synology models support Docker. Only NAS devices with an Intel or AMD (x86-64) processor work. ARM-based models (like the J-series) do not. Check <strong>synology.com/compatibility</strong> and search for "Docker" under your model.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION 5 — PREPARING THE NAS
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 class="section-title" id="s5">5. Preparing the NAS</h1>
+  <p class="section-subtitle">One-time setup steps on the Synology DSM interface.</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h3>Install required packages</h3>
+      <p>Open <strong>Package Center</strong> in DSM. Search for and install both:</p>
+      <ul>
+        <li><strong>Container Manager</strong> — the Docker interface</li>
+        <li><strong>Git Server</strong> — provides the <code>git</code> command in SSH</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h3>Enable SSH</h3>
+      <p>Go to <strong>Control Panel → Terminal & SNMP</strong>. Check <em>Enable SSH service</em> and click Apply.</p>
+      <p>SSH lets you type commands on the NAS remotely from your computer's terminal.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h3>Connect via SSH</h3>
+      <p>On your Mac or PC, open a terminal and type:</p>
+<pre>ssh your_username@192.168.10.30</pre>
+      <p>Replace <code>your_username</code> with your DSM admin username and <code>192.168.10.30</code> with your NAS IP. Enter your password when prompted.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h3>Create the deployment folder</h3>
+      <p>Create a folder in <code>/volume1/docker/</code> which is the standard location for Docker projects on Synology:</p>
+<pre>mkdir -p /volume1/docker</pre>
+    </div>
+  </div>
+
+  <div class="callout tip">
+    <span class="callout-icon">💡</span>
+    <div class="callout-body">
+      <strong>Tip: Find your NAS IP address</strong>
+      <p>In DSM, go to Control Panel → Network → Network Interface. Your IP will be listed next to LAN 1. It usually looks like <code>192.168.x.x</code>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION 6 — CLONING THE REPO
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 class="section-title" id="s6">6. Cloning the Repository</h1>
+  <p class="section-subtitle">Downloading the application code onto the NAS.</p>
+
+  <p>
+    The application code lives on GitHub. "Cloning" means downloading a full copy of it to the NAS.
+    Run these commands over SSH:
+  </p>
+
+<pre>
+cd /volume1/docker
+sudo git clone https://github.com/MCCI-git/printer-asset-management.git
+sudo chown -R your_username:users /volume1/docker/printer-asset-management
+cd /volume1/docker/printer-asset-management
+</pre>
+
+  <p>Line by line explanation:</p>
+  <table>
+    <tr><th>Command</th><th>What it does</th></tr>
+    <tr><td><code>cd /volume1/docker</code></td><td>Navigate into the docker folder</td></tr>
+    <tr><td><code>sudo git clone ...</code></td><td>Download the entire repository. <code>sudo</code> is needed because <code>/volume1/docker</code> requires elevated permissions.</td></tr>
+    <tr><td><code>sudo chown -R ...</code></td><td>Transfer ownership of the downloaded files to your user. Without this you can't edit the files or access them in File Station.</td></tr>
+    <tr><td><code>cd printer-asset-management</code></td><td>Enter the project folder — all following commands run from here.</td></tr>
+  </table>
+
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div class="callout-body">
+      <strong>Always fix ownership after cloning with sudo</strong>
+      <p>When you use <code>sudo git clone</code>, the files are created owned by <code>root</code>. The <code>chown</code> command transfers them to your user so you can access and edit them normally. Skipping this step causes "Permission denied" errors.</p>
+    </div>
+  </div>
+
+  <div class="callout tip">
+    <span class="callout-icon">💡</span>
+    <div class="callout-body">
+      <strong>Tip: Combine both commands</strong>
+      <p>You can chain them so ownership is fixed immediately after cloning:</p>
+    </div>
+  </div>
+<pre>
+sudo git clone https://github.com/MCCI-git/printer-asset-management.git \
+  /volume1/docker/printer-asset-management && \
+  sudo chown -R your_username:users /volume1/docker/printer-asset-management
+</pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION 7 — ENVIRONMENT CONFIGURATION
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 class="section-title" id="s7">7. Environment Configuration</h1>
+  <p class="section-subtitle">The .env file — secrets and settings that are never committed to GitHub.</p>
+
+  <p>
+    The <code>.env</code> file contains sensitive configuration: database passwords, the app URL,
+    and encryption keys. It is <strong>never uploaded to GitHub</strong> — each deployment creates its own.
+    A template called <code>.env.prod.example</code> is provided as a starting point.
+  </p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h3>Copy the template</h3>
+<pre>cp .env.prod.example .env</pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h3>Generate a Laravel APP_KEY</h3>
+      <p>This is a unique encryption key for your installation. Generate one with:</p>
+<pre>echo "base64:$(openssl rand -base64 32)"</pre>
+      <p>Copy the output — it will look like: <code>base64:3fiInZz22meE...hXg=</code></p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h3>Edit the .env file</h3>
+<pre>vi .env</pre>
+      <p>Fill it in with your values:</p>
+<pre>
+APP_KEY=base64:YOUR_GENERATED_KEY_HERE
+APP_URL=http://192.168.10.30:8900
+APP_PORT=8900
+
+DB_CONNECTION=mysql
+DB_HOST=pam_db
+DB_PORT=3306
+DB_DATABASE=printer_assets
+DB_USERNAME=pam_user
+DB_PASSWORD=$$YourStrongPassword2024
+DB_ROOT_PASSWORD=$$YourRootPassword2024
+</pre>
+    </div>
+  </div>
+
+  <div class="callout danger">
+    <span class="callout-icon">🔴</span>
+    <div class="callout-body">
+      <strong>Critical: Escape the $ sign in passwords</strong>
+      <p>Docker Compose reads the <code>.env</code> file and treats <code>${...}</code> as variable substitution. If your password contains a <code>$</code> character (e.g. <code>$ecret</code>), you <strong>must</strong> write it as <code>$$ecret</code> (double dollar sign). Otherwise Docker will silently mangle your password and the database won't connect.</p>
+    </div>
+  </div>
+
+  <h2>What each variable means</h2>
+  <table>
+    <tr><th>Variable</th><th>Example value</th><th>Description</th></tr>
+    <tr><td><code>APP_KEY</code></td><td><code>base64:abc123...</code></td><td>Laravel's encryption key. Must be unique per installation. Never share this.</td></tr>
+    <tr><td><code>APP_URL</code></td><td><code>http://192.168.10.30:8900</code></td><td>The full URL where the app is accessible. Use your NAS IP.</td></tr>
+    <tr><td><code>APP_PORT</code></td><td><code>8900</code></td><td>The port Nginx listens on. Change if 8900 is already in use.</td></tr>
+    <tr><td><code>DB_CONNECTION</code></td><td><code>mysql</code></td><td>Database driver. Must be <code>mysql</code> — do not change.</td></tr>
+    <tr><td><code>DB_HOST</code></td><td><code>pam_db</code></td><td>The database container name. Docker resolves this automatically.</td></tr>
+    <tr><td><code>DB_PASSWORD</code></td><td><code>$$MyPassword</code></td><td>Password for the <code>pam_user</code> database user. Remember to escape <code>$</code>.</td></tr>
+    <tr><td><code>DB_ROOT_PASSWORD</code></td><td><code>$$RootPassword</code></td><td>MySQL root password. Used only during first setup.</td></tr>
+  </table>
+
+  <div class="callout tip">
+    <span class="callout-icon">💡</span>
+    <div class="callout-body">
+      <strong>Tip: vi editor basics</strong>
+      <p>When editing files with <code>vi</code>: press <code>i</code> to start typing, use arrow keys to move, press <code>Esc</code> when done typing, then type <code>:wq</code> and press Enter to save and exit. To exit without saving: <code>:q!</code></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION 8 — DOCKER COMPOSE
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 class="section-title" id="s8">8. Docker Compose Configuration</h1>
+  <p class="section-subtitle">Understanding how the containers are defined and connected.</p>
+
+  <p>
+    Before starting the containers, create a <code>docker-compose.yml</code> from the production template.
+    This is the file Docker Compose actually reads:
+  </p>
+<pre>cp docker-compose.prod.yml docker-compose.yml</pre>
+
+  <p>The file defines 4 services. Here is each one explained:</p>
+
+  <h2>Service 1: pam_db (MySQL Database)</h2>
+<pre>
+pam_db:
+  image: mysql:8.0           <span class="comment"># Uses the official MySQL 8 image from Docker Hub</span>
+  container_name: pam_db     <span class="comment"># Fixed name so other containers can refer to it</span>
+  environment:
+    MYSQL_DATABASE: printer_assets   <span class="comment"># Creates this database on first run</span>
+    MYSQL_USER: pam_user             <span class="comment"># Creates this user</span>
+    MYSQL_PASSWORD: ${DB_PASSWORD}   <span class="comment"># Password comes from .env</span>
+    MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+  healthcheck:
+    test: ["CMD", "mysqladmin", "ping"]
+    retries: 30
+    start_period: 300s       <span class="comment"># Wait up to 5 min for MySQL to initialise on first run</span>
+</pre>
+
+  <div class="callout info">
+    <span class="callout-icon">ℹ️</span>
+    <div class="callout-body">
+      <strong>Why start_period: 300s?</strong>
+      <p>On first run, MySQL initialises its data directory which can take 3–5 minutes on NAS hardware. The <code>start_period</code> tells Docker to not count healthcheck failures during this initialisation window. Without it, Docker marks the container as unhealthy and aborts startup.</p>
+    </div>
+  </div>
+
+  <h2>Service 2: pam_backend (Laravel / PHP)</h2>
+<pre>
+pam_backend:
+  build:
+    context: ./backend
+    dockerfile: Dockerfile.prod   <span class="comment"># Builds from backend/Dockerfile.prod</span>
+  environment:
+    DB_CONNECTION: mysql
+    DB_HOST: pam_db        <span class="comment"># Docker resolves "pam_db" to the database container IP</span>
+    APP_KEY: ${APP_KEY}    <span class="comment"># Passed from .env</span>
+  depends_on:
+    pam_db:
+      condition: service_healthy  <span class="comment"># Only starts after database is ready</span>
+</pre>
+
+  <h2>Service 3: pam_nginx (Nginx + React Frontend)</h2>
+<pre>
+pam_nginx:
+  build:
+    context: .
+    dockerfile: Dockerfile.nginx  <span class="comment"># Multi-stage: builds React, then serves with Nginx</span>
+  ports:
+    - "${APP_PORT:-8900}:80"       <span class="comment"># Maps NAS port 8900 to container port 80</span>
+  depends_on:
+    - pam_backend
+</pre>
+
+  <h2>Service 4: pam_phpmyadmin (Database browser — optional)</h2>
+<pre>
+pam_phpmyadmin:
+  image: phpmyadmin:latest
+  ports:
+    - "8901:80"            <span class="comment"># Access at http://NAS-IP:8901</span>
+  environment:
+    PMA_HOST: pam_db       <span class="comment"># Connects to the database container</span>
+</pre>
+
+  <h2>How Nginx routes requests</h2>
+  <p>The <code>nginx.prod.conf</code> file tells Nginx what to do with each request:</p>
+  <table>
+    <tr><th>URL pattern</th><th>Action</th></tr>
+    <tr><td><code>/api/*</code></td><td>Forward to Laravel via FastCGI (PHP-FPM)</td></tr>
+    <tr><td><code>/sanctum/*</code></td><td>Forward to Laravel (authentication handshake)</td></tr>
+    <tr><td><code>/storage/*</code></td><td>Forward to Laravel (uploaded files)</td></tr>
+    <tr><td>Everything else</td><td>Serve the React <code>index.html</code> (SPA routing)</td></tr>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION 9 — BUILDING & STARTING
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 class="section-title" id="s9">9. Building and Starting the Containers</h1>
+  <p class="section-subtitle">Going live for the first time.</p>
+
+  <div class="callout info">
+    <span class="callout-icon">ℹ️</span>
+    <div class="callout-body">
+      <strong>Make sure you are in the project folder</strong>
+      <p>All commands must be run from inside <code>/volume1/docker/printer-asset-management</code>. If you get "no configuration file provided", you are in the wrong directory.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h3>Build all container images</h3>
+      <p>This compiles the PHP backend, builds the React frontend, and assembles the Nginx image. It downloads dependencies from the internet so it takes a few minutes.</p>
+<pre>sudo docker compose build --no-cache</pre>
+      <p><code>--no-cache</code> forces a fresh build, ignoring any previously cached layers. Always use this flag after pulling updates.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h3>Start all containers</h3>
+<pre>sudo docker compose up -d</pre>
+      <p><code>-d</code> means "detached" — containers run in the background. Without it they would stop when you close the terminal.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h3>Monitor startup</h3>
+      <p>Check the status of all containers:</p>
+<pre>sudo docker compose ps</pre>
+      <p>You are waiting for this output (MySQL takes up to 5 minutes on first run):</p>
+<pre>
+pam_db          Up (healthy)
+pam_backend     Up
+pam_nginx       Up    0.0.0.0:8900->80/tcp
+</pre>
+      <div class="callout warn">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-body">
+          <strong>Do not proceed until pam_db shows "(healthy)"</strong>
+          <p>If you run migrations before MySQL is ready, they will fail. Wait for the healthy status.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h3>Verify the build worked</h3>
+      <p>Open a browser and go to <code>http://192.168.10.30:8900</code>. You should see the login page. If you see a blank page or error, check the logs:</p>
+<pre>sudo docker logs pam_nginx --tail 30
+sudo docker logs pam_backend --tail 30</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION 10 — DATABASE SETUP
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 class="section-title" id="s10">10. Database Setup</h1>
+  <p class="section-subtitle">Creating tables and your first admin account.</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h3>Run database migrations</h3>
+      <p>Migrations create all the database tables. This must be run once on a fresh installation and again after any update that includes schema changes.</p>
+<pre>sudo docker exec -it pam_backend php artisan migrate --force</pre>
+      <p>You should see a list of migrations running with <code>DONE</code> next to each one.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h3>Create your first admin user</h3>
+      <p>Open the Laravel Tinker interactive console:</p>
+<pre>sudo docker exec -it pam_backend php artisan tinker</pre>
+      <p>Then paste this command on a single line (replace the values):</p>
+<pre>
+\App\Models\User::create(['name' => 'Your Name', 'email' => 'you@example.com', 'password' => bcrypt('yourpassword'), 'role' => 'super-admin', 'status' => 'active']);
+</pre>
+      <p>Press <strong>Ctrl+D</strong> to exit Tinker.</p>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <div class="callout-body">
+      <strong>Passwords with $ in Tinker</strong>
+      <p>If your password contains a <code>$</code> character, you must escape it as <code>\$</code> inside double quotes when typing in Tinker. Example: <code>bcrypt("\$ecret123")</code>. The easiest workaround is to use a password without <code>$</code> for initial setup, then change it from the app's profile settings once logged in.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h3>Log in</h3>
+      <p>Open <code>http://192.168.10.30:8900</code> in your browser and log in with the email and password you just created.</p>
+    </div>
+  </div>
+
+  <h2>User roles</h2>
+  <table>
+    <tr><th>Role</th><th>Access level</th></tr>
+    <tr><td><span class="tag red">super-admin</span></td><td>Full access to everything including user management and system settings</td></tr>
+    <tr><td><span class="tag orange">admin</span></td><td>Full access except cannot manage other admins</td></tr>
+    <tr><td><span class="tag">view</span></td><td>Read-only access — can view all data but cannot create, edit, or delete</td></tr>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION 11 — ACCESSING THE APPLICATION
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 class="section-title" id="s11">11. Accessing the Application</h1>
+  <p class="section-subtitle">How to reach the app and navigate it.</p>
+
+  <h2>Access URL</h2>
+  <p>The application is available on your local network at:</p>
+<pre>http://192.168.10.30:8900</pre>
+  <p>Replace <code>192.168.10.30</code> with your NAS IP address. The app is only accessible within your local network unless you set up port forwarding on your router.</p>
+
+  <h2>Database browser (phpMyAdmin)</h2>
+  <p>If you started the phpMyAdmin container, you can browse the database at:</p>
+<pre>http://192.168.10.30:8901</pre>
+
+  <div class="callout tip">
+    <span class="callout-icon">💡</span>
+    <div class="callout-body">
+      <strong>Tip: Bookmark the app</strong>
+      <p>Add <code>http://192.168.10.30:8900</code> as a bookmark in your browser for quick access. On mobile, you can add it to your home screen as a web app.</p>
+    </div>
+  </div>
+
+  <h2>Navigation overview</h2>
+  <p>The sidebar on the left contains all main sections. The top bar shows your profile and theme toggle (light/dark mode).</p>
+
+  <table>
+    <tr><th>Section</th><th>Icon</th><th>Purpose</th></tr>
+    <tr><td>Dashboard</td><td>🏠</td><td>Summary of everything — fleet status, stock alerts, contract expiries</td></tr>
+    <tr><td>Printers</td><td>🖨️</td><td>Add, edit, view printers. Click "Show details" for page counts and assigned consumables.</td></tr>
+    <tr><td>Consumables</td><td>🖊️</td><td>Manage toner/ink stock. Assign to printers. Track stock levels.</td></tr>
+    <tr><td>Contracts</td><td>📄</td><td>Track service/supply contracts. Upload PDFs. See expiry dates.</td></tr>
+    <tr><td>Suppliers</td><td>🏢</td><td>Contact details for all vendors.</td></tr>
+    <tr><td>Maintenance</td><td>🔧</td><td>Work orders — raise, assign, and close maintenance jobs.</td></tr>
+    <tr><td>CAPEX</td><td>📊</td><td>Capital expenditure — purchase costs and depreciation.</td></tr>
+    <tr><td>OPEX</td><td>📈</td><td>Running costs — toner, service, cost per page.</td></tr>
+    <tr><td>Budget</td><td>💰</td><td>Annual budget tracking against actual spend.</td></tr>
+    <tr><td>Reports</td><td>📋</td><td>Activity log of all changes. Export to CSV.</td></tr>
+    <tr><td>Admin</td><td>⚙️</td><td>Manage users, configure email alerts, set notification thresholds.</td></tr>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION 12 — APPLICATION FEATURES
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 class="section-title" id="s12">12. Application Features</h1>
+  <p class="section-subtitle">A walkthrough of each module.</p>
+
+  <h2>Printers</h2>
+  <p>
+    The Printers page is the core of the app. Each printer record stores its model, serial number,
+    location, department, status, IP address, last and next service dates, and the user it is assigned to.
+  </p>
+  <ul>
+    <li><strong>Add a printer:</strong> Click the <em>Add Printer</em> button. Fill in the form and save.</li>
+    <li><strong>Edit:</strong> Click the pencil icon on any row.</li>
+    <li><strong>Show details:</strong> Click the eye icon to open a full detail panel showing page count history and assigned consumables.</li>
+    <li><strong>Page counts:</strong> Inside the details panel, log monthly page counts to track usage over time.</li>
+    <li><strong>Status:</strong> Active, Under Maintenance, or Retired.</li>
+  </ul>
+
+  <h2>Consumables</h2>
+  <p>Track toner cartridges, drums, fuser units, and any other consumable items.</p>
+  <ul>
+    <li><strong>Stock levels:</strong> Set minimum stock thresholds. The dashboard alerts you when stock falls below the minimum.</li>
+    <li><strong>Assigning:</strong> Use the assign button to link a consumable to a specific printer. The assignment date is recorded automatically.</li>
+    <li><strong>Unassigning:</strong> Remove the assignment when the item is replaced. The consumable disappears from the printer's detail panel in real time.</li>
+  </ul>
+
+  <h2>Maintenance (Work Orders)</h2>
+  <p>
+    Each maintenance job is a Work Order with a unique reference number (e.g. WO-001).
+    Work Orders have a status: <span class="tag orange">Open</span>, <span class="tag">In Progress</span>, or <span class="tag green">Completed</span>.
+    When a Work Order is marked Completed, the completion date is recorded and shown in the table.
+  </p>
+
+  <h2>Activity Log (Reports)</h2>
+  <p>
+    Every change made in the app — creating a printer, updating a contract, assigning a consumable —
+    is automatically recorded in the Activity Log. This provides a full audit trail.
+    You can filter by date, model type, and action type, and export to CSV.
+  </p>
+
+  <h2>Budget</h2>
+  <p>
+    Set a total annual budget split into CAPEX (capital purchases) and OPEX (running costs).
+    The app automatically calculates actual spend from your recorded purchases and shows
+    the remaining budget in real time.
+  </p>
+
+  <h2>Email Alerts (Admin)</h2>
+  <p>
+    Configure an SMTP server (e.g. your company mail server or Gmail SMTP) in Admin → SMTP Settings.
+    Then set up notification thresholds in Admin → Notifications:
+  </p>
+  <ul>
+    <li>Low stock alerts</li>
+    <li>Out of stock alerts</li>
+    <li>Contract expiry warnings (X days before)</li>
+    <li>Overdue service alerts</li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION 13 — USER ROLES
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 class="section-title" id="s13">13. User Roles & Management</h1>
+  <p class="section-subtitle">Controlling who can do what in the application.</p>
+
+  <h2>Available roles</h2>
+  <table>
+    <tr><th>Role</th><th>Who it's for</th><th>Permissions</th></tr>
+    <tr>
+      <td><span class="tag red">super-admin</span></td>
+      <td>System owner / IT manager</td>
+      <td>Everything — full CRUD on all data, user management, system settings, budget configuration</td>
+    </tr>
+    <tr>
+      <td><span class="tag orange">admin</span></td>
+      <td>IT staff</td>
+      <td>Full CRUD on all operational data (printers, consumables, work orders). Cannot manage other admin users or change system settings.</td>
+    </tr>
+    <tr>
+      <td><span class="tag">view</span></td>
+      <td>Auditors / management</td>
+      <td>Read-only. Can see all data and export reports but cannot make any changes.</td>
+    </tr>
+  </table>
+
+  <h2>Creating additional users</h2>
+  <p>
+    Once logged in as super-admin, go to <strong>Admin → Users</strong>. Click <em>Add User</em>,
+    fill in their name, email, set a temporary password, and assign a role.
+    The user can change their password from their profile settings after first login.
+  </p>
+
+  <h2>Creating a user via command line</h2>
+  <p>If you need to create a user before the app is accessible (e.g. first setup), use Tinker:</p>
+<pre>
+sudo docker exec -it pam_backend php artisan tinker
+</pre>
+<pre>
+\App\Models\User::create([
+  'name' => 'Full Name',
+  'email' => 'user@example.com',
+  'password' => bcrypt('temporarypassword'),
+  'role' => 'admin',
+  'status' => 'active'
+]);
+</pre>
+
+  <div class="callout tip">
+    <span class="callout-icon">💡</span>
+    <div class="callout-body">
+      <strong>Tip: Only one super-admin needed</strong>
+      <p>Create one super-admin account for initial setup, then create regular admin accounts for day-to-day use. This way if an admin account is compromised, you still have a secure super-admin to lock things down.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION 14 — UPDATING
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 class="section-title" id="s14">14. Updating the Application</h1>
+  <p class="section-subtitle">How to deploy new versions of the app.</p>
+
+  <p>
+    Updates are pushed to GitHub by the developer. To apply them to your NAS, you pull the changes
+    and rebuild the containers. Your data is safe — it lives in a Docker volume that is never touched
+    during an update.
+  </p>
+
+  <h2>Update procedure</h2>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h3>SSH into the NAS</h3>
+<pre>ssh your_username@192.168.10.30</pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h3>Navigate to the project folder</h3>
+<pre>cd /volume1/docker/printer-asset-management</pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h3>Pull the latest code from GitHub</h3>
+<pre>git pull</pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h3>Rebuild and restart</h3>
+<pre>
+sudo docker compose build --no-cache pam_backend pam_nginx
+sudo docker compose up -d
+</pre>
+      <p>Only rebuild the services that changed. If only the backend changed, you can omit <code>pam_nginx</code> to save time.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-body">
+      <h3>Run any new migrations</h3>
+<pre>sudo docker exec -it pam_backend php artisan migrate --force</pre>
+      <p>This is safe to run even if there are no new migrations — it will simply report that everything is up to date.</p>
+    </div>
+  </div>
+
+  <div class="callout tip">
+    <span class="callout-icon">💡</span>
+    <div class="callout-body">
+      <strong>Your data is never deleted during updates</strong>
+      <p>The database lives in a Docker volume called <code>pam_mysql_data</code>. This volume persists across container rebuilds and <code>docker compose down</code> commands. Your data is only deleted if you explicitly run <code>docker volume rm pam_mysql_data</code> — which you should never do in production.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION 15 — USEFUL COMMANDS
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 class="section-title" id="s15">15. Useful Commands</h1>
+  <p class="section-subtitle">Quick reference for day-to-day operations.</p>
+
+  <h2>Container management</h2>
+  <table>
+    <tr><th>Task</th><th>Command</th></tr>
+    <tr><td>Check all containers are running</td><td><code>sudo docker compose ps</code></td></tr>
+    <tr><td>Start all containers</td><td><code>sudo docker compose up -d</code></td></tr>
+    <tr><td>Stop all containers</td><td><code>sudo docker compose down</code></td></tr>
+    <tr><td>Restart a single container</td><td><code>sudo docker compose restart pam_backend</code></td></tr>
+    <tr><td>Rebuild everything from scratch</td><td><code>sudo docker compose build --no-cache</code></td></tr>
+    <tr><td>View live logs</td><td><code>sudo docker logs pam_backend -f</code></td></tr>
+    <tr><td>View last 50 log lines</td><td><code>sudo docker logs pam_backend --tail 50</code></td></tr>
+  </table>
+
+  <h2>Laravel commands (inside the backend container)</h2>
+  <table>
+    <tr><th>Task</th><th>Command</th></tr>
+    <tr><td>Run migrations</td><td><code>sudo docker exec -it pam_backend php artisan migrate --force</code></td></tr>
+    <tr><td>Clear all caches</td><td><code>sudo docker exec -it pam_backend php artisan optimize:clear</code></td></tr>
+    <tr><td>Open interactive console</td><td><code>sudo docker exec -it pam_backend php artisan tinker</code></td></tr>
+    <tr><td>Check migration status</td><td><code>sudo docker exec -it pam_backend php artisan migrate:status</code></td></tr>
+    <tr><td>List all routes</td><td><code>sudo docker exec -it pam_backend php artisan route:list</code></td></tr>
+    <tr><td>View Laravel error log</td><td><code>sudo docker exec pam_backend tail -50 /var/www/html/storage/logs/laravel.log</code></td></tr>
+  </table>
+
+  <h2>Database</h2>
+  <table>
+    <tr><th>Task</th><th>Command</th></tr>
+    <tr><td>Open MySQL shell</td><td><code>sudo docker exec -it pam_db mysql -u pam_user -p printer_assets</code></td></tr>
+    <tr><td>Open phpMyAdmin in browser</td><td><code>http://192.168.10.30:8901</code></td></tr>
+    <tr><td>Check environment variables</td><td><code>sudo docker exec pam_backend env | grep DB_</code></td></tr>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION 16 — TROUBLESHOOTING
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 class="section-title" id="s16">16. Troubleshooting</h1>
+  <p class="section-subtitle">Common issues and how to fix them.</p>
+
+  <h2>🔴 "Permission denied" when cloning or accessing files</h2>
+  <p><strong>Cause:</strong> Files were created by root when using <code>sudo git clone</code>.</p>
+  <p><strong>Fix:</strong></p>
+<pre>sudo chown -R your_username:users /volume1/docker/printer-asset-management</pre>
+
+  <h2>🔴 MySQL container stays "unhealthy" for a long time</h2>
+  <p><strong>Cause:</strong> First-run database initialisation takes 3–5 minutes on NAS hardware.</p>
+  <p><strong>Fix:</strong> Wait. Check the healthcheck config has <code>start_period: 300s</code> and <code>retries: 30</code> in <code>docker-compose.yml</code>. Do not restart the container — just wait.</p>
+
+  <h2>🔴 "Database file at path does not exist" (SQLite error)</h2>
+  <p><strong>Cause:</strong> <code>DB_CONNECTION=mysql</code> is missing from the container's environment.</p>
+  <p><strong>Fix:</strong> Ensure <code>DB_CONNECTION: mysql</code> is in the <code>pam_backend</code> environment block of <code>docker-compose.yml</code> and that <code>DB_CONNECTION=mysql</code> is in your <code>.env</code> file. Then restart:</p>
+<pre>sudo docker compose restart pam_backend</pre>
+
+  <h2>🔴 npm ci fails during build (lock file mismatch)</h2>
+  <p><strong>Cause:</strong> The <code>package-lock.json</code> was generated on a different platform and is out of sync.</p>
+  <p><strong>Fix:</strong> Regenerate it using Docker so it matches the build environment:</p>
+<pre>
+cd /volume1/docker/printer-asset-management/frontend
+sudo docker run --rm -v "$(pwd)":/app -w /app node:20-alpine npm install --package-lock-only
+cd ..
+sudo docker compose build --no-cache pam_nginx
+</pre>
+
+  <h2>🔴 PHP version error during backend build</h2>
+  <p><strong>Cause:</strong> <code>backend/Dockerfile.prod</code> uses PHP 8.3 but packages require PHP ≥ 8.4.</p>
+  <p><strong>Fix:</strong> The <code>Dockerfile.prod</code> should already have <code>FROM php:8.4-fpm-alpine</code>. If not, update it:</p>
+<pre>sed -i 's/php:8.3-fpm-alpine/php:8.4-fpm-alpine/' backend/Dockerfile.prod</pre>
+
+  <h2>🔴 Login shows "CSRF token mismatch"</h2>
+  <p><strong>Cause:</strong> Laravel's stateful middleware was enabled, conflicting with token-based auth.</p>
+  <p><strong>Fix:</strong> Ensure <code>backend/bootstrap/app.php</code> does <strong>not</strong> contain <code>$middleware->statefulApi();</code>. Rebuild after removing it.</p>
+
+  <h2>🔴 "no configuration file provided: not found"</h2>
+  <p><strong>Cause:</strong> You are not in the project directory.</p>
+  <p><strong>Fix:</strong></p>
+<pre>cd /volume1/docker/printer-asset-management</pre>
+
+  <h2>🔴 App loads but API calls fail (404 on /api/)</h2>
+  <p><strong>Cause:</strong> Nginx config is incorrect or stale.</p>
+  <p><strong>Fix:</strong> Rebuild the nginx container:</p>
+<pre>sudo docker compose build --no-cache pam_nginx && sudo docker compose up -d</pre>
+
+  <h2>🔴 Containers stopped after NAS reboot</h2>
+  <p><strong>Cause:</strong> The <code>restart: unless-stopped</code> policy is set, so containers should auto-start. If they don't:</p>
+  <p><strong>Fix:</strong></p>
+<pre>cd /volume1/docker/printer-asset-management && sudo docker compose up -d</pre>
+
+  <hr/>
+
+  <h2>Getting more information</h2>
+  <p>When something goes wrong, these two commands give the most useful information:</p>
+<pre>
+<span class="comment"># See what Laravel logged</span>
+sudo docker exec pam_backend tail -100 /var/www/html/storage/logs/laravel.log
+
+<span class="comment"># See what the container printed to its console</span>
+sudo docker logs pam_backend --tail 50
+</pre>
+
+  <div class="callout tip">
+    <span class="callout-icon">💡</span>
+    <div class="callout-body">
+      <strong>Tip: Always check the logs first</strong>
+      <p>Before trying any fix, read the error in the logs. The error message almost always tells you exactly what is wrong. Guessing without reading the logs wastes time.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     BACK COVER
+══════════════════════════════════════════════════════════ -->
+<div class="cover" style="page-break-before: always; min-height: 50vh; justify-content: flex-end; padding-bottom: 60px;">
+  <p style="opacity:0.5;font-size:13px;">Printer Asset Management — Internal Documentation</p>
+  <p style="opacity:0.4;font-size:12px;margin-top:8px;">MCCI · 2026</p>
+</div>
+
+</body>
+</html>
