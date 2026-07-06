@@ -18,7 +18,8 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 30
+      start_period: 300s
 
   # ── Laravel Backend (PHP-FPM) ──────────────────────────────────────────────
   pam_backend:
