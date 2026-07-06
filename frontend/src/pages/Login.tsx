@@ -9,6 +9,34 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
+import DotField from '@/components/ui/DotField'
+
+const LIGHT_FIELD = {
+  gradientFrom: '#78A4CB',
+  gradientTo:   '#B4E1EB',
+  glowColor:    '#ffffff',
+}
+
+const DARK_FIELD = {
+  gradientFrom: '#78A4CB',
+  gradientTo:   '#95BDD7',
+  glowColor:    '#000000',
+}
+
+function useIsDark() {
+  const [dark, setDark] = useState(() =>
+    document.documentElement.classList.contains('dark')
+  )
+  useEffect(() => {
+    const el = document.documentElement
+    const obs = new MutationObserver(() =>
+      setDark(el.classList.contains('dark'))
+    )
+    obs.observe(el, { attributes: true, attributeFilter: ['class'] })
+    return () => obs.disconnect()
+  }, [])
+  return dark
+}
 
 export function Login() {
   const { login, isAuthenticated } = useAuth()
@@ -18,6 +46,8 @@ export function Login() {
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const isDark = useIsDark()
+  const field = isDark ? DARK_FIELD : LIGHT_FIELD
 
   useEffect(() => {
     if (loading) {
@@ -56,12 +86,30 @@ export function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-background px-4">
+
+      {/* DotField background — dark mode only */}
+      {isDark && (
+        <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+          <DotField
+            dotRadius={1.5}
+            dotSpacing={14}
+            bulgeStrength={67}
+            glowRadius={160}
+            sparkle={false}
+            waveAmplitude={0}
+            gradientFrom={field.gradientFrom}
+            gradientTo={field.gradientTo}
+            glowColor={field.glowColor}
+          />
+        </div>
+      )}
+
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
-        className="w-full max-w-xs"
+        className="relative z-10 mx-auto w-full max-w-sm rounded-2xl border border-white/10 bg-white/8 px-8 py-10 shadow-2xl backdrop-blur-2xl"
       >
         {/* Brand */}
         <div className="mb-8 flex flex-col items-center gap-3">
@@ -70,7 +118,7 @@ export function Login() {
           </div>
           <div className="text-center">
             <h1 className="text-xl font-bold tracking-tight">Printer Asset Management</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Sign in to your workspace</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">Sign in to your workspace</p>
           </div>
         </div>
 
@@ -86,6 +134,7 @@ export function Login() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
+              className="border-white/10 bg-white/5 backdrop-blur-sm placeholder:text-muted-foreground/60 focus-visible:ring-white/20"
             />
           </div>
 
@@ -100,12 +149,12 @@ export function Login() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
-                className="pr-10"
+                className="border-white/10 bg-white/5 pr-10 backdrop-blur-sm placeholder:text-muted-foreground/60 focus-visible:ring-white/20"
               />
               <button
                 type="button"
                 onClick={() => setShowPass(!showPass)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                 tabIndex={-1}
               >
                 {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -113,7 +162,7 @@ export function Login() {
             </div>
           </div>
 
-          <Button type="submit" disabled={loading} className="w-full mt-1" size="sm">
+          <Button type="submit" disabled={loading} className="mt-1 w-full" size="sm">
             {loading
               ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
               : 'Sign in'}

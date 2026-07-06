@@ -29,7 +29,7 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { usePrinters, useDeletePrinter, useUpdatePrinter, usePageCounts, useCreatePageCount, useDeletePageCount, usePrinterConsumables } from '@/hooks/useData'
+import { usePrinters, useDeletePrinter, useUpdatePrinter, usePageCounts, useCreatePageCount, useDeletePageCount, usePrinterConsumables, useConsumableAssignments } from '@/hooks/useData'
 import { useQueryClient } from '@tanstack/react-query'
 import { printersApi } from '@/services/api'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
@@ -154,6 +154,8 @@ export function Printers() {
 
   const { data: detailsPageCounts = [] } = usePageCounts(detailsTarget?.id ?? null)
   const { data: detailsConsumables = [] } = usePrinterConsumables(detailsTarget?.id ?? null)
+  const { data: allAssignments = [] } = useConsumableAssignments()
+  const detailsAssignments = allAssignments.filter(a => a.printer_id === detailsTarget?.id)
 
   const tonerCostPerPage = useMemo(() => {
     const toner = detailsConsumables.find(c => c.type === 'Toner' && c.unit_cost > 0 && (c as any).page_yield > 0)
@@ -828,17 +830,19 @@ export function Printers() {
                     <section className="flex min-h-0 flex-1 flex-col space-y-1.5">
                       <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Assigned Consumables</p>
                       <div className="flex-1 overflow-y-auto rounded-lg border border-border bg-muted/20 p-3">
-                        {detailsConsumables.length === 0 ? (
+                        {detailsAssignments.length === 0 ? (
                           <p className="text-xs text-muted-foreground">No consumables assigned.</p>
                         ) : (
                           <div className="space-y-2">
-                            {detailsConsumables.map(c => (
-                              <div key={c.id} className="flex items-start justify-between gap-2">
+                            {detailsAssignments.map(a => (
+                              <div key={a.id} className="flex items-start justify-between gap-2">
                                 <div className="min-w-0">
-                                  <p className="break-words text-xs font-medium text-foreground">{c.name}</p>
-                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{c.sku} · {c.type}</p>
+                                  <p className="break-words text-xs font-medium text-foreground">{a.consumable.name}</p>
+                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{a.consumable.sku} · {a.consumable.type}</p>
                                 </div>
-                                <span className="shrink-0 text-xs font-medium text-muted-foreground">{formatCurrency(c.unit_cost)}</span>
+                                <span className="shrink-0 text-xs text-muted-foreground">
+                                  {new Date(a.assigned_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                </span>
                               </div>
                             ))}
                           </div>
