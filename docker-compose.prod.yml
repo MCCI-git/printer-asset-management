@@ -61,6 +61,23 @@ services:
     networks:
       - pam_net
 
+  # ── phpMyAdmin ────────────────────────────────────────────────────────────────
+  pam_phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: pam_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: pam_db
+      PMA_USER: pam_user
+      PMA_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "8901:80"
+    depends_on:
+      pam_db:
+        condition: service_healthy
+    networks:
+      - pam_net
+
 volumes:
   pam_mysql_data:
   pam_storage:
