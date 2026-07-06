@@ -182,6 +182,19 @@ export interface PrinterPageCount {
   created_at?: string
 }
 
+export interface ActivityLog {
+  id: number
+  user_id?: number
+  user_name?: string
+  action: string
+  model_type: string
+  model_id?: number
+  model_label: string
+  description: string
+  properties?: Record<string, { old: unknown; new: unknown }>
+  created_at: string
+}
+
 export type WorkOrderPriority = 'high' | 'medium' | 'low'
 export type WorkOrderStatus = 'open' | 'in-progress' | 'scheduled' | 'completed' | 'cancelled'
 

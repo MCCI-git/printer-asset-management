@@ -2,6 +2,16 @@
 
 namespace App\Providers;
 
+use App\Models\Consumable;
+use App\Models\Contract;
+use App\Models\Printer;
+use App\Models\Supplier;
+use App\Models\WorkOrder;
+use App\Observers\ConsumableObserver;
+use App\Observers\ContractObserver;
+use App\Observers\PrinterObserver;
+use App\Observers\SupplierObserver;
+use App\Observers\WorkOrderObserver;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +29,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Printer::observe(PrinterObserver::class);
+        Consumable::observe(ConsumableObserver::class);
+        WorkOrder::observe(WorkOrderObserver::class);
+        Contract::observe(ContractObserver::class);
+        Supplier::observe(SupplierObserver::class);
+
         $smtpPath = storage_path('app/smtp_config.json');
         if (file_exists($smtpPath)) {
             $config = json_decode(file_get_contents($smtpPath), true);

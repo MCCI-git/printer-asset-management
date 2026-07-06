@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\SnipeItController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\SmtpController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\WorkOrderController;
 use Illuminate\Support\Facades\Route;
 
@@ -61,6 +62,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus']);
 
     Route::apiResource('work-orders', WorkOrderController::class)->except(['show']);
+
+    Route::get('/activity-logs', [ActivityLogController::class, 'index']);
+    Route::get('/activity-logs/export', [ActivityLogController::class, 'export']);
 
     Route::get('/budgets/history', [BudgetController::class, 'history']);
     Route::get('/budgets/all', [BudgetController::class, 'all']);

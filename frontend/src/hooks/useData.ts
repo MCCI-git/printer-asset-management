@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { dashboardApi, printersApi, consumablesApi, contractsApi, suppliersApi, snipeItApi, budgetsApi, pageCountsApi, usersApi, workOrdersApi } from '@/services/api'
-import type { PrinterPageCount, ConsumableAssignment, WorkOrder } from '@/types'
+import { dashboardApi, printersApi, consumablesApi, contractsApi, suppliersApi, snipeItApi, budgetsApi, pageCountsApi, usersApi, workOrdersApi, activityLogsApi } from '@/services/api'
+import type { PrinterPageCount, ConsumableAssignment, WorkOrder, ActivityLog } from '@/types'
 
 export function useDashboardStats() {
   return useQuery({
@@ -354,6 +354,16 @@ export function useToggleUserStatus() {
   return useMutation({
     mutationFn: (id: number) => usersApi.toggleStatus(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+  })
+}
+
+export function useActivityLogs(params?: Record<string, unknown>) {
+  return useQuery<{ data: ActivityLog[]; total: number; last_page: number; current_page: number }>({
+    queryKey: ['activity-logs', params],
+    queryFn: async () => {
+      const res = await activityLogsApi.list(params)
+      return res.data
+    },
   })
 }
 

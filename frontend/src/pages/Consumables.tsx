@@ -405,7 +405,7 @@ export function Consumables() {
                   <BarChart data={barData} layout="vertical" margin={{ top: 2, right: 20, left: 4, bottom: 2 }} barCategoryGap="25%">
                     <CartesianGrid horizontal={false} strokeDasharray="3 3" />
                     <XAxis type="number" tickLine={false} axisLine={false} tickMargin={4} allowDecimals={false} className="text-xs" />
-                    <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} tickMargin={4} width={72} className="text-xs" />
+                    <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} tickMargin={4} width={90} className="text-xs" />
                     <ChartTooltip content={<ChartTooltipContent formatter={(v) => [v, 'SKUs']} />} />
                     <Bar dataKey="value" radius={[0, 3, 3, 0]}>
                       {barData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}

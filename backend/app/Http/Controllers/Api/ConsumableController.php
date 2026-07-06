@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Consumable;
 use App\Models\ConsumableAssignment;
+use App\Services\ActivityLogger;
 use App\Services\AlertService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -163,19 +164,45 @@ class ConsumableController extends Controller
         });
 
         $consumable->refresh();
+        $assignment->load(['consumable.supplier', 'printer']);
+
+        $printerName = $assignment->printer?->name ?? "Printer #{$validated['printer_id']}";
+        ActivityLogger::log(
+            action:      'assigned',
+            modelType:   'Consumable',
+            modelId:     $consumable->id,
+            modelLabel:  $consumable->name,
+            description: "Consumable \"{$consumable->name}\" was assigned to {$printerName} (remaining qty: {$consumable->quantity}).",
+            properties:  ['printer' => $printerName, 'quantity_after' => $consumable->quantity],
+        );
 
         // Send immediate stock alert if out of stock or low stock after assignment
         $alerts->sendStockAlert($consumable);
 
-        return response()->json($assignment->load(['consumable.supplier', 'printer']), 201);
+        return response()->json($assignment, 201);
     }
 
     public function unassign(ConsumableAssignment $assignment): JsonResponse
     {
+        $assignment->load(['consumable', 'printer']);
+        $consumableName = $assignment->consumable?->name ?? "Consumable #{$assignment->consumable_id}";
+        $printerName    = $assignment->printer?->name    ?? "Printer #{$assignment->printer_id}";
+        $consumableId   = $assignment->consumable_id;
+
         DB::transaction(function () use ($assignment) {
             $assignment->consumable->increment('quantity');
             $assignment->delete();
         });
+
+        ActivityLogger::log(
+            action:      'unassigned',
+            modelType:   'Consumable',
+            modelId:     $consumableId,
+            modelLabel:  $consumableName,
+            description: "Consumable \"{$consumableName}\" was unassigned from {$printerName}.",
+            properties:  ['printer' => $printerName],
+        );
+
         return response()->json(['message' => 'Unassigned successfully.']);
     }
 }

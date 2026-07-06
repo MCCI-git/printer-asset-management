@@ -138,6 +138,13 @@ export const budgetsApi = {
     api.put('/budgets', data),
 }
 
+// Activity Logs
+export const activityLogsApi = {
+  list: (params?: Record<string, unknown>) => api.get('/activity-logs', { params }),
+  export: (params?: Record<string, unknown>) =>
+    api.get('/activity-logs/export', { params, responseType: 'blob' }),
+}
+
 // Work Orders
 export const workOrdersApi = {
   list: () => api.get('/work-orders'),
