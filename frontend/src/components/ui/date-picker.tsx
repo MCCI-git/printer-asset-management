@@ -13,13 +13,17 @@ interface DatePickerProps {
   disabled?: boolean
   className?: string
   toDate?: Date
+  fromDate?: Date
+  fromYear?: number
+  toYear?: number
 }
 
-export function DatePicker({ value, onChange, placeholder = 'Pick a date', disabled, className, toDate }: DatePickerProps) {
+export function DatePicker({ value, onChange, placeholder = 'Pick a date', disabled, className, toDate, fromDate, fromYear, toYear }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
 
   const selected = value ? parse(value, 'yyyy-MM-dd', new Date()) : undefined
   const validSelected = selected && isValid(selected) ? selected : undefined
+  const currentYear = new Date().getFullYear()
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -47,6 +51,8 @@ export function DatePicker({ value, onChange, placeholder = 'Pick a date', disab
           }}
           disabled={toDate ? { after: toDate } : undefined}
           captionLayout="dropdown"
+          startMonth={fromDate ?? new Date(fromYear ?? currentYear - 10, 0)}
+          endMonth={toDate ?? new Date(toYear ?? currentYear + 5, 11)}
           defaultMonth={validSelected ?? new Date()}
         />
       </PopoverContent>

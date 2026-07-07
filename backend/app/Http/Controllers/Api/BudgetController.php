@@ -40,7 +40,15 @@ class BudgetController extends Controller
     {
         $year = (int) $request->get('year', now()->year);
 
-        $consumableSpend = Consumable::whereYear('created_at', $year)
+        $capexActual = (float) Printer::where('cost_type', 'CAPEX')
+            ->whereYear('purchase_date', $year)
+            ->sum('purchase_cost');
+
+        $opexActual = (float) Printer::where('cost_type', 'OPEX')
+            ->whereYear('purchase_date', $year)
+            ->sum('monthly_fixed_cost') * 12;
+
+        $consumableSpend = Consumable::whereYear('purchase_date', $year)
             ->selectRaw('SUM(unit_cost * quantity) as total')
             ->value('total') ?? 0;
 
@@ -51,7 +59,7 @@ class BudgetController extends Controller
 
         return response()->json([
             'year'   => $year,
-            'actual' => round((float) $consumableSpend + (float) $contractSpend, 2),
+            'actual' => round((float) $capexActual + (float) $opexActual + (float) $consumableSpend + (float) $contractSpend, 2),
         ]);
     }
 
@@ -63,7 +71,15 @@ class BudgetController extends Controller
         return response()->json($years->map(function ($year) {
             $rows = Budget::where('year', $year)->get()->keyBy('type');
 
-            $consumableSpend = Consumable::whereYear('created_at', $year)
+            $capexActual = (float) Printer::where('cost_type', 'CAPEX')
+                ->whereYear('purchase_date', $year)
+                ->sum('purchase_cost');
+
+            $opexActual = (float) Printer::where('cost_type', 'OPEX')
+                ->whereYear('purchase_date', $year)
+                ->sum('monthly_fixed_cost') * 12;
+
+            $consumableSpend = Consumable::whereYear('purchase_date', $year)
                 ->selectRaw('SUM(unit_cost * quantity) as total')
                 ->value('total') ?? 0;
 
@@ -75,7 +91,7 @@ class BudgetController extends Controller
             return [
                 'year'       => $year,
                 'budget'     => (float) ($rows['total']->amount ?? 0),
-                'actual'     => round((float) $consumableSpend + (float) $contractSpend, 2),
+                'actual'     => round((float) $capexActual + (float) $opexActual + (float) $consumableSpend + (float) $contractSpend, 2),
                 'start_date' => $rows['total']->start_date?->toDateString(),
                 'end_date'   => $rows['total']->end_date?->toDateString(),
             ];
@@ -88,10 +104,15 @@ class BudgetController extends Controller
         $year = (int) $request->get('year', now()->year);
         $rows = Budget::where('year', $year)->get()->keyBy('type');
 
-        $capexActual = (float) Printer::where('cost_type', 'CAPEX')->sum('purchase_cost');
-        $opexActual = (float) Printer::where('cost_type', 'OPEX')->sum('monthly_fixed_cost') * 12;
+        $capexActual = (float) Printer::where('cost_type', 'CAPEX')
+            ->whereYear('purchase_date', $year)
+            ->sum('purchase_cost');
 
-        $consumablesActual = (float) (Consumable::whereYear('created_at', $year)
+        $opexActual = (float) Printer::where('cost_type', 'OPEX')
+            ->whereYear('purchase_date', $year)
+            ->sum('monthly_fixed_cost') * 12;
+
+        $consumablesActual = (float) (Consumable::whereYear('purchase_date', $year)
             ->selectRaw('SUM(unit_cost * quantity) as total')
             ->value('total') ?? 0);
 

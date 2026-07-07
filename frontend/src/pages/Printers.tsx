@@ -1332,7 +1332,7 @@ export function Printers() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Date</Label>
-                  <DatePicker value={pcDate} onChange={setPcDate} toDate={new Date()} />
+                  <DatePicker value={pcDate} onChange={setPcDate} toYear={new Date().getFullYear() + 1} />
                 </div>
               </div>
               <div className="space-y-1.5">

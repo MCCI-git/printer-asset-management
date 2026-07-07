@@ -251,11 +251,11 @@ export function Budget() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Start Date</Label>
-                <DatePicker value={startDateInput} onChange={setStartDateInput} placeholder="Start" />
+                <DatePicker value={startDateInput} onChange={setStartDateInput} placeholder="Start" toYear={selectedYear + 1} />
               </div>
               <div className="space-y-1.5">
                 <Label>Finish Date</Label>
-                <DatePicker value={endDateInput} onChange={setEndDateInput} placeholder="Finish" />
+                <DatePicker value={endDateInput} onChange={setEndDateInput} placeholder="Finish" toYear={selectedYear + 1} />
               </div>
             </div>
           </div>

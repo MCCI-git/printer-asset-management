@@ -712,7 +712,7 @@ export function Consumables() {
             </div>
             <div className="space-y-1.5">
               <Label>Purchase Date</Label>
-              <DatePicker value={editForm.purchase_date} onChange={v => setEditForm(f => ({ ...f, purchase_date: v }))} toDate={new Date()} />
+              <DatePicker value={editForm.purchase_date} onChange={v => setEditForm(f => ({ ...f, purchase_date: v }))} toYear={new Date().getFullYear() + 1} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="edit-invoice">Invoice Number <span className="text-xs text-muted-foreground font-normal">(optional)</span></Label>
@@ -807,7 +807,7 @@ export function Consumables() {
             </div>
             <div className="space-y-1.5">
               <Label>Purchase Date</Label>
-              <DatePicker value={addForm.purchase_date} onChange={v => setAddForm(f => ({ ...f, purchase_date: v }))} toDate={new Date()} />
+              <DatePicker value={addForm.purchase_date} onChange={v => setAddForm(f => ({ ...f, purchase_date: v }))} toYear={new Date().getFullYear() + 1} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="add-invoice">Invoice Number <span className="text-xs text-muted-foreground font-normal">(optional)</span></Label>
