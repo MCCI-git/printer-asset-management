@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
-import { Printer, Eye, EyeOff } from 'lucide-react'
+import { Printer, Eye, EyeOff, Moon, Sun } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/AuthContext'
 import { Input } from '@/components/ui/input'
@@ -8,9 +8,9 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/utils'
-import Aurora from '@/components/ui/Aurora'
+import Grainient from '@/components/ui/Grainient'
 
-function useIsDark() {
+function useIsDark(): [boolean, () => void] {
   const [dark, setDark] = useState(() =>
     document.documentElement.classList.contains('dark')
   )
@@ -22,7 +22,12 @@ function useIsDark() {
     obs.observe(el, { attributes: true, attributeFilter: ['class'] })
     return () => obs.disconnect()
   }, [])
-  return dark
+  const toggle = () => {
+    const next = !dark
+    document.documentElement.classList.toggle('dark', next)
+    localStorage.setItem('theme', next ? 'dark' : 'light')
+  }
+  return [dark, toggle]
 }
 
 export function Login() {
@@ -31,7 +36,7 @@ export function Login() {
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
-  const isDark = useIsDark()
+  const [isDark, toggleDark] = useIsDark()
 
   if (isAuthenticated) return <Navigate to="/dashboard" replace />
 
@@ -51,24 +56,50 @@ export function Login() {
   return (
     <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-background px-4">
 
-      {/* Aurora background — dark mode only */}
-      {isDark && (
-        <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-          <Aurora
-            colorStops={['#355872', '#7AAACE', '#9CD5FF']}
-            amplitude={1.25}
+      {/* Theme toggle */}
+      <button
+        onClick={toggleDark}
+        className={cn("absolute top-4 right-4 z-20 rounded-full p-2 transition-colors hover:bg-accent", isDark ? "text-muted-foreground hover:text-foreground" : "text-black hover:text-black")}
+        aria-label="Toggle theme"
+      >
+        {isDark ? <Sun size={18} /> : <Moon size={18} />}
+      </button>
+
+      {/* Grainient background */}
+      <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+        {isDark && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1 }} />}
+        <Grainient
+            color1="#355872"
+            color2="#7AAACE"
+            color3="#9CD5FF"
+            timeSpeed={1.75}
+            colorBalance={0.0}
+            warpStrength={1.0}
+            warpFrequency={5.0}
+            warpSpeed={2.0}
+            warpAmplitude={50.0}
+            blendAngle={0.0}
+            blendSoftness={0.05}
+            rotationAmount={500.0}
+            noiseScale={2.0}
+            grainAmount={0.06}
+            grainScale={2.0}
+            grainAnimated={false}
+            contrast={1.5}
+            gamma={1.0}
+            saturation={1.0}
+            centerX={0.0}
+            centerY={0.0}
+            zoom={0.9}
           />
-        </div>
-      )}
+      </div>
 
       <div
         className={cn(
           "relative z-10 mx-auto w-full max-w-sm rounded-2xl px-8 pt-10 pb-6",
-          isDark
-            ? "border border-white/15 bg-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-2xl backdrop-saturate-150"
-            : "border border-border bg-card shadow-sm"
+          "border border-white/15 bg-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-2xl backdrop-saturate-150"
         )}
-        style={isDark ? { boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)' } : {}}
+        style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)' }}
       >
         {/* Brand */}
         <div className="mb-8 flex flex-col items-center gap-3">
@@ -76,7 +107,7 @@ export function Login() {
             <Printer size={18} />
           </div>
           <div className="text-center">
-            <h1 className="text-xl font-bold tracking-tight">Printer Asset Management</h1>
+            <h1 className={cn("text-xl font-bold tracking-tight", !isDark && "text-black")}>Printer Asset Management</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">Sign in to your workspace</p>
           </div>
         </div>
@@ -84,7 +115,7 @@ export function Login() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email address</Label>
+            <Label htmlFor="email" className={!isDark ? "text-black" : ""}>Email address</Label>
             <Input
               id="email"
               type="email"
@@ -93,12 +124,12 @@ export function Login() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              className={isDark ? "border-white/15 bg-white/8 backdrop-blur-md placeholder:text-white/40 text-white focus-visible:ring-white/25 focus-visible:border-white/30" : ""}
+              className="border-white/15 bg-white/8 backdrop-blur-md placeholder:text-white/40 focus-visible:ring-white/25 focus-visible:border-white/30"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className={!isDark ? "text-black" : ""}>Password</Label>
             <div className="relative">
               <Input
                 id="password"
@@ -108,12 +139,12 @@ export function Login() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
-                className={isDark ? "border-white/15 bg-white/8 backdrop-blur-md placeholder:text-white/40 text-white pr-10 focus-visible:ring-white/25 focus-visible:border-white/30" : "pr-10"}
+                className="border-white/15 bg-white/8 backdrop-blur-md placeholder:text-white/40 pr-10 focus-visible:ring-white/25 focus-visible:border-white/30"
               />
               <button
                 type="button"
                 onClick={() => setShowPass(!showPass)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                className={cn("absolute right-3 top-1/2 -translate-y-1/2 transition-colors", isDark ? "text-muted-foreground hover:text-foreground" : "text-black hover:text-black")}
                 tabIndex={-1}
               >
                 {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
