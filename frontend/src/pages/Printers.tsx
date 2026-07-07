@@ -146,9 +146,11 @@ export function Printers() {
   // Show Details dialog state
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [detailsTarget, setDetailsTarget] = useState<PrinterType | null>(null)
+  const [detailsYear, setDetailsYear] = useState(new Date().getFullYear())
 
   const openDetails = useCallback((printer: PrinterType) => {
     setDetailsTarget(printer)
+    setDetailsYear(new Date().getFullYear())
     setDetailsOpen(true)
   }, [])
 
@@ -163,13 +165,22 @@ export function Printers() {
     return toner.unit_cost / (toner as any).page_yield
   }, [detailsConsumables])
 
+  // Years that have page count data for this printer
+  const detailsPageCountYears = useMemo(() => {
+    const years = new Set<number>()
+    years.add(new Date().getFullYear())
+    for (const log of detailsPageCounts) {
+      years.add(new Date(log.logged_at).getFullYear())
+    }
+    return Array.from(years).sort((a, b) => b - a)
+  }, [detailsPageCounts])
+
   const monthlyPageCountData = useMemo(() => {
-    const year = new Date().getFullYear()
     const months: { key: string; label: string; value: number; cost: number | null }[] = []
     for (let month = 0; month <= 11; month++) {
       months.push({
-        key: `${year}-${month}`,
-        label: new Date(year, month, 1).toLocaleDateString('en-US', { month: 'short' }),
+        key: `${detailsYear}-${month}`,
+        label: new Date(detailsYear, month, 1).toLocaleDateString('en-US', { month: 'short' }),
         value: 0,
         cost: null,
       })
@@ -178,6 +189,7 @@ export function Printers() {
 
     for (const log of detailsPageCounts) {
       const d = new Date(log.logged_at)
+      if (d.getFullYear() !== detailsYear) continue
       const key = `${d.getFullYear()}-${d.getMonth()}`
       const bucket = byKey.get(key)
       if (bucket) bucket.value += log.count
@@ -190,7 +202,7 @@ export function Printers() {
     }
 
     return months
-  }, [detailsPageCounts, tonerCostPerPage])
+  }, [detailsPageCounts, tonerCostPerPage, detailsYear])
 
   // Edit Printer dialog state
   const [editOpen, setEditOpen]   = useState(false)
@@ -641,9 +653,9 @@ export function Printers() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Model Number</Label>
+                <Label>Serial Number</Label>
                 <Input
-                  placeholder="e.g. M428fdw"
+                  placeholder="e.g. VNB3K12345"
                   value={form.model_number}
                   onChange={e => setField('model_number', e.target.value)}
                 />
@@ -816,7 +828,7 @@ export function Printers() {
                         <Detail label="Serial"       value={detailsTarget.serial} />
                         <Detail label="Model"        value={detailsTarget.model} />
                         <Detail label="Manufacturer" value={detailsTarget.manufacturer} />
-                        <Detail label="Model No."    value={detailsTarget.model_number} />
+                        <Detail label="Serial No."    value={detailsTarget.model_number} />
                         <Detail label="Colour"       value={detailsTarget.color_capability ? (detailsTarget.color_capability === 'mono' ? 'Mono' : 'Colour') : undefined} />
                         <Detail label="IP Address"   value={detailsTarget.ip_address} />
                       </div>
@@ -891,7 +903,18 @@ export function Printers() {
                   <div className="flex min-h-0 flex-col gap-3">
 
                     <section className="flex min-h-0 flex-1 flex-col space-y-1.5">
-                      <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Page Count — {new Date().getFullYear()} (Jan–Dec)</p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Page Count (Jan–Dec)</p>
+                        <select
+                          value={detailsYear}
+                          onChange={e => setDetailsYear(Number(e.target.value))}
+                          className="h-6 rounded border border-border bg-background px-1.5 text-[10px] text-foreground focus:outline-none"
+                        >
+                          {detailsPageCountYears.map(y => (
+                            <option key={y} value={y}>{y}</option>
+                          ))}
+                        </select>
+                      </div>
                       <div className="min-h-0 flex-1 rounded-lg border border-border bg-muted/20 p-3">
                         {detailsPageCounts.length < 1 ? (
                           <p className="flex h-full items-center justify-center text-center text-xs text-muted-foreground">
@@ -915,7 +938,7 @@ export function Printers() {
                     </section>
 
                     <section className="flex min-h-0 flex-1 flex-col space-y-1.5">
-                      <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Monthly Toner Cost — {new Date().getFullYear()}</p>
+                      <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Monthly Toner Cost — {detailsYear}</p>
                       <div className="min-h-0 flex-1 rounded-lg border border-border bg-muted/20 p-3">
                         {tonerCostPerPage === null ? (
                           <p className="flex h-full items-center justify-center text-center text-xs text-muted-foreground">
@@ -1001,9 +1024,9 @@ export function Printers() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Model Number</Label>
+                <Label>Serial Number</Label>
                 <Input
-                  placeholder="e.g. M428fdw"
+                  placeholder="e.g. VNB3K12345"
                   value={editForm.model_number}
                   onChange={e => setEditForm(f => ({ ...f, model_number: e.target.value }))}
                 />

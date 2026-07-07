@@ -96,9 +96,9 @@ class UserController extends Controller
         $target = User::findOrFail($id);
         $actor = request()->user();
 
-        if ($target->isSuperAdmin() && $target->id !== $actor->id) {
+        if ($target->id === $actor->id) {
             throw ValidationException::withMessages([
-                'status' => 'A super admin cannot disable another super admin account.',
+                'status' => 'You cannot disable your own account.',
             ])->status(403);
         }
 

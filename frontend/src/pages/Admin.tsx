@@ -77,16 +77,9 @@ export function Admin() {
   const toggleStatusMutation = useToggleUserStatus()
 
   const toggleDisable = (id: number) => {
-    const target = users.find(u => u.id === id)
-    if (target?.role === 'super-admin' && target.id !== user?.id) {
-      toast.error('Unable to disable super admin', {
-        description: 'Another super admin can only be disabled by themselves.',
-      })
-      return
-    }
     toggleStatusMutation.mutate(id, {
       onError: (err: any) => {
-        toast.error('Unable to disable super admin', {
+        toast.error('Action not allowed', {
           description: err?.response?.data?.errors?.status?.[0] ?? err?.response?.data?.message ?? 'Request was rejected.',
         })
       },
@@ -342,7 +335,7 @@ export function Admin() {
         header: '',
         cell: ({ row }) => {
           const u = row.original
-          const isProtectedOtherSuperAdmin = u.role === 'super-admin' && u.id !== user?.id
+          const isProtectedOtherSuperAdmin = u.id === user?.id
           return (
             <div className="flex items-center gap-1">
               {user?.role === 'super-admin' && (
@@ -362,7 +355,7 @@ export function Admin() {
                     size="sm"
                     className="text-destructive hover:text-destructive disabled:opacity-40 disabled:pointer-events-none"
                     disabled={isProtectedOtherSuperAdmin}
-                    title={isProtectedOtherSuperAdmin ? 'Another super admin can only change their own account' : undefined}
+                    title={isProtectedOtherSuperAdmin ? 'You cannot delete your own account' : undefined}
                   >
                     Delete
                   </Button>
@@ -525,14 +518,12 @@ export function Admin() {
                       size="sm"
                       className={`h-7 text-xs gap-1.5 ${allActive ? 'text-destructive hover:text-destructive' : 'text-emerald-600 hover:text-emerald-700'}`}
                       onClick={() => {
-                        const protectedRows = selectedRows.filter(row => row.original.role === 'super-admin' && row.original.id !== user?.id)
-                        if (protectedRows.length > 0) {
-                          toast.error(`Unable to ${label.toLowerCase()} ${protectedRows.length} super admin${protectedRows.length > 1 ? 's' : ''}`, {
-                            description: 'Another super admin can only be disabled by themselves.',
-                          })
+                        const selfRow = selectedRows.find(row => row.original.id === user?.id)
+                        if (selfRow) {
+                          toast.error('You cannot disable your own account.')
                         }
                         selectedRows
-                          .filter(row => !(row.original.role === 'super-admin' && row.original.id !== user?.id))
+                          .filter(row => row.original.id !== user?.id)
                           .forEach(row => toggleDisable(row.original.id))
                         table.resetRowSelection()
                       }}

@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { DatePicker } from '@/components/ui/date-picker'
 import { formatCurrency } from '@/lib/utils'
-import { useBudget, useUpsertBudget, useAllBudgets, useActualSpend, useBudgetBreakdown } from '@/hooks/useData'
+import { useBudget, useUpsertBudget, useAllBudgets, useActualSpend, useBudgetBreakdown, useBudgetHistory } from '@/hooks/useData'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
 } from 'recharts'
@@ -25,12 +25,24 @@ const yearChartConfig = {
 
 export function Budget() {
   const currentYear = new Date().getFullYear()
+  const nextYear = currentYear + 1
 
-  const { data: dbBudget } = useBudget(currentYear)
+  const { data: budgetHistory = [] } = useBudgetHistory()
+
+  // Build year options: always include current, next year, and any years with existing budgets
+  const yearOptions = Array.from(new Set([
+    nextYear,
+    currentYear,
+    ...budgetHistory,
+  ])).sort((a, b) => b - a)
+
+  const [selectedYear, setSelectedYear] = useState(currentYear)
+
+  const { data: dbBudget } = useBudget(selectedYear)
   const upsertBudget = useUpsertBudget()
   const { data: allBudgets = [] } = useAllBudgets()
-  const { data: actualData } = useActualSpend(currentYear)
-  const { data: breakdownData } = useBudgetBreakdown(currentYear)
+  const { data: actualData } = useActualSpend(selectedYear)
+  const { data: breakdownData } = useBudgetBreakdown(selectedYear)
   const categoryData = breakdownData?.categories ?? []
 
   const totalBudgeted = dbBudget?.total ?? 0
@@ -53,7 +65,7 @@ export function Budget() {
     if (isNaN(budgetVal) || budgetVal < 0) return
     if (startDateInput && endDateInput && endDateInput < startDateInput) return
     await upsertBudget.mutateAsync({
-      year: currentYear,
+      year: selectedYear,
       type: 'total',
       amount: budgetVal,
       start_date: startDateInput || undefined,
@@ -64,14 +76,29 @@ export function Budget() {
 
   return (
     <div className="space-y-5">
-      <div className="border-b border-border/40 pb-4">
-        <h1 className="text-xl font-bold text-foreground dark:text-secondary-foreground">Budget</h1>
-        <p className="text-sm text-muted-foreground dark:text-muted-foreground/70">
-          FY {currentYear} budget vs actual spend tracking
-          {dbBudget?.start_date && dbBudget?.end_date && (
-            <> · {format(new Date(dbBudget.start_date), 'dd MMM yyyy')} – {format(new Date(dbBudget.end_date), 'dd MMM yyyy')}</>
-          )}
-        </p>
+      <div className="border-b border-border/40 pb-4 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-foreground dark:text-secondary-foreground">Budget</h1>
+          <p className="text-sm text-muted-foreground dark:text-muted-foreground/70">
+            FY {selectedYear} budget vs actual spend tracking
+            {dbBudget?.start_date && dbBudget?.end_date && (
+              <> · {format(new Date(dbBudget.start_date), 'dd MMM yyyy')} – {format(new Date(dbBudget.end_date), 'dd MMM yyyy')}</>
+            )}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <select
+            value={selectedYear}
+            onChange={e => setSelectedYear(Number(e.target.value))}
+            className="h-8 rounded-md border border-border bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            {yearOptions.map(y => (
+              <option key={y} value={y}>
+                {y === nextYear ? `${y} (Next Year)` : y === currentYear ? `${y} (Current)` : y}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -205,11 +232,11 @@ export function Budget() {
       <Dialog open={dialogOpen} onOpenChange={o => { if (!o) setDialogOpen(false) }}>
         <DialogContent className="max-w-xs">
           <DialogHeader>
-            <DialogTitle>Set Budget</DialogTitle>
+            <DialogTitle>Set Budget — FY {selectedYear}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1.5">
-              <Label htmlFor="total-budget-input">Allocated Budget (Rs) — {currentYear}</Label>
+              <Label htmlFor="total-budget-input">Allocated Budget (Rs) — {selectedYear}</Label>
               <Input
                 id="total-budget-input"
                 type="number"
