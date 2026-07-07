@@ -58,10 +58,17 @@ services:
     restart: unless-stopped
     ports:
       - "${APP_PORT:-8900}:80"
+    volumes:
+      - pam_storage:/var/www/html/storage/app
     depends_on:
       - pam_backend
     networks:
       - pam_net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   # ── phpMyAdmin ────────────────────────────────────────────────────────────────
   pam_phpmyadmin:
