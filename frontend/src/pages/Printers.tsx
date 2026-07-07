@@ -300,12 +300,18 @@ export function Printers() {
   const [addSaving, setAddSaving]       = useState(false)
   const [addError, setAddError]         = useState('')
   const [form, setForm] = useState({
-    asset_tag:   '',
-    name:        '',
-    model:       '',
-    department:  '',
-    cost_type:   'CAPEX' as 'CAPEX' | 'OPEX',
-    assigned_to: '',
+    name:              '',
+    model:             '',
+    manufacturer:      '',
+    model_number:      '',
+    color_capability:  '' as '' | 'mono' | 'colour',
+    ip_address:        '',
+    department:        '',
+    cost_type:         'CAPEX' as 'CAPEX' | 'OPEX',
+    status:            'active' as string,
+    assigned_to:       '',
+    last_service_date: '',
+    next_service_date: '',
   })
 
   const setField = (k: keyof typeof form, v: string) => setForm(f => ({ ...f, [k]: v }))
@@ -319,19 +325,10 @@ export function Printers() {
 
   const validateForm = () => {
     const errs: Record<string, string> = {}
-    const tag = sanitize(form.asset_tag)
     const name = sanitize(form.name)
     const model = sanitize(form.model)
     const dept = sanitize(form.department)
     const assignedTo = sanitize(form.assigned_to)
-
-    if (form.cost_type === 'CAPEX') {
-      if (!tag) {
-        errs.asset_tag = 'Asset Tag is required.'
-      } else if (!ASSET_TAG_RULES.CAPEX.regex.test(tag)) {
-        errs.asset_tag = `Must follow the format: ${ASSET_TAG_RULES.CAPEX.hint}`
-      }
-    }
 
     if (!name) {
       errs.name = 'Name is required.'
@@ -357,18 +354,23 @@ export function Printers() {
     setAddError('')
     try {
       await printersApi.create({
-        ...(form.cost_type === 'CAPEX' ? { asset_tag: sanitize(form.asset_tag) } : {}),
-        name:        sanitize(form.name),
-        model:       sanitize(form.model),
-        department:  sanitize(form.department),
-        cost_type:   form.cost_type,
-        assigned_to: sanitize(form.assigned_to),
-        status:      'active',
+        name:              sanitize(form.name),
+        model:             sanitize(form.model),
+        manufacturer:      sanitize(form.manufacturer),
+        model_number:      sanitize(form.model_number),
+        color_capability:  form.color_capability || undefined,
+        ip_address:        sanitize(form.ip_address) || undefined,
+        department:        sanitize(form.department),
+        cost_type:         form.cost_type,
+        status:            form.status,
+        assigned_to:       sanitize(form.assigned_to),
+        last_service_date: form.last_service_date || null,
+        next_service_date: form.next_service_date || null,
       })
       queryClient.invalidateQueries({ queryKey: ['printers'], exact: false })
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
       setAddOpen(false)
-      setForm({ asset_tag: '', name: '', model: '', department: '', cost_type: 'CAPEX', assigned_to: '' })
+      setForm({ name: '', model: '', manufacturer: '', model_number: '', color_capability: '', ip_address: '', department: '', cost_type: 'CAPEX', status: 'active', assigned_to: '', last_service_date: '', next_service_date: '' })
     } catch (err: any) {
       const errors = err?.response?.data?.errors
       if (errors) {
@@ -608,73 +610,6 @@ export function Printers() {
             )}
 
             <div className="space-y-1.5">
-              <Label>Cost Type</Label>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setForm(f => ({ ...f, cost_type: 'CAPEX', asset_tag: f.asset_tag.startsWith('IT') ? f.asset_tag : 'IT' }))}
-                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                    form.cost_type === 'CAPEX'
-                      ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                      : 'border-border text-muted-foreground hover:bg-muted/50'
-                  }`}
-                >
-                  CAPEX
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setForm(f => ({ ...f, cost_type: 'OPEX', asset_tag: '' })); setFieldErrors(fe => ({ ...fe, asset_tag: '' })) }}
-                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                    form.cost_type === 'OPEX'
-                      ? 'border-orange-400 bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                      : 'border-border text-muted-foreground hover:bg-muted/50'
-                  }`}
-                >
-                  OPEX
-                </button>
-              </div>
-              {form.cost_type === 'OPEX' && (
-                <p className="text-xs text-muted-foreground">Asset Tag is auto-generated for OPEX printers.</p>
-              )}
-            </div>
-
-            {form.cost_type === 'CAPEX' && (
-              <div className="space-y-1.5">
-                <Label>Asset Tag <span className="text-destructive">*</span></Label>
-                <Input
-                  placeholder={`e.g. ${ASSET_TAG_RULES.CAPEX.prefix}00001`}
-                  value={form.asset_tag}
-                  onChange={e => {
-                    let val = e.target.value.toUpperCase()
-                    const rule = ASSET_TAG_RULES.CAPEX
-                    if (val.length < rule.prefixLen) val = rule.prefix
-                    setForm(f => ({ ...f, asset_tag: val }))
-                    setFieldErrors(fe => ({ ...fe, asset_tag: '' }))
-                  }}
-                  className={(() => {
-                    const rule = ASSET_TAG_RULES.CAPEX
-                    const val = form.asset_tag
-                    const afterPrefix = val.slice(rule.prefixLen)
-                    const formatInvalid = val.length > rule.prefixLen && (
-                      /\D/.test(afterPrefix) || val.length > rule.prefixLen + 5
-                    )
-                    return (formatInvalid || fieldErrors.asset_tag) ? 'border-destructive focus-visible:ring-destructive' : ''
-                  })()}
-                />
-                {(() => {
-                  const rule = ASSET_TAG_RULES.CAPEX
-                  const val = form.asset_tag
-                  const afterPrefix = val.slice(rule.prefixLen)
-                  const formatInvalid = val.length > rule.prefixLen && (
-                    /\D/.test(afterPrefix) || val.length > rule.prefixLen + 5
-                  )
-                  const msg = formatInvalid ? 'Invalid Asset Tag format' : fieldErrors.asset_tag
-                  return msg ? <p className="text-xs text-destructive">{msg}</p> : null
-                })()}
-              </div>
-            )}
-
-            <div className="space-y-1.5">
               <Label>Name <span className="text-destructive">*</span></Label>
               <Input
                 placeholder="e.g. HP LaserJet Pro MFP"
@@ -696,6 +631,46 @@ export function Printers() {
               {fieldErrors.model && <p className="text-xs text-destructive">{fieldErrors.model}</p>}
             </div>
 
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Manufacturer</Label>
+                <Input
+                  placeholder="e.g. HP, Canon, Ricoh"
+                  value={form.manufacturer}
+                  onChange={e => setField('manufacturer', e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Model Number</Label>
+                <Input
+                  placeholder="e.g. M428fdw"
+                  value={form.model_number}
+                  onChange={e => setField('model_number', e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Colour Capability</Label>
+                <Select value={form.color_capability} onValueChange={v => setForm(f => ({ ...f, color_capability: v as '' | 'mono' | 'colour' }))}>
+                  <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mono">Mono</SelectItem>
+                    <SelectItem value="colour">Colour</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>IP Address</Label>
+                <Input
+                  placeholder="e.g. 192.168.1.50"
+                  value={form.ip_address}
+                  onChange={e => setField('ip_address', e.target.value)}
+                />
+              </div>
+            </div>
+
             <div className="space-y-1.5">
               <Label>Department</Label>
               <Input
@@ -708,6 +683,48 @@ export function Printers() {
             </div>
 
             <div className="space-y-1.5">
+              <Label>Cost Type</Label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, cost_type: 'CAPEX' }))}
+                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                    form.cost_type === 'CAPEX'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                      : 'border-border text-muted-foreground hover:bg-muted/50'
+                  }`}
+                >
+                  CAPEX
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, cost_type: 'OPEX' }))}
+                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                    form.cost_type === 'OPEX'
+                      ? 'border-orange-400 bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                      : 'border-border text-muted-foreground hover:bg-muted/50'
+                  }`}
+                >
+                  OPEX
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">Asset Tag is auto-generated.</p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                  <SelectItem value="retired">Retired</SelectItem>
+                  <SelectItem value="lost">Lost</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
               <Label>Assigned To</Label>
               <Input
                 placeholder="e.g. John Smith"
@@ -716,6 +733,25 @@ export function Printers() {
                 className={fieldErrors.assigned_to ? 'border-destructive focus-visible:ring-destructive' : ''}
               />
               {fieldErrors.assigned_to && <p className="text-xs text-destructive">{fieldErrors.assigned_to}</p>}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Last Service Date</Label>
+                <Input
+                  type="date"
+                  value={form.last_service_date}
+                  onChange={e => setField('last_service_date', e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Next Service Date</Label>
+                <Input
+                  type="date"
+                  value={form.next_service_date}
+                  onChange={e => setField('next_service_date', e.target.value)}
+                />
+              </div>
             </div>
           </div>
 

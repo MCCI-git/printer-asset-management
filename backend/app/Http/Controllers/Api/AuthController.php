@@ -26,6 +26,14 @@ class AuthController extends Controller
             ]);
         }
 
+        if ($user->status === 'inactive') {
+            throw ValidationException::withMessages([
+                'email' => ['Your account has been disabled. Please contact your administrator.'],
+            ]);
+        }
+
+        $user->update(['last_login_at' => now()]);
+
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([

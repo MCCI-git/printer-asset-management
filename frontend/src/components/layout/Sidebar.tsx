@@ -83,7 +83,7 @@ export function Sidebar() {
 
   return (
     <>
-      <ShadSidebar collapsible="icon">
+      <ShadSidebar collapsible="icon" className="border-r border-border/40 bg-background/60 backdrop-blur-2xl backdrop-saturate-150" style={{ boxShadow: 'inset -1px 0 0 rgba(255,255,255,0.08)' }}>
         {/* Logo header */}
         <SidebarHeader className="h-16 justify-center border-b border-border/40 px-3">
           <div className="flex items-center gap-2.5">

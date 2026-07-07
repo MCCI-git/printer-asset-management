@@ -329,7 +329,13 @@ export function Admin() {
       {
         accessorKey: 'last_login',
         header: 'Last Login',
-        cell: ({ getValue }) => <span className="text-xs text-muted-foreground">{getValue<string>()}</span>,
+        cell: ({ getValue }) => {
+          const val = getValue<string>()
+          if (!val || val === '–') return <span className="text-xs text-muted-foreground">Never</span>
+          const d = new Date(val)
+          const formatted = d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+          return <span className="text-xs text-muted-foreground">{formatted}</span>
+        },
       },
       {
         id: 'actions',

@@ -96,18 +96,18 @@ export function Login() {
 
       <div
         className={cn(
-          "relative z-10 mx-auto w-full max-w-sm rounded-2xl px-8 pt-10 pb-6",
+          "relative z-10 mx-auto w-full max-w-sm rounded-2xl px-8 pb-16",
           "border border-white/15 bg-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-2xl backdrop-saturate-150"
         )}
-        style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)' }}
+        style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)', paddingTop: '19px' }}
       >
         {/* Brand */}
-        <div className="mb-8 flex flex-col items-center gap-3">
+        <div className="mb-8 flex flex-col items-center gap-3 pt-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
             <Printer size={18} />
           </div>
           <div className="text-center">
-            <h1 className={cn("text-xl font-bold tracking-tight", !isDark && "text-black")}>Printer Asset Management</h1>
+            <h1 className={cn("text-2xl font-bold tracking-tight", !isDark && "text-black")}>Printer Asset Management</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">Sign in to your workspace</p>
           </div>
         </div>
