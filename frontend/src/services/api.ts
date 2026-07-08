@@ -121,10 +121,11 @@ export const adminApi = {
 
 // Printer page counts
 export const pageCountsApi = {
-  list:   (printerId: number) => api.get(`/printers/${printerId}/page-counts`),
-  create: (printerId: number, data: { count: number; logged_at: string; notes?: string }) =>
+  list:    (printerId: number) => api.get(`/printers/${printerId}/page-counts`),
+  create:  (printerId: number, data: { count: number; logged_at: string; notes?: string }) =>
     api.post(`/printers/${printerId}/page-counts`, data),
-  delete: (printerId: number, logId: number) => api.delete(`/printers/${printerId}/page-counts/${logId}`),
+  delete:  (printerId: number, logId: number) => api.delete(`/printers/${printerId}/page-counts/${logId}`),
+  opexYtd: (year: number) => api.get('/printers/opex-ytd', { params: { year } }),
 }
 
 // Budgets

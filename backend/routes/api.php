@@ -27,6 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
 
     Route::apiResource('printers', PrinterController::class);
+    Route::get('/printers/opex-ytd', [PrinterPageCountController::class, 'opexYtd']);
     Route::get('/printers/{printer}/page-counts', [PrinterPageCountController::class, 'index']);
     Route::post('/printers/{printer}/page-counts', [PrinterPageCountController::class, 'store']);
     Route::delete('/printers/{printer}/page-counts/{log}', [PrinterPageCountController::class, 'destroy']);

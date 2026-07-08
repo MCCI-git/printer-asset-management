@@ -226,6 +226,18 @@ export function useDeleteSupplier() {
   })
 }
 
+export function useOpexYtd(year: number) {
+  return useQuery({
+    queryKey: ['opex-ytd', year],
+    queryFn: async () => {
+      const res = await pageCountsApi.opexYtd(year)
+      return res.data as { year: number; months_elapsed: number; fixed_cost_total: number; pages_cost_total: number; total: number }
+    },
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+  })
+}
+
 export function usePageCounts(printerId: number | null) {
   return useQuery({
     queryKey: ['page-counts', printerId],

@@ -17,7 +17,7 @@ import {
 import { Slider } from '@/components/ui/slider'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { usePrinters, useDeletePrinter } from '@/hooks/useData'
+import { usePrinters, useDeletePrinter, useOpexYtd } from '@/hooks/useData'
 import { formatCurrency } from '@/lib/utils'
 import type { Printer } from '@/types'
 
@@ -35,11 +35,16 @@ export function Opex() {
 
   const monthlyPages = pages[0]
 
+  const currentYear = new Date().getFullYear()
   const totalMonthly = printers.reduce((s, p) => s + (p.monthly_fixed_cost ?? 0), 0)
   const perPagePrinters = printers.filter(p => p.per_page_cost)
   const avgPerPage =
     perPagePrinters.reduce((s, p) => s + (p.per_page_cost ?? 0), 0) /
     (perPagePrinters.length || 1)
+
+  const { data: opexYtdData } = useOpexYtd(currentYear)
+  const ytdTotal = opexYtdData?.total ?? 0
+  const monthsElapsed = opexYtdData?.months_elapsed ?? (new Date().getMonth() + 1)
 
   const totalProjected =
     totalMonthly + avgPerPage * monthlyPages * perPagePrinters.length
@@ -113,7 +118,7 @@ export function Opex() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard title="Total OPEX Printers" value={printers.length} accentColor="bg-amber-500" icon={<PrinterIcon size={18} />} />
         <StatCard title="Monthly Fixed Cost" value={`${formatCurrency(totalMonthly)}/mo`} accentColor="bg-orange-500" icon={<CreditCard size={18} />} />
-        <StatCard title="Avg. Cost per Page" value={`Rs ${avgPerPage.toFixed(3)}`} accentColor="bg-yellow-500" icon={<Activity size={18} />} />
+        <StatCard title="Overall OPEX YTD Cost" value={formatCurrency(ytdTotal)} subtitle={`Fixed: ${formatCurrency(opexYtdData?.fixed_cost_total ?? 0)} + Pages: ${formatCurrency(opexYtdData?.pages_cost_total ?? 0)}`} accentColor="bg-yellow-500" icon={<TrendingDown size={18} />} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">

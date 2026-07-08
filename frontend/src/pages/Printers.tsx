@@ -165,6 +165,18 @@ export function Printers() {
     return toner.unit_cost / (toner as any).page_yield
   }, [detailsConsumables])
 
+  // Lifetime total — all logs ever recorded for this printer
+  const lifetimePageCount = useMemo(() =>
+    detailsPageCounts.reduce((s, l) => s + l.count, 0),
+  [detailsPageCounts])
+
+  // Annual total — only logs for the selected year
+  const annualPageCount = useMemo(() =>
+    detailsPageCounts
+      .filter(l => new Date(l.logged_at).getFullYear() === detailsYear)
+      .reduce((s, l) => s + l.count, 0),
+  [detailsPageCounts, detailsYear])
+
   // Years that have page count data for this printer
   const detailsPageCountYears = useMemo(() => {
     const years = new Set<number>()
@@ -843,6 +855,23 @@ export function Printers() {
                         <Detail label="Added"         value={detailsTarget.created_at ? new Date(detailsTarget.created_at).toLocaleDateString() : undefined} />
                       </div>
                     </section>
+
+                    {/* Print Volume summary card */}
+                    <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5">
+                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Print Volume</p>
+                      <div className="grid grid-cols-2 divide-x divide-border">
+                        <div className="pr-3">
+                          <p className="text-[10px] text-muted-foreground">{detailsYear} Annual</p>
+                          <p className="text-base font-bold text-foreground">{annualPageCount.toLocaleString()}</p>
+                          <p className="text-[10px] text-muted-foreground">pages</p>
+                        </div>
+                        <div className="pl-3">
+                          <p className="text-[10px] text-muted-foreground">Lifetime Total</p>
+                          <p className="text-base font-bold text-foreground">{lifetimePageCount.toLocaleString()}</p>
+                          <p className="text-[10px] text-muted-foreground">pages cumulative</p>
+                        </div>
+                      </div>
+                    </div>
 
                     {detailsTarget.notes && (
                       <section className="space-y-1.5 flex-1 flex flex-col">

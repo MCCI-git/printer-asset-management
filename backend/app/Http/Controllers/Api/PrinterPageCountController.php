@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Printer;
 use App\Models\PrinterPageCount;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -38,6 +39,34 @@ class PrinterPageCountController extends Controller
         ]);
 
         return response()->json($log, 201);
+    }
+
+    // GET /api/printers/opex-ytd?year=YYYY
+    public function opexYtd(Request $request): JsonResponse
+    {
+        $year = (int) $request->get('year', now()->year);
+        $monthsElapsed = $year === now()->year ? now()->month : 12;
+
+        $opexPrinters = Printer::where('cost_type', 'OPEX')->get();
+
+        $fixedCostTotal = $opexPrinters->sum('monthly_fixed_cost') * $monthsElapsed;
+
+        $pagesCostTotal = 0;
+        foreach ($opexPrinters as $printer) {
+            if (!$printer->per_page_cost) continue;
+            $pages = PrinterPageCount::where('printer_id', $printer->id)
+                ->whereYear('logged_at', $year)
+                ->sum('count');
+            $pagesCostTotal += $pages * $printer->per_page_cost;
+        }
+
+        return response()->json([
+            'year'             => $year,
+            'months_elapsed'   => $monthsElapsed,
+            'fixed_cost_total' => round($fixedCostTotal, 2),
+            'pages_cost_total' => round($pagesCostTotal, 2),
+            'total'            => round($fixedCostTotal + $pagesCostTotal, 2),
+        ]);
     }
 
     // DELETE /api/printers/{printer}/page-counts/{log}
