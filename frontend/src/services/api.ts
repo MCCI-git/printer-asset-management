@@ -106,7 +106,7 @@ export const adminApi = {
     from_address: string
     from_name: string
   }) => api.post('/admin/smtp', data),
-  testSmtp: () => api.post('/admin/smtp/test'),
+  testSmtp: (to?: string) => api.post('/admin/smtp/test', { to }),
   getNotifications: () => api.get('/admin/notifications'),
   saveNotifications: (data: {
     recipients: string

@@ -197,6 +197,7 @@ export function Admin() {
   const [smtpFromName, setSmtpFromName] = useState('')
   const [smtpSaving, setSmtpSaving] = useState(false)
   const [smtpTesting, setSmtpTesting] = useState(false)
+  const [smtpTestTo, setSmtpTestTo] = useState('')
   const [showSmtpPassword, setShowSmtpPassword] = useState(false)
   const [smtpConfigured, setSmtpConfigured] = useState(false)
 
@@ -804,6 +805,15 @@ export function Admin() {
                   <Input value={smtpFromName} onChange={e => setSmtpFromName(e.target.value)} placeholder="Printer Asset Management" />
                 </div>
               </div>
+              <div className="space-y-1.5">
+                <Label>Test Recipient</Label>
+                <Input
+                  type="email"
+                  value={smtpTestTo}
+                  onChange={e => setSmtpTestTo(e.target.value)}
+                  placeholder="you@example.com"
+                />
+              </div>
               <div className="flex gap-2 pt-1">
                 <Button size="sm" disabled={smtpSaving} onClick={async () => {
                   setSmtpSaving(true)
@@ -822,7 +832,7 @@ export function Admin() {
                   setSmtpTesting(true)
                   try {
                     const { adminApi } = await import('@/services/api')
-                    const res = await adminApi.testSmtp()
+                    const res = await adminApi.testSmtp(smtpTestTo || undefined)
                     toast.success(res.data?.message ?? 'Test email sent.')
                   } catch (err: unknown) {
                     const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message

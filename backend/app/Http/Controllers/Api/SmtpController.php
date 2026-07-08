@@ -71,11 +71,11 @@ class SmtpController extends Controller
         return response()->json(['message' => 'SMTP settings saved.']);
     }
 
-    public function test(): JsonResponse
+    public function test(Request $request): JsonResponse
     {
         $this->bootSmtp();
 
-        $recipient = auth()->user()?->email ?? config('mail.from.address');
+        $recipient = $request->input('to') ?: (auth()->user()?->email ?? config('mail.from.address'));
 
         try {
             Mail::raw('This is a test email from Printer Asset Management.', function ($m) use ($recipient) {
