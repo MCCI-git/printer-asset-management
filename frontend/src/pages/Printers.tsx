@@ -856,23 +856,6 @@ export function Printers() {
                       </div>
                     </section>
 
-                    {/* Print Volume summary card */}
-                    <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5">
-                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Print Volume</p>
-                      <div className="grid grid-cols-2 divide-x divide-border">
-                        <div className="pr-3">
-                          <p className="text-[10px] text-muted-foreground">{detailsYear} Annual</p>
-                          <p className="text-base font-bold text-foreground">{annualPageCount.toLocaleString()}</p>
-                          <p className="text-[10px] text-muted-foreground">pages</p>
-                        </div>
-                        <div className="pl-3">
-                          <p className="text-[10px] text-muted-foreground">Lifetime Total</p>
-                          <p className="text-base font-bold text-foreground">{lifetimePageCount.toLocaleString()}</p>
-                          <p className="text-[10px] text-muted-foreground">pages cumulative</p>
-                        </div>
-                      </div>
-                    </div>
-
                     {detailsTarget.notes && (
                       <section className="space-y-1.5 flex-1 flex flex-col">
                         <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Notes</p>
@@ -893,16 +876,22 @@ export function Printers() {
                       </div>
                     </section>
 
-                    <section className="space-y-1.5">
-                      <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Financials</p>
-                      <div className="grid grid-cols-1 gap-y-2 rounded-lg border border-border bg-muted/20 p-3">
-                        <Detail label="Purchase Cost" value={detailsTarget.purchase_cost != null ? formatCurrency(detailsTarget.purchase_cost) : undefined} />
-                        <Detail label="Purchase Date" value={detailsTarget.purchase_date} />
-                        <Detail label="Warranty"      value={detailsTarget.warranty} />
-                        <Detail label="Monthly Cost"  value={detailsTarget.monthly_fixed_cost != null ? formatCurrency(detailsTarget.monthly_fixed_cost) : undefined} />
-                        <Detail label="Per-Page Cost" value={detailsTarget.per_page_cost != null ? `$${detailsTarget.per_page_cost}` : undefined} />
+                    {/* Print Volume summary card */}
+                    <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5">
+                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Print Volume</p>
+                      <div className="grid grid-cols-2 divide-x divide-border">
+                        <div className="pr-3">
+                          <p className="text-[10px] text-muted-foreground">{detailsYear} Annual</p>
+                          <p className="text-base font-bold text-foreground">{annualPageCount.toLocaleString()}</p>
+                          <p className="text-[10px] text-muted-foreground">pages</p>
+                        </div>
+                        <div className="pl-3">
+                          <p className="text-[10px] text-muted-foreground">Lifetime Total</p>
+                          <p className="text-base font-bold text-foreground">{lifetimePageCount.toLocaleString()}</p>
+                          <p className="text-[10px] text-muted-foreground">pages cumulative</p>
+                        </div>
                       </div>
-                    </section>
+                    </div>
 
                     <section className="flex min-h-0 flex-1 flex-col space-y-1.5">
                       <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Assigned Consumables</p>
