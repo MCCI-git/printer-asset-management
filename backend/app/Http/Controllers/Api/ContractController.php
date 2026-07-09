@@ -7,6 +7,7 @@ use App\Models\Contract;
 use App\Models\ContractRenewal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -59,11 +60,11 @@ class ContractController extends Controller
     public function update(Request $request, Contract $contract): JsonResponse
     {
         $validated = $request->validate([
-            'name'             => 'nullable|string|max:255',
-            'vendor'           => 'nullable|string|max:255',
-            'type'             => 'nullable|in:Service,Support,Lease,Maintenance',
-            'start_date'       => 'nullable|date',
-            'end_date'         => 'nullable|date',
+            'name'               => 'nullable|string|max:255',
+            'vendor'             => 'nullable|string|max:255',
+            'type'               => 'nullable|in:Service,Support,Lease,Maintenance',
+            'start_date'         => 'nullable|date',
+            'end_date'           => 'nullable|date',
             'annual_cost'        => 'nullable|numeric|min:0',
             'covered_printers'   => 'nullable|integer|min:0',
             'notice_period_days' => 'nullable|integer|min:0',
@@ -72,8 +73,31 @@ class ContractController extends Controller
             'status'             => 'nullable|in:active,expired,pending',
         ]);
 
+        $wasExpired = $contract->status === 'expired';
+
+        // Determine effective status after update
+        $newEndDate = $validated['end_date'] ?? $contract->end_date;
+        $newStatus  = $validated['status'] ?? $contract->status;
+        $dateExpired = $newEndDate && now()->startOfDay()->gt(\Carbon\Carbon::parse($newEndDate)->startOfDay());
+        if ($dateExpired) {
+            $validated['status'] = 'expired';
+            $newStatus = 'expired';
+        }
+
         $contract->update($validated);
-        return response()->json($contract);
+
+        // Log when a contract transitions to expired for the first time
+        if (!$wasExpired && $newStatus === 'expired') {
+            ContractRenewal::create([
+                'event_type'           => 'expired',
+                'original_contract_id' => $contract->id,
+                'renewed_contract_id'  => null,
+                'renewed_by'           => null,
+                'renewed_at'           => now(),
+            ]);
+        }
+
+        return response()->json($contract->fresh());
     }
 
     public function destroy(Contract $contract): JsonResponse

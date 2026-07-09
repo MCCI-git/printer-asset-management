@@ -185,7 +185,10 @@ export function useUpdateContract() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: unknown }) => contractsApi.update(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['contracts'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contracts'] })
+      qc.invalidateQueries({ queryKey: ['contract-renewals'] })
+    },
   })
 }
 
