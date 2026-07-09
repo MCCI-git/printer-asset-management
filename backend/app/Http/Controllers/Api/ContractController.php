@@ -105,6 +105,7 @@ class ContractController extends Controller
             ]);
 
             ContractRenewal::create([
+                'event_type'           => 'renewed',
                 'original_contract_id' => $contract->id,
                 'renewed_contract_id'  => $renewed->id,
                 'renewed_by'           => $request->user()->id,

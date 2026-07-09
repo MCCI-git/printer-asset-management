@@ -14,7 +14,7 @@ import {
   type PaginationState,
 } from '@tanstack/react-table'
 import { TablePagination } from '@/components/ui/table-pagination'
-import { FileText, Plus, Search, ArrowUpDown, Download, RefreshCw, Trash2, X } from 'lucide-react'
+import { FileText, Plus, Search, ArrowUpDown, Download, RefreshCw, Trash2, X, Pencil } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -33,7 +33,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { useContracts, useCreateContract, useDeleteContract, useRenewContract, useContractRenewals } from '@/hooks/useData'
+import { useContracts, useCreateContract, useDeleteContract, useRenewContract, useContractRenewals, useUpdateContract } from '@/hooks/useData'
 import { formatCurrency, formatDate, daysUntil } from '@/lib/utils'
 import { DatePicker } from '@/components/ui/date-picker'
 import type { Contract } from '@/types'
@@ -65,8 +65,60 @@ export function Contracts() {
   const createContract = useCreateContract()
   const deleteContract = useDeleteContract()
   const renewContract = useRenewContract()
+  const updateContract = useUpdateContract()
   const { data: renewalLogs = [] } = useContractRenewals()
   const [renewing, setRenewing] = useState(false)
+  const [editTarget, setEditTarget] = useState<Contract | null>(null)
+  const [editForm, setEditForm] = useState(EMPTY_FORM)
+  const [editError, setEditError] = useState('')
+  const [editSaving, setEditSaving] = useState(false)
+
+  const openEdit = (c: Contract) => {
+    setEditTarget(c)
+    setEditForm({
+      name:               c.name,
+      vendor:             c.vendor,
+      type:               c.type,
+      start_date:         c.start_date,
+      end_date:           c.end_date,
+      annual_cost:        String(c.annual_cost),
+      covered_printers:   String(c.covered_printers),
+      notice_period_days: c.notice_period_days ? String(c.notice_period_days) : '',
+      contract_manager:   c.contract_manager ?? '',
+      notes:              c.notes ?? '',
+      status:             c.status,
+    })
+    setEditError('')
+  }
+
+  const handleEditSave = async () => {
+    if (!editTarget) return
+    setEditSaving(true)
+    try {
+      await updateContract.mutateAsync({
+        id: editTarget.id,
+        data: {
+          name:               editForm.name.trim(),
+          vendor:             editForm.vendor.trim(),
+          type:               editForm.type,
+          start_date:         editForm.start_date,
+          end_date:           editForm.end_date,
+          annual_cost:        Number(editForm.annual_cost),
+          covered_printers:   editForm.covered_printers ? Number(editForm.covered_printers) : 0,
+          notice_period_days: editForm.notice_period_days ? Number(editForm.notice_period_days) : null,
+          contract_manager:   editForm.contract_manager.trim() || null,
+          notes:              editForm.notes.trim() || null,
+          status:             editForm.status,
+        },
+      })
+      setEditTarget(null)
+      toast.success('Contract updated.')
+    } catch (err: any) {
+      setEditError(err?.response?.data?.message ?? 'Failed to update contract.')
+    } finally {
+      setEditSaving(false)
+    }
+  }
 
   const handleRenew = async () => {
     const selected = Object.keys(rowSelection).map(i => contracts[Number(i)]).filter(Boolean)
@@ -225,6 +277,17 @@ export function Contracts() {
           return <StatusBadge status={status} />
         },
       },
+      {
+        id: 'actions',
+        header: '',
+        enableSorting: false,
+        enableGlobalFilter: false,
+        cell: ({ row }) => (
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(row.original)}>
+            <Pencil size={13} />
+          </Button>
+        ),
+      },
     ],
     []
   )
@@ -355,6 +418,97 @@ export function Contracts() {
             <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
             <Button onClick={handleAdd} disabled={createContract.isPending}>
               {createContract.isPending ? 'Adding…' : 'Add Contract'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Contract Dialog */}
+      <Dialog open={!!editTarget} onOpenChange={open => { if (!open) setEditTarget(null) }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Contract</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label>Contract Name <span className="text-destructive">*</span></Label>
+              <Input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Annual Print Support" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Vendor <span className="text-destructive">*</span></Label>
+                <Input value={editForm.vendor} onChange={e => setEditForm(f => ({ ...f, vendor: e.target.value }))} placeholder="e.g. Xerox" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Type</Label>
+                <Select value={editForm.type} onValueChange={v => setEditForm(f => ({ ...f, type: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Service">Service</SelectItem>
+                    <SelectItem value="Support">Support</SelectItem>
+                    <SelectItem value="Lease">Lease</SelectItem>
+                    <SelectItem value="Maintenance">Maintenance</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Start Date <span className="text-destructive">*</span></Label>
+                <DatePicker value={editForm.start_date} onChange={v => setEditForm(f => ({ ...f, start_date: v }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>End Date <span className="text-destructive">*</span></Label>
+                <DatePicker value={editForm.end_date} onChange={v => setEditForm(f => ({ ...f, end_date: v }))} toYear={new Date().getFullYear() + 5} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Annual Cost <span className="text-destructive">*</span></Label>
+                <Input type="number" value={editForm.annual_cost} onChange={e => setEditForm(f => ({ ...f, annual_cost: e.target.value }))} placeholder="0.00" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Covered Printers</Label>
+                <Input type="number" value={editForm.covered_printers} onChange={e => setEditForm(f => ({ ...f, covered_printers: e.target.value }))} placeholder="0" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Notice Period (days)</Label>
+                <Input type="number" value={editForm.notice_period_days} onChange={e => setEditForm(f => ({ ...f, notice_period_days: e.target.value }))} placeholder="30" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Status</Label>
+                <Select value={editForm.status} onValueChange={v => setEditForm(f => ({ ...f, status: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="expired">Expired</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Contract Manager</Label>
+              <Input value={editForm.contract_manager} onChange={e => setEditForm(f => ({ ...f, contract_manager: e.target.value }))} placeholder="e.g. Jane Smith" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Notes</Label>
+              <textarea
+                value={editForm.notes}
+                onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))}
+                rows={3}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                placeholder="Optional notes…"
+              />
+            </div>
+            {editError && <p className="text-sm text-destructive">{editError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditTarget(null)}>Cancel</Button>
+            <Button onClick={handleEditSave} disabled={editSaving}>
+              {editSaving ? 'Saving…' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -498,16 +652,22 @@ export function Contracts() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Original Contract</TableHead>
+                  <TableHead>Event</TableHead>
+                  <TableHead>Contract</TableHead>
                   <TableHead>Renewed Contract</TableHead>
                   <TableHead>New Period</TableHead>
-                  <TableHead>Renewed By</TableHead>
-                  <TableHead>Date Renewed</TableHead>
+                  <TableHead>By</TableHead>
+                  <TableHead>Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {renewalLogs.map(log => (
                   <TableRow key={log.id} className="h-12 border-b border-border/60 bg-white dark:border-border dark:bg-card">
+                    <TableCell className="align-middle">
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${log.event_type === 'renewed' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                        {log.event_type === 'renewed' ? 'Renewed' : 'Expired'}
+                      </span>
+                    </TableCell>
                     <TableCell className="align-middle text-sm font-medium">{log.original_contract?.name ?? '—'}</TableCell>
                     <TableCell className="align-middle text-sm">{log.renewed_contract?.name ?? '—'}</TableCell>
                     <TableCell className="align-middle text-sm text-muted-foreground">
@@ -515,7 +675,7 @@ export function Contracts() {
                         ? `${new Date(log.renewed_contract.start_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} – ${new Date(log.renewed_contract.end_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`
                         : '—'}
                     </TableCell>
-                    <TableCell className="align-middle text-sm">{log.renewed_by?.name ?? '—'}</TableCell>
+                    <TableCell className="align-middle text-sm">{log.renewed_by?.name ?? 'System'}</TableCell>
                     <TableCell className="align-middle text-sm text-muted-foreground">
                       {new Date(log.renewed_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
                     </TableCell>

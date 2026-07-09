@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('alerts:send')->everyMinute();
+Schedule::command('contracts:expire')->dailyAt('00:05');

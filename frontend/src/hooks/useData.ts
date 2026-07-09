@@ -180,6 +180,14 @@ export function useCreateContract() {
   })
 }
 
+export function useUpdateContract() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: unknown }) => contractsApi.update(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['contracts'] }),
+  })
+}
+
 export function useDeleteContract() {
   const qc = useQueryClient()
   return useMutation({
@@ -206,12 +214,13 @@ export function useContractRenewals() {
       const res = await contractsApi.renewals()
       return res.data as {
         id: number
+        event_type: 'renewed' | 'expired'
         original_contract_id: number
-        renewed_contract_id: number
+        renewed_contract_id: number | null
         renewed_at: string
         original_contract: { id: number; name: string }
-        renewed_contract: { id: number; name: string; start_date: string; end_date: string }
-        renewed_by: { id: number; name: string }
+        renewed_contract: { id: number; name: string; start_date: string; end_date: string } | null
+        renewed_by: { id: number; name: string } | null
       }[]
     },
     refetchOnWindowFocus: true,

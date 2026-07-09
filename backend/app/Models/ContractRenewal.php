@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ContractRenewal extends Model
 {
-    protected $fillable = ['original_contract_id', 'renewed_contract_id', 'renewed_by', 'renewed_at'];
+    protected $fillable = ['event_type', 'original_contract_id', 'renewed_contract_id', 'renewed_by', 'renewed_at'];
 
     protected $casts = ['renewed_at' => 'datetime'];
 
