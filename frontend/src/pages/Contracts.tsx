@@ -1,6 +1,6 @@
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
@@ -34,9 +34,157 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { useContracts, useCreateContract, useDeleteContract, useRenewContract, useContractRenewals, useUpdateContract, useCreateRenewalLog, useDeleteRenewalLog } from '@/hooks/useData'
+
 import { formatCurrency, formatDate, daysUntil } from '@/lib/utils'
 import { DatePicker } from '@/components/ui/date-picker'
 import type { Contract } from '@/types'
+
+function EditContractDialog({ contract, onClose }: { contract: Contract | null; onClose: () => void }) {
+  const updateContract = useUpdateContract()
+  const [form, setForm] = useState(EMPTY_FORM)
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (contract) {
+      setForm({
+        name:               contract.name,
+        vendor:             contract.vendor,
+        type:               contract.type,
+        start_date:         contract.start_date,
+        end_date:           contract.end_date,
+        annual_cost:        String(contract.annual_cost),
+        covered_printers:   String(contract.covered_printers),
+        notice_period_days: contract.notice_period_days ? String(contract.notice_period_days) : '',
+        contract_manager:   contract.contract_manager ?? '',
+        notes:              contract.notes ?? '',
+        status:             contract.status,
+      })
+      setError('')
+    }
+  }, [contract])
+
+  const handleSave = async () => {
+    if (!contract) return
+    setSaving(true)
+    try {
+      await updateContract.mutateAsync({
+        id: contract.id,
+        data: {
+          name:               form.name.trim(),
+          vendor:             form.vendor.trim(),
+          type:               form.type,
+          start_date:         form.start_date,
+          end_date:           form.end_date,
+          annual_cost:        Number(form.annual_cost),
+          covered_printers:   form.covered_printers ? Number(form.covered_printers) : 0,
+          notice_period_days: form.notice_period_days ? Number(form.notice_period_days) : null,
+          contract_manager:   form.contract_manager.trim() || null,
+          notes:              form.notes.trim() || null,
+          status:             form.status,
+        },
+      })
+      toast.success('Contract updated.')
+      onClose()
+    } catch (err: any) {
+      setError(err?.response?.data?.message ?? 'Failed to update contract.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Dialog open={!!contract} onOpenChange={open => { if (!open) onClose() }}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit Contract</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <Label>Contract Name <span className="text-destructive">*</span></Label>
+            <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Annual Print Support" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Vendor <span className="text-destructive">*</span></Label>
+              <Input value={form.vendor} onChange={e => setForm(f => ({ ...f, vendor: e.target.value }))} placeholder="e.g. Xerox" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Type</Label>
+              <Select value={form.type} onValueChange={v => setForm(f => ({ ...f, type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Service">Service</SelectItem>
+                  <SelectItem value="Support">Support</SelectItem>
+                  <SelectItem value="Lease">Lease</SelectItem>
+                  <SelectItem value="Maintenance">Maintenance</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Start Date <span className="text-destructive">*</span></Label>
+              <DatePicker value={form.start_date} onChange={v => setForm(f => ({ ...f, start_date: v }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>End Date <span className="text-destructive">*</span></Label>
+              <DatePicker value={form.end_date} onChange={v => setForm(f => ({ ...f, end_date: v }))} toYear={new Date().getFullYear() + 5} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Annual Cost <span className="text-destructive">*</span></Label>
+              <Input type="number" value={form.annual_cost} onChange={e => setForm(f => ({ ...f, annual_cost: e.target.value }))} placeholder="0.00" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Covered Printers</Label>
+              <Input type="number" value={form.covered_printers} onChange={e => setForm(f => ({ ...f, covered_printers: e.target.value }))} placeholder="0" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Notice Period (days)</Label>
+              <Input type="number" value={form.notice_period_days} onChange={e => setForm(f => ({ ...f, notice_period_days: e.target.value }))} placeholder="30" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="expired">Expired</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Contract Manager</Label>
+            <Input value={form.contract_manager} onChange={e => setForm(f => ({ ...f, contract_manager: e.target.value }))} placeholder="e.g. Jane Smith" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Notes</Label>
+            <textarea
+              value={form.notes}
+              onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+              rows={3}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              placeholder="Optional notes…"
+            />
+          </div>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? 'Saving…' : 'Save Changes'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 const EMPTY_FORM = {
   name: '',
@@ -66,7 +214,6 @@ export function Contracts() {
   const createContract = useCreateContract()
   const deleteContract = useDeleteContract()
   const renewContract = useRenewContract()
-  const updateContract = useUpdateContract()
   const createRenewalLog = useCreateRenewalLog()
   const deleteRenewalLog = useDeleteRenewalLog()
   const { data: renewalLogs = [] } = useContractRenewals()
@@ -74,6 +221,9 @@ export function Contracts() {
   const [addLogOpen, setAddLogOpen] = useState(false)
   const [logForm, setLogForm] = useState({ event_type: 'renewed', original_contract_id: '', renewed_contract_id: '', renewed_at: '' })
   const [logSaving, setLogSaving] = useState(false)
+  const [editTarget, setEditTarget] = useState<Contract | null>(null)
+
+  const openEdit = useCallback((c: Contract) => setEditTarget(c), [])
 
   const handleAddLog = async () => {
     if (!logForm.original_contract_id || !logForm.renewed_at) return
@@ -92,57 +242,6 @@ export function Contracts() {
       toast.error('Failed to add log entry.')
     } finally {
       setLogSaving(false)
-    }
-  }
-  const [editTarget, setEditTarget] = useState<Contract | null>(null)
-  const [editForm, setEditForm] = useState(EMPTY_FORM)
-  const [editError, setEditError] = useState('')
-  const [editSaving, setEditSaving] = useState(false)
-
-  const openEdit = useCallback((c: Contract) => {
-    setEditTarget(c)
-    setEditForm({
-      name:               c.name,
-      vendor:             c.vendor,
-      type:               c.type,
-      start_date:         c.start_date,
-      end_date:           c.end_date,
-      annual_cost:        String(c.annual_cost),
-      covered_printers:   String(c.covered_printers),
-      notice_period_days: c.notice_period_days ? String(c.notice_period_days) : '',
-      contract_manager:   c.contract_manager ?? '',
-      notes:              c.notes ?? '',
-      status:             c.status,
-    })
-    setEditError('')
-  }, [])
-
-  const handleEditSave = async () => {
-    if (!editTarget) return
-    setEditSaving(true)
-    try {
-      await updateContract.mutateAsync({
-        id: editTarget.id,
-        data: {
-          name:               editForm.name.trim(),
-          vendor:             editForm.vendor.trim(),
-          type:               editForm.type,
-          start_date:         editForm.start_date,
-          end_date:           editForm.end_date,
-          annual_cost:        Number(editForm.annual_cost),
-          covered_printers:   editForm.covered_printers ? Number(editForm.covered_printers) : 0,
-          notice_period_days: editForm.notice_period_days ? Number(editForm.notice_period_days) : null,
-          contract_manager:   editForm.contract_manager.trim() || null,
-          notes:              editForm.notes.trim() || null,
-          status:             editForm.status,
-        },
-      })
-      setEditTarget(null)
-      toast.success('Contract updated.')
-    } catch (err: any) {
-      setEditError(err?.response?.data?.message ?? 'Failed to update contract.')
-    } finally {
-      setEditSaving(false)
     }
   }
 
@@ -449,96 +548,7 @@ export function Contracts() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Contract Dialog */}
-      <Dialog open={!!editTarget} onOpenChange={open => { if (!open) setEditTarget(null) }}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Contract</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label>Contract Name <span className="text-destructive">*</span></Label>
-              <Input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Annual Print Support" />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Vendor <span className="text-destructive">*</span></Label>
-                <Input value={editForm.vendor} onChange={e => setEditForm(f => ({ ...f, vendor: e.target.value }))} placeholder="e.g. Xerox" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Type</Label>
-                <Select value={editForm.type} onValueChange={v => setEditForm(f => ({ ...f, type: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Service">Service</SelectItem>
-                    <SelectItem value="Support">Support</SelectItem>
-                    <SelectItem value="Lease">Lease</SelectItem>
-                    <SelectItem value="Maintenance">Maintenance</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Start Date <span className="text-destructive">*</span></Label>
-                <DatePicker value={editForm.start_date} onChange={v => setEditForm(f => ({ ...f, start_date: v }))} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>End Date <span className="text-destructive">*</span></Label>
-                <DatePicker value={editForm.end_date} onChange={v => setEditForm(f => ({ ...f, end_date: v }))} toYear={new Date().getFullYear() + 5} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Annual Cost <span className="text-destructive">*</span></Label>
-                <Input type="number" value={editForm.annual_cost} onChange={e => setEditForm(f => ({ ...f, annual_cost: e.target.value }))} placeholder="0.00" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Covered Printers</Label>
-                <Input type="number" value={editForm.covered_printers} onChange={e => setEditForm(f => ({ ...f, covered_printers: e.target.value }))} placeholder="0" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Notice Period (days)</Label>
-                <Input type="number" value={editForm.notice_period_days} onChange={e => setEditForm(f => ({ ...f, notice_period_days: e.target.value }))} placeholder="30" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Status</Label>
-                <Select value={editForm.status} onValueChange={v => setEditForm(f => ({ ...f, status: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="expired">Expired</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Contract Manager</Label>
-              <Input value={editForm.contract_manager} onChange={e => setEditForm(f => ({ ...f, contract_manager: e.target.value }))} placeholder="e.g. Jane Smith" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Notes</Label>
-              <textarea
-                value={editForm.notes}
-                onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))}
-                rows={3}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-                placeholder="Optional notes…"
-              />
-            </div>
-            {editError && <p className="text-sm text-destructive">{editError}</p>}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditTarget(null)}>Cancel</Button>
-            <Button onClick={handleEditSave} disabled={editSaving}>
-              {editSaving ? 'Saving…' : 'Save Changes'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditContractDialog contract={editTarget} onClose={() => setEditTarget(null)} />
 
       <Card>
         <CardHeader>
