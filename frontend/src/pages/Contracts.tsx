@@ -39,6 +39,22 @@ import { formatCurrency, formatDate, daysUntil } from '@/lib/utils'
 import { DatePicker } from '@/components/ui/date-picker'
 import type { Contract } from '@/types'
 
+const EMPTY_FORM = {
+  name: '',
+  vendor: '',
+  type: 'Service' as string,
+  start_date: '',
+  end_date: '',
+  annual_cost: '',
+  covered_printers: '',
+  notice_period_days: '',
+  contract_manager: '',
+  notes: '',
+  status: 'active' as string,
+}
+
+type FieldErrors = Partial<Record<keyof typeof EMPTY_FORM, string>>
+
 function EditContractDialog({ contract, onClose }: { contract: Contract | null; onClose: () => void }) {
   const updateContract = useUpdateContract()
   const [form, setForm] = useState(EMPTY_FORM)
@@ -185,22 +201,6 @@ function EditContractDialog({ contract, onClose }: { contract: Contract | null; 
     </Dialog>
   )
 }
-
-const EMPTY_FORM = {
-  name: '',
-  vendor: '',
-  type: 'Service' as string,
-  start_date: '',
-  end_date: '',
-  annual_cost: '',
-  covered_printers: '',
-  notice_period_days: '',
-  contract_manager: '',
-  notes: '',
-  status: 'active' as string,
-}
-
-type FieldErrors = Partial<Record<keyof typeof EMPTY_FORM, string>>
 
 export function Contracts() {
   const { data: rawData, isLoading } = useContracts()
