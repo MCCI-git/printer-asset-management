@@ -33,7 +33,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { useContracts, useCreateContract, useDeleteContract, useRenewContract, useContractRenewals, useUpdateContract } from '@/hooks/useData'
+import { useContracts, useCreateContract, useDeleteContract, useRenewContract, useContractRenewals, useUpdateContract, useCreateRenewalLog, useDeleteRenewalLog } from '@/hooks/useData'
 import { formatCurrency, formatDate, daysUntil } from '@/lib/utils'
 import { DatePicker } from '@/components/ui/date-picker'
 import type { Contract } from '@/types'
@@ -56,7 +56,8 @@ type FieldErrors = Partial<Record<keyof typeof EMPTY_FORM, string>>
 
 export function Contracts() {
   const { data: rawData, isLoading } = useContracts()
-  const contracts: Contract[] = (rawData as { data: Contract[] } | undefined)?.data ?? []
+  const allContracts: Contract[] = (rawData as { data: Contract[] } | undefined)?.data ?? []
+  const contracts: Contract[] = allContracts.filter(c => c.status !== 'expired')
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState('')
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
@@ -66,8 +67,33 @@ export function Contracts() {
   const deleteContract = useDeleteContract()
   const renewContract = useRenewContract()
   const updateContract = useUpdateContract()
+  const createRenewalLog = useCreateRenewalLog()
+  const deleteRenewalLog = useDeleteRenewalLog()
   const { data: renewalLogs = [] } = useContractRenewals()
   const [renewing, setRenewing] = useState(false)
+  const [addLogOpen, setAddLogOpen] = useState(false)
+  const [logForm, setLogForm] = useState({ event_type: 'renewed', original_contract_id: '', renewed_contract_id: '', renewed_at: '' })
+  const [logSaving, setLogSaving] = useState(false)
+
+  const handleAddLog = async () => {
+    if (!logForm.original_contract_id || !logForm.renewed_at) return
+    setLogSaving(true)
+    try {
+      await createRenewalLog.mutateAsync({
+        event_type:           logForm.event_type,
+        original_contract_id: Number(logForm.original_contract_id),
+        renewed_contract_id:  logForm.renewed_contract_id ? Number(logForm.renewed_contract_id) : null,
+        renewed_at:           logForm.renewed_at,
+      })
+      setAddLogOpen(false)
+      setLogForm({ event_type: 'renewed', original_contract_id: '', renewed_contract_id: '', renewed_at: '' })
+      toast.success('Log entry added.')
+    } catch {
+      toast.error('Failed to add log entry.')
+    } finally {
+      setLogSaving(false)
+    }
+  }
   const [editTarget, setEditTarget] = useState<Contract | null>(null)
   const [editForm, setEditForm] = useState(EMPTY_FORM)
   const [editError, setEditError] = useState('')
@@ -639,16 +665,21 @@ export function Contracts() {
       </Card>
 
       {/* Renewal Log */}
-      {renewalLogs.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <RefreshCw size={15} className="text-blue-500" />
-              Renewal History
-              <span className="ml-auto text-xs font-normal text-muted-foreground/70">{renewalLogs.length} record{renewalLogs.length !== 1 ? 's' : ''}</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <RefreshCw size={15} className="text-blue-500" />
+            Logs History
+            <span className="ml-auto text-xs font-normal text-muted-foreground/70">{renewalLogs.length} record{renewalLogs.length !== 1 ? 's' : ''}</span>
+            <Button size="sm" className="h-7 text-xs gap-1.5 ml-2" onClick={() => setAddLogOpen(true)}>
+              <Plus size={12} /> Add Log
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {renewalLogs.length === 0 ? (
+            <p className="px-6 py-8 text-center text-sm text-muted-foreground">No logs yet.</p>
+          ) : (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -658,6 +689,7 @@ export function Contracts() {
                   <TableHead>New Period</TableHead>
                   <TableHead>By</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -679,13 +711,83 @@ export function Contracts() {
                     <TableCell className="align-middle text-sm text-muted-foreground">
                       {new Date(log.renewed_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
                     </TableCell>
+                    <TableCell className="align-middle">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive">
+                            <Trash2 size={13} />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete this log entry?</AlertDialogTitle>
+                            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction variant="destructive" onClick={() => deleteRenewalLog.mutate(log.id)}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Add Log Dialog */}
+      <Dialog open={addLogOpen} onOpenChange={setAddLogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Log Entry</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label>Event Type</Label>
+              <Select value={logForm.event_type} onValueChange={v => setLogForm(f => ({ ...f, event_type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="renewed">Renewed</SelectItem>
+                  <SelectItem value="expired">Expired</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Contract <span className="text-destructive">*</span></Label>
+              <Select value={logForm.original_contract_id} onValueChange={v => setLogForm(f => ({ ...f, original_contract_id: v }))}>
+                <SelectTrigger><SelectValue placeholder="Select contract…" /></SelectTrigger>
+                <SelectContent>
+                  {allContracts.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {logForm.event_type === 'renewed' && (
+              <div className="space-y-1.5">
+                <Label>Renewed To</Label>
+                <Select value={logForm.renewed_contract_id} onValueChange={v => setLogForm(f => ({ ...f, renewed_contract_id: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Select renewed contract…" /></SelectTrigger>
+                  <SelectContent>
+                    {allContracts.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="space-y-1.5">
+              <Label>Date <span className="text-destructive">*</span></Label>
+              <DatePicker value={logForm.renewed_at} onChange={v => setLogForm(f => ({ ...f, renewed_at: v }))} toYear={new Date().getFullYear() + 1} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddLogOpen(false)}>Cancel</Button>
+            <Button onClick={handleAddLog} disabled={logSaving}>
+              {logSaving ? 'Saving…' : 'Add Log'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

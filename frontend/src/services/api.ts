@@ -72,6 +72,8 @@ export const contractsApi = {
   delete: (id: number) => api.delete(`/contracts/${id}`),
   renew: (id: number) => api.post(`/contracts/${id}/renew`),
   renewals: () => api.get('/contract-renewals'),
+  createRenewal: (data: unknown) => api.post('/contract-renewals', data),
+  deleteRenewal: (id: number) => api.delete(`/contract-renewals/${id}`),
 }
 
 // Suppliers

@@ -104,6 +104,8 @@ class ContractController extends Controller
                 'status'             => 'active',
             ]);
 
+            $contract->update(['status' => 'expired']);
+
             ContractRenewal::create([
                 'event_type'           => 'renewed',
                 'original_contract_id' => $contract->id,
@@ -125,6 +127,34 @@ class ContractController extends Controller
             ->get();
 
         return response()->json($logs);
+    }
+
+    public function storeRenewal(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'event_type'           => 'required|in:renewed,expired',
+            'original_contract_id' => 'required|exists:contracts,id',
+            'renewed_contract_id'  => 'nullable|exists:contracts,id',
+            'renewed_at'           => 'required|date',
+            'notes'                => 'nullable|string',
+        ]);
+
+        $log = ContractRenewal::create([
+            'event_type'           => $validated['event_type'],
+            'original_contract_id' => $validated['original_contract_id'],
+            'renewed_contract_id'  => $validated['renewed_contract_id'] ?? null,
+            'renewed_by'           => $request->user()->id,
+            'renewed_at'           => $validated['renewed_at'],
+        ]);
+
+        $log->load(['originalContract:id,name', 'renewedContract:id,name,start_date,end_date', 'renewedBy:id,name']);
+        return response()->json($log, 201);
+    }
+
+    public function destroyRenewal(ContractRenewal $renewal): JsonResponse
+    {
+        $renewal->delete();
+        return response()->json(['message' => 'Log deleted.']);
     }
 
     public function uploadPdf(Request $request, Contract $contract): JsonResponse

@@ -196,6 +196,22 @@ export function useDeleteContract() {
   })
 }
 
+export function useCreateRenewalLog() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: unknown) => contractsApi.createRenewal(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['contract-renewals'] }),
+  })
+}
+
+export function useDeleteRenewalLog() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => contractsApi.deleteRenewal(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['contract-renewals'] }),
+  })
+}
+
 export function useRenewContract() {
   const qc = useQueryClient()
   return useMutation({

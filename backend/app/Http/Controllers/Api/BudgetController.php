@@ -135,7 +135,7 @@ class BudgetController extends Controller
                 ['category' => 'OPEX Managed Print',  'short' => 'OPEX',    'budgeted' => (float) ($rows['opex']->amount ?? 0),  'actual' => $opexActual],
                 ['category' => 'Consumables',         'short' => 'Consum.', 'budgeted' => 0, 'actual' => $consumablesActual],
                 ['category' => 'Maint. Contracts',    'short' => 'Maint.',  'budgeted' => 0, 'actual' => $maintenanceActual],
-                ['category' => 'Support Contracts',   'short' => 'Support', 'budgeted' => 0, 'actual' => $supportActual],
+                ['category' => 'Rental Contract',      'short' => 'Rental',  'budgeted' => 0, 'actual' => $supportActual],
             ],
         ]);
     }

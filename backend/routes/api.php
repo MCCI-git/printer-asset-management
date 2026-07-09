@@ -38,6 +38,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('contracts', ContractController::class);
     Route::post('/contracts/{contract}/renew', [ContractController::class, 'renew']);
     Route::get('/contract-renewals', [ContractController::class, 'renewals']);
+    Route::post('/contract-renewals', [ContractController::class, 'storeRenewal']);
+    Route::delete('/contract-renewals/{renewal}', [ContractController::class, 'destroyRenewal']);
     Route::post('/contracts/{contract}/upload-pdf', [ContractController::class, 'uploadPdf']);
     Route::apiResource('suppliers', SupplierController::class);
 
