@@ -1,6 +1,6 @@
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
@@ -99,7 +99,7 @@ export function Contracts() {
   const [editError, setEditError] = useState('')
   const [editSaving, setEditSaving] = useState(false)
 
-  const openEdit = (c: Contract) => {
+  const openEdit = useCallback((c: Contract) => {
     setEditTarget(c)
     setEditForm({
       name:               c.name,
@@ -115,7 +115,7 @@ export function Contracts() {
       status:             c.status,
     })
     setEditError('')
-  }
+  }, [])
 
   const handleEditSave = async () => {
     if (!editTarget) return
@@ -315,7 +315,7 @@ export function Contracts() {
         ),
       },
     ],
-    []
+    [openEdit]
   )
 
   const table = useReactTable({

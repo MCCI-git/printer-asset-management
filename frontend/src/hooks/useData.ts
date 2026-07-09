@@ -63,6 +63,7 @@ export function useContracts(params?: Record<string, unknown>) {
       const res = await contractsApi.list(params)
       return res.data
     },
+    refetchOnWindowFocus: false,
   })
 }
 
@@ -226,6 +227,7 @@ export function useRenewContract() {
 export function useContractRenewals() {
   return useQuery({
     queryKey: ['contract-renewals'],
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       const res = await contractsApi.renewals()
       return res.data as {
