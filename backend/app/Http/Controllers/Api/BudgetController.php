@@ -52,7 +52,7 @@ class BudgetController extends Controller
             ->selectRaw('SUM(unit_cost * quantity) as total')
             ->value('total') ?? 0;
 
-        $contractSpend = Contract::where('status', 'Active')
+        $contractSpend = Contract::where('status', 'active')
             ->whereYear('start_date', '<=', $year)
             ->whereYear('end_date', '>=', $year)
             ->sum('annual_cost');
@@ -83,7 +83,7 @@ class BudgetController extends Controller
                 ->selectRaw('SUM(unit_cost * quantity) as total')
                 ->value('total') ?? 0;
 
-            $contractSpend = Contract::where('status', 'Active')
+            $contractSpend = Contract::where('status', 'active')
                 ->whereYear('start_date', '<=', $year)
                 ->whereYear('end_date', '>=', $year)
                 ->sum('annual_cost');
@@ -116,13 +116,13 @@ class BudgetController extends Controller
             ->selectRaw('SUM(unit_cost * quantity) as total')
             ->value('total') ?? 0);
 
-        $maintenanceActual = (float) Contract::where('status', 'Active')
+        $maintenanceActual = (float) Contract::where('status', 'active')
             ->where('type', 'Maintenance')
             ->whereYear('start_date', '<=', $year)
             ->whereYear('end_date', '>=', $year)
             ->sum('annual_cost');
 
-        $supportActual = (float) Contract::where('status', 'Active')
+        $supportActual = (float) Contract::where('status', 'active')
             ->where('type', 'Support')
             ->whereYear('start_date', '<=', $year)
             ->whereYear('end_date', '>=', $year)
