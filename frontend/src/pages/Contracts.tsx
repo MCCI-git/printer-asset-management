@@ -1,3 +1,4 @@
+import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useState, useMemo } from 'react'
 import {
@@ -32,7 +33,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { useContracts, useCreateContract, useDeleteContract } from '@/hooks/useData'
+import { useContracts, useCreateContract, useDeleteContract, useRenewContract, useContractRenewals } from '@/hooks/useData'
 import { formatCurrency, formatDate, daysUntil } from '@/lib/utils'
 import { DatePicker } from '@/components/ui/date-picker'
 import type { Contract } from '@/types'
@@ -63,6 +64,24 @@ export function Contracts() {
 
   const createContract = useCreateContract()
   const deleteContract = useDeleteContract()
+  const renewContract = useRenewContract()
+  const { data: renewalLogs = [] } = useContractRenewals()
+  const [renewing, setRenewing] = useState(false)
+
+  const handleRenew = async () => {
+    const selected = Object.keys(rowSelection).map(i => contracts[Number(i)]).filter(Boolean)
+    if (!selected.length) return
+    setRenewing(true)
+    try {
+      await Promise.all(selected.map(c => renewContract.mutateAsync(c.id)))
+      setRowSelection({})
+      toast.success(`${selected.length} contract${selected.length > 1 ? 's' : ''} renewed.`)
+    } catch {
+      toast.error('Failed to renew one or more contracts.')
+    } finally {
+      setRenewing(false)
+    }
+  }
   const [addOpen, setAddOpen] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
@@ -366,8 +385,8 @@ export function Contracts() {
             <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/60 px-3 py-2">
               <span className="text-xs font-medium text-muted-foreground">{selectedCount} selected</span>
               <div className="ml-auto flex items-center gap-2">
-                <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5">
-                  <RefreshCw size={12} /> Renew
+                <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5" disabled={renewing} onClick={handleRenew}>
+                  <RefreshCw size={12} className={renewing ? 'animate-spin' : ''} /> {renewing ? 'Renewing…' : 'Renew'}
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -463,6 +482,49 @@ export function Contracts() {
           />
         </CardContent>
       </Card>
+
+      {/* Renewal Log */}
+      {renewalLogs.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <RefreshCw size={15} className="text-blue-500" />
+              Renewal History
+              <span className="ml-auto text-xs font-normal text-muted-foreground/70">{renewalLogs.length} record{renewalLogs.length !== 1 ? 's' : ''}</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Original Contract</TableHead>
+                  <TableHead>Renewed Contract</TableHead>
+                  <TableHead>New Period</TableHead>
+                  <TableHead>Renewed By</TableHead>
+                  <TableHead>Date Renewed</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {renewalLogs.map(log => (
+                  <TableRow key={log.id} className="h-12 border-b border-border/60 bg-white dark:border-border dark:bg-card">
+                    <TableCell className="align-middle text-sm font-medium">{log.original_contract?.name ?? '—'}</TableCell>
+                    <TableCell className="align-middle text-sm">{log.renewed_contract?.name ?? '—'}</TableCell>
+                    <TableCell className="align-middle text-sm text-muted-foreground">
+                      {log.renewed_contract
+                        ? `${new Date(log.renewed_contract.start_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} – ${new Date(log.renewed_contract.end_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`
+                        : '—'}
+                    </TableCell>
+                    <TableCell className="align-middle text-sm">{log.renewed_by?.name ?? '—'}</TableCell>
+                    <TableCell className="align-middle text-sm text-muted-foreground">
+                      {new Date(log.renewed_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

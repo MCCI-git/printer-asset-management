@@ -188,6 +188,36 @@ export function useDeleteContract() {
   })
 }
 
+export function useRenewContract() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => contractsApi.renew(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contracts'] })
+      qc.invalidateQueries({ queryKey: ['contract-renewals'] })
+    },
+  })
+}
+
+export function useContractRenewals() {
+  return useQuery({
+    queryKey: ['contract-renewals'],
+    queryFn: async () => {
+      const res = await contractsApi.renewals()
+      return res.data as {
+        id: number
+        original_contract_id: number
+        renewed_contract_id: number
+        renewed_at: string
+        original_contract: { id: number; name: string }
+        renewed_contract: { id: number; name: string; start_date: string; end_date: string }
+        renewed_by: { id: number; name: string }
+      }[]
+    },
+    refetchOnWindowFocus: true,
+  })
+}
+
 export function useSupplier(id: number | null) {
   return useQuery({
     queryKey: ['supplier', id],

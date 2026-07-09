@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Contract;
+use App\Models\ContractRenewal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -81,6 +82,43 @@ class ContractController extends Controller
         }
         $contract->delete();
         return response()->json(['message' => 'Contract deleted.']);
+    }
+
+    public function renew(Request $request, Contract $contract): JsonResponse
+    {
+        $shiftYear = fn(string $date) => date('Y-m-d', strtotime($date . ' +1 year'));
+
+        $renewed = Contract::create([
+            'name'               => $contract->name,
+            'vendor'             => $contract->vendor,
+            'type'               => $contract->type,
+            'start_date'         => $shiftYear($contract->start_date),
+            'end_date'           => $shiftYear($contract->end_date),
+            'annual_cost'        => $contract->annual_cost,
+            'covered_printers'   => $contract->covered_printers,
+            'notice_period_days' => $contract->notice_period_days,
+            'contract_manager'   => $contract->contract_manager,
+            'notes'              => $contract->notes,
+            'status'             => 'active',
+        ]);
+
+        ContractRenewal::create([
+            'original_contract_id' => $contract->id,
+            'renewed_contract_id'  => $renewed->id,
+            'renewed_by'           => $request->user()->id,
+            'renewed_at'           => now(),
+        ]);
+
+        return response()->json($renewed, 201);
+    }
+
+    public function renewals(): JsonResponse
+    {
+        $logs = ContractRenewal::with(['originalContract:id,name', 'renewedContract:id,name,start_date,end_date', 'renewedBy:id,name'])
+            ->orderByDesc('renewed_at')
+            ->get();
+
+        return response()->json($logs);
     }
 
     public function uploadPdf(Request $request, Contract $contract): JsonResponse
