@@ -359,6 +359,40 @@ const ContractsTable = memo(function ContractsTable({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
   const [renewing, setRenewing] = useState(false)
+  const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [filterType, setFilterType] = useState<string>('all')
+  const [filterVendor, setFilterVendor] = useState<string>('all')
+  const [filterCostMin, setFilterCostMin] = useState('')
+  const [filterCostMax, setFilterCostMax] = useState('')
+
+  const vendors = useMemo(() => [...new Set(contracts.map(c => c.vendor))].sort(), [contracts])
+
+  const activeFilterCount = [
+    filterStatus !== 'all',
+    filterType !== 'all',
+    filterVendor !== 'all',
+    !!filterCostMin || !!filterCostMax,
+  ].filter(Boolean).length
+
+  const clearFilters = () => {
+    setFilterStatus('all')
+    setFilterType('all')
+    setFilterVendor('all')
+    setFilterCostMin('')
+    setFilterCostMax('')
+  }
+
+  const filteredContracts = useMemo(() => {
+    return contracts.filter(c => {
+      const effectiveStatus = c.end_date && new Date(c.end_date) < new Date(new Date().toDateString()) ? 'expired' : c.status
+      if (filterStatus !== 'all' && effectiveStatus !== filterStatus) return false
+      if (filterType !== 'all' && c.type !== filterType) return false
+      if (filterVendor !== 'all' && c.vendor !== filterVendor) return false
+      if (filterCostMin && c.annual_cost < Number(filterCostMin)) return false
+      if (filterCostMax && c.annual_cost > Number(filterCostMax)) return false
+      return true
+    })
+  }, [contracts, filterStatus, filterType, filterVendor, filterCostMin, filterCostMax])
 
   const columns = useMemo<ColumnDef<Contract>[]>(() => [
     {
@@ -441,7 +475,7 @@ const ContractsTable = memo(function ContractsTable({
   ], [onEdit])
 
   const table = useReactTable({
-    data: contracts,
+    data: filteredContracts,
     columns,
     state: { sorting, globalFilter, rowSelection, pagination },
     onSortingChange: setSorting,
@@ -480,19 +514,72 @@ const ContractsTable = memo(function ContractsTable({
           <span className="ml-auto text-xs font-normal text-muted-foreground/70">
             {table.getFilteredRowModel().rows.length !== contracts.length
               ? `${table.getFilteredRowModel().rows.length} of ${contracts.length} records`
-              : `${contracts.length} records`}
+              : filteredContracts.length !== contracts.length
+                ? `${filteredContracts.length} of ${contracts.length} records`
+                : `${contracts.length} records`}
           </span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="relative max-w-sm">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/70" />
-          <input
-            placeholder="Search contracts..."
-            value={globalFilter}
-            onChange={e => setGlobalFilter(e.target.value)}
-            className="w-full rounded-lg border border-border bg-white py-2 pl-9 pr-3 text-sm text-foreground/80 placeholder:text-muted-foreground/50 focus:border-blue-500 focus:outline-none dark:border-border dark:bg-secondary dark:text-muted-foreground/50"
-          />
+        {/* Search + filters in one row */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[160px] max-w-xs">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/70" />
+            <input
+              placeholder="Search contracts..."
+              value={globalFilter}
+              onChange={e => setGlobalFilter(e.target.value)}
+              className="w-full rounded-lg border border-border bg-white py-2 pl-9 pr-3 text-sm text-foreground/80 placeholder:text-muted-foreground/50 focus:border-blue-500 focus:outline-none dark:border-border dark:bg-secondary dark:text-muted-foreground/50"
+            />
+          </div>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="h-9 w-[120px] text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="h-9 w-[130px] text-xs"><SelectValue placeholder="Type" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All types</SelectItem>
+              <SelectItem value="Service">Service</SelectItem>
+              <SelectItem value="Support">Support</SelectItem>
+              <SelectItem value="Lease">Lease</SelectItem>
+              <SelectItem value="Maintenance">Maintenance</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterVendor} onValueChange={setFilterVendor}>
+            <SelectTrigger className="h-9 w-[130px] text-xs"><SelectValue placeholder="Vendor" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All vendors</SelectItem>
+              {vendors.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <div className="flex items-center gap-1.5">
+            <Input
+              type="number"
+              placeholder="Min cost"
+              value={filterCostMin}
+              onChange={e => setFilterCostMin(e.target.value)}
+              className="h-9 w-[90px] text-xs"
+            />
+            <span className="text-muted-foreground text-xs">–</span>
+            <Input
+              type="number"
+              placeholder="Max cost"
+              value={filterCostMax}
+              onChange={e => setFilterCostMax(e.target.value)}
+              className="h-9 w-[90px] text-xs"
+            />
+          </div>
+          {activeFilterCount > 0 && (
+            <Button variant="ghost" size="sm" className="h-9 px-2 text-muted-foreground gap-1" onClick={clearFilters}>
+              <X size={13} /> Clear
+            </Button>
+          )}
         </div>
 
         {selectedCount > 0 && (
