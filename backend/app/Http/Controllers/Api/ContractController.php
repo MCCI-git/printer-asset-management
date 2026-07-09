@@ -7,6 +7,7 @@ use App\Models\Contract;
 use App\Models\ContractRenewal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class ContractController extends Controller
@@ -88,26 +89,30 @@ class ContractController extends Controller
     {
         $shiftYear = fn(string $date) => date('Y-m-d', strtotime($date . ' +1 year'));
 
-        $renewed = Contract::create([
-            'name'               => $contract->name,
-            'vendor'             => $contract->vendor,
-            'type'               => $contract->type,
-            'start_date'         => $shiftYear($contract->start_date),
-            'end_date'           => $shiftYear($contract->end_date),
-            'annual_cost'        => $contract->annual_cost,
-            'covered_printers'   => $contract->covered_printers,
-            'notice_period_days' => $contract->notice_period_days,
-            'contract_manager'   => $contract->contract_manager,
-            'notes'              => $contract->notes,
-            'status'             => 'active',
-        ]);
+        $renewed = DB::transaction(function () use ($contract, $request, $shiftYear) {
+            $renewed = Contract::create([
+                'name'               => $contract->name,
+                'vendor'             => $contract->vendor,
+                'type'               => $contract->type,
+                'start_date'         => $shiftYear($contract->start_date),
+                'end_date'           => $shiftYear($contract->end_date),
+                'annual_cost'        => $contract->annual_cost,
+                'covered_printers'   => $contract->covered_printers,
+                'notice_period_days' => $contract->notice_period_days,
+                'contract_manager'   => $contract->contract_manager,
+                'notes'              => $contract->notes,
+                'status'             => 'active',
+            ]);
 
-        ContractRenewal::create([
-            'original_contract_id' => $contract->id,
-            'renewed_contract_id'  => $renewed->id,
-            'renewed_by'           => $request->user()->id,
-            'renewed_at'           => now(),
-        ]);
+            ContractRenewal::create([
+                'original_contract_id' => $contract->id,
+                'renewed_contract_id'  => $renewed->id,
+                'renewed_by'           => $request->user()->id,
+                'renewed_at'           => now(),
+            ]);
+
+            return $renewed;
+        });
 
         return response()->json($renewed, 201);
     }
