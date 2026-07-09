@@ -705,18 +705,27 @@ export function Contracts() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {renewalLogs.map(log => (
+                {renewalLogs.map(log => {
+                  const eventStyles: Record<string, string> = {
+                    created:  'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+                    updated:  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+                    renewed:  'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+                    expired:  'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+                    deleted:  'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                  }
+                  const eventLabels: Record<string, string> = {
+                    created: 'Created', updated: 'Updated', renewed: 'Renewed', expired: 'Expired', deleted: 'Deleted',
+                  }
+                  return (
                   <TableRow key={log.id} className="h-12 border-b border-border/60 bg-white dark:border-border dark:bg-card">
                     <TableCell className="align-middle">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                        log.event_type === 'renewed'
-                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                          : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                      }`}>
-                        {log.event_type === 'renewed' ? 'Renewed' : 'Expired'}
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${eventStyles[log.event_type] ?? 'bg-muted text-muted-foreground'}`}>
+                        {eventLabels[log.event_type] ?? log.event_type}
                       </span>
                     </TableCell>
-                    <TableCell className="align-middle text-sm font-medium">{log.original_contract?.name ?? '—'}</TableCell>
+                    <TableCell className="align-middle text-sm font-medium">
+                      {log.original_contract?.name ?? log.contract_name ?? '—'}
+                    </TableCell>
                     <TableCell className="align-middle text-sm">{log.renewed_contract?.name ?? '—'}</TableCell>
                     <TableCell className="align-middle text-sm text-muted-foreground">
                       {log.renewed_contract
@@ -749,7 +758,8 @@ export function Contracts() {
                       </AlertDialog>
                     </TableCell>
                   </TableRow>
-                ))}
+                  )
+                })}
               </TableBody>
             </Table>
           )}
@@ -767,8 +777,11 @@ export function Contracts() {
                 <Select value={logForm.event_type} onValueChange={v => setLogForm(f => ({ ...f, event_type: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="created">Created</SelectItem>
+                    <SelectItem value="updated">Updated</SelectItem>
                     <SelectItem value="renewed">Renewed</SelectItem>
                     <SelectItem value="expired">Expired</SelectItem>
+                    <SelectItem value="deleted">Deleted</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

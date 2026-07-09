@@ -36,11 +36,11 @@ class ContractController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'name'             => 'required|string|max:255',
-            'vendor'           => 'required|string|max:255',
-            'type'             => 'required|in:Service,Support,Lease,Maintenance',
-            'start_date'       => 'required|date',
-            'end_date'         => 'required|date|after:start_date',
+            'name'               => 'required|string|max:255',
+            'vendor'             => 'required|string|max:255',
+            'type'               => 'required|in:Service,Support,Lease,Maintenance',
+            'start_date'         => 'required|date',
+            'end_date'           => 'required|date|after:start_date',
             'annual_cost'        => 'required|numeric|min:0',
             'covered_printers'   => 'nullable|integer|min:0',
             'notice_period_days' => 'nullable|integer|min:0',
@@ -49,7 +49,18 @@ class ContractController extends Controller
             'status'             => 'nullable|in:active,expired,pending',
         ]);
 
-        return response()->json(Contract::create($validated), 201);
+        $contract = Contract::create($validated);
+
+        ContractRenewal::create([
+            'event_type'           => 'created',
+            'contract_name'        => $contract->name,
+            'original_contract_id' => $contract->id,
+            'renewed_contract_id'  => null,
+            'renewed_by'           => $request->user()->id,
+            'renewed_at'           => now(),
+        ]);
+
+        return response()->json($contract, 201);
     }
 
     public function show(Contract $contract): JsonResponse
@@ -75,33 +86,42 @@ class ContractController extends Controller
 
         $wasExpired = $contract->status === 'expired';
 
-        // Determine effective status after update
+        // Auto-force status to expired if end_date is in the past
         $newEndDate = $validated['end_date'] ?? $contract->end_date;
         $newStatus  = $validated['status'] ?? $contract->status;
-        $dateExpired = $newEndDate && now()->startOfDay()->gt(\Carbon\Carbon::parse($newEndDate)->startOfDay());
-        if ($dateExpired) {
+        if ($newEndDate && now()->startOfDay()->gt(Carbon::parse($newEndDate)->startOfDay())) {
             $validated['status'] = 'expired';
             $newStatus = 'expired';
         }
 
         $contract->update($validated);
 
-        // Log when a contract transitions to expired for the first time
-        if (!$wasExpired && $newStatus === 'expired') {
-            ContractRenewal::create([
-                'event_type'           => 'expired',
-                'original_contract_id' => $contract->id,
-                'renewed_contract_id'  => null,
-                'renewed_by'           => null,
-                'renewed_at'           => now(),
-            ]);
-        }
+        // Log expired transition or general update
+        $eventType = (!$wasExpired && $newStatus === 'expired') ? 'expired' : 'updated';
+        ContractRenewal::create([
+            'event_type'           => $eventType,
+            'contract_name'        => $contract->name,
+            'original_contract_id' => $contract->id,
+            'renewed_contract_id'  => null,
+            'renewed_by'           => $request->user()->id,
+            'renewed_at'           => now(),
+        ]);
 
         return response()->json($contract->fresh());
     }
 
     public function destroy(Contract $contract): JsonResponse
     {
+        // Log before deleting so the FK is still valid and name is captured
+        ContractRenewal::create([
+            'event_type'           => 'deleted',
+            'contract_name'        => $contract->name,
+            'original_contract_id' => $contract->id,
+            'renewed_contract_id'  => null,
+            'renewed_by'           => request()->user()->id,
+            'renewed_at'           => now(),
+        ]);
+
         if ($contract->pdf_path) {
             Storage::delete($contract->pdf_path);
         }
@@ -132,6 +152,7 @@ class ContractController extends Controller
 
             ContractRenewal::create([
                 'event_type'           => 'renewed',
+                'contract_name'        => $contract->name,
                 'original_contract_id' => $contract->id,
                 'renewed_contract_id'  => $renewed->id,
                 'renewed_by'           => $request->user()->id,
@@ -156,16 +177,22 @@ class ContractController extends Controller
     public function storeRenewal(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'event_type'           => 'required|in:renewed,expired',
-            'original_contract_id' => 'required|exists:contracts,id',
+            'event_type'           => 'required|in:renewed,expired,created,updated,deleted',
+            'original_contract_id' => 'nullable|exists:contracts,id',
             'renewed_contract_id'  => 'nullable|exists:contracts,id',
             'renewed_at'           => 'required|date',
             'notes'                => 'nullable|string',
         ]);
 
+        $contractName = '';
+        if (!empty($validated['original_contract_id'])) {
+            $contractName = Contract::find($validated['original_contract_id'])?->name ?? '';
+        }
+
         $log = ContractRenewal::create([
             'event_type'           => $validated['event_type'],
-            'original_contract_id' => $validated['original_contract_id'],
+            'contract_name'        => $contractName,
+            'original_contract_id' => $validated['original_contract_id'] ?? null,
             'renewed_contract_id'  => $validated['renewed_contract_id'] ?? null,
             'renewed_by'           => $request->user()->id,
             'renewed_at'           => $validated['renewed_at'],

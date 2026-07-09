@@ -22,6 +22,7 @@ class ExpireContracts extends Command
 
             ContractRenewal::create([
                 'event_type'           => 'expired',
+                'contract_name'        => $contract->name,
                 'original_contract_id' => $contract->id,
                 'renewed_contract_id'  => null,
                 'renewed_by'           => null,
