@@ -76,8 +76,9 @@ export function Contracts() {
       await Promise.all(selected.map(c => renewContract.mutateAsync(c.id)))
       setRowSelection({})
       toast.success(`${selected.length} contract${selected.length > 1 ? 's' : ''} renewed.`)
-    } catch {
-      toast.error('Failed to renew one or more contracts.')
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? err?.message ?? 'Failed to renew one or more contracts.'
+      toast.error(msg)
     } finally {
       setRenewing(false)
     }
