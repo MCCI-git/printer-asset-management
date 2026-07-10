@@ -8,6 +8,7 @@ use App\Services\ActivityLogger;
 use App\Models\Consumable;
 use App\Models\Contract;
 use App\Models\Printer;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -45,17 +46,15 @@ class BudgetController extends Controller
             ->sum('purchase_cost');
 
         $opexActual = (float) Printer::where('cost_type', 'OPEX')
-            ->whereYear('purchase_date', $year)
+            ->where('status', 'active')
+            ->whereYear('purchase_date', '<=', $year)
             ->sum('monthly_fixed_cost') * 12;
 
         $consumableSpend = Consumable::whereYear('purchase_date', $year)
             ->selectRaw('SUM(unit_cost * quantity) as total')
             ->value('total') ?? 0;
 
-        $contractSpend = Contract::where('status', 'active')
-            ->whereYear('start_date', '<=', $year)
-            ->whereYear('end_date', '>=', $year)
-            ->sum('annual_cost');
+        $contractSpend = $this->proratedContractSpend($year);
 
         return response()->json([
             'year'   => $year,
@@ -76,17 +75,15 @@ class BudgetController extends Controller
                 ->sum('purchase_cost');
 
             $opexActual = (float) Printer::where('cost_type', 'OPEX')
-                ->whereYear('purchase_date', $year)
+                ->where('status', 'active')
+                ->whereYear('purchase_date', '<=', $year)
                 ->sum('monthly_fixed_cost') * 12;
 
             $consumableSpend = Consumable::whereYear('purchase_date', $year)
                 ->selectRaw('SUM(unit_cost * quantity) as total')
                 ->value('total') ?? 0;
 
-            $contractSpend = Contract::where('status', 'active')
-                ->whereYear('start_date', '<=', $year)
-                ->whereYear('end_date', '>=', $year)
-                ->sum('annual_cost');
+            $contractSpend = $this->proratedContractSpend($year);
 
             return [
                 'year'       => $year,
@@ -109,24 +106,16 @@ class BudgetController extends Controller
             ->sum('purchase_cost');
 
         $opexActual = (float) Printer::where('cost_type', 'OPEX')
-            ->whereYear('purchase_date', $year)
+            ->where('status', 'active')
+            ->whereYear('purchase_date', '<=', $year)
             ->sum('monthly_fixed_cost') * 12;
 
         $consumablesActual = (float) (Consumable::whereYear('purchase_date', $year)
             ->selectRaw('SUM(unit_cost * quantity) as total')
             ->value('total') ?? 0);
 
-        $maintenanceActual = (float) Contract::where('status', 'active')
-            ->where('type', 'Maintenance')
-            ->whereYear('start_date', '<=', $year)
-            ->whereYear('end_date', '>=', $year)
-            ->sum('annual_cost');
-
-        $supportActual = (float) Contract::where('status', 'active')
-            ->where('type', 'Support')
-            ->whereYear('start_date', '<=', $year)
-            ->whereYear('end_date', '>=', $year)
-            ->sum('annual_cost');
+        $maintenanceActual = $this->proratedContractSpend($year, 'Maintenance');
+        $supportActual     = $this->proratedContractSpend($year, 'Support');
 
         return response()->json([
             'year' => $year,
@@ -138,6 +127,30 @@ class BudgetController extends Controller
                 ['category' => 'Rental Contract',      'short' => 'Rental',  'budgeted' => 0, 'actual' => $supportActual],
             ],
         ]);
+    }
+
+    // Calculates prorated annual contract spend for a given year
+    private function proratedContractSpend(int $year, ?string $type = null): float
+    {
+        $yearStart = Carbon::create($year, 1, 1)->startOfDay();
+        $yearEnd   = Carbon::create($year, 12, 31)->endOfDay();
+
+        $query = Contract::where('status', 'active')
+            ->whereDate('start_date', '<=', $yearEnd)
+            ->whereDate('end_date', '>=', $yearStart);
+
+        if ($type) {
+            $query->where('type', $type);
+        }
+
+        return $query->get()->sum(function (Contract $c) use ($yearStart, $yearEnd) {
+            $start    = Carbon::parse($c->start_date)->max($yearStart);
+            $end      = Carbon::parse($c->end_date)->min($yearEnd);
+            $daysInYear   = $yearStart->isLeapYear() ? 366 : 365;
+            $daysActive   = $start->diffInDays($end) + 1;
+            $dailyRate    = $c->annual_cost / 365;
+            return round($dailyRate * min($daysActive, $daysInYear), 2);
+        });
     }
 
     // PUT /api/budgets  — upsert one type for a given year

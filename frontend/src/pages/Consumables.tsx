@@ -532,9 +532,9 @@ export function Consumables() {
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction variant="destructive" onClick={async () => {
-                        const ids = Object.keys(rowSelection).map(i => consumables[Number(i)]?.id).filter(Boolean) as number[]
+                        const ids = table.getSelectedRowModel().rows.map(r => r.original.id)
                         await Promise.all(ids.map(id => deleteConsumable.mutateAsync(id)))
-                        setRowSelection({})
+                        table.resetRowSelection()
                       }}>Delete</AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>

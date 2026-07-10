@@ -288,9 +288,9 @@ export function Dashboard() {
 
       {/* Quick stats footer */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard title="Contracts Tracked" value="12" subtitle={`${stats.contracts.expiring_30_days} expiring soon`} accentColor="bg-blue-500" icon={<FileText size={18} />} />
+        <StatCard title="Contracts Tracked" value={stats.contracts.total} subtitle={`${stats.contracts.expiring_30_days} expiring soon`} accentColor="bg-blue-500" icon={<FileText size={18} />} />
         <StatCard title="Suppliers" value={stats.suppliers.total} subtitle={`YTD: ${formatCurrency(stats.suppliers.ytd_spend)}`} accentColor="bg-purple-500" icon={<Users size={18} />} />
-        <StatCard title="Consumables" value="8 SKUs" subtitle={`${stats.consumables.out_of_stock} out of stock`} accentColor="bg-amber-500" icon={<Package size={18} />} />
+        <StatCard title="Consumables" value={`${stats.consumables.total} SKUs`} subtitle={`${stats.consumables.out_of_stock} out of stock`} accentColor="bg-amber-500" icon={<Package size={18} />} />
         <StatCard title="Maintenance" value={stats.printers.maintenance} subtitle="units under service" accentColor="bg-red-500" icon={<Activity size={18} />} />
       </div>
 

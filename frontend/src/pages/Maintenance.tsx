@@ -100,7 +100,7 @@ export function Maintenance() {
     setFilterCompletedTo('')
   }
 
-  const today = new Date()
+  const today = new Date(new Date().toDateString())
   today.setHours(0, 0, 0, 0)
 
   const filtered = useMemo(() => {
@@ -137,8 +137,8 @@ export function Maintenance() {
       priority: wo.priority,
       status: wo.status,
       assignee: wo.assignee ?? '',
-      scheduled_date: wo.scheduled_date ?? '',
-      completed_date: wo.completed_date ?? '',
+      scheduled_date: wo.scheduled_date ? wo.scheduled_date.slice(0, 10) : '',
+      completed_date: wo.completed_date ? wo.completed_date.slice(0, 10) : '',
       notes: wo.notes ?? '',
     })
     setDialogOpen(true)
@@ -209,7 +209,7 @@ export function Maintenance() {
 
   const isOverdue = (wo: WorkOrder) => {
     if (!wo.scheduled_date || wo.status === 'completed' || wo.status === 'cancelled') return false
-    return new Date(wo.scheduled_date) < today
+    return new Date(wo.scheduled_date.slice(0, 10)) < today
   }
 
   if (isLoading) return (

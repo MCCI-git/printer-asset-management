@@ -106,7 +106,7 @@
 
 /* ── Dark theme — warm zinc/charcoal ────────────────────────────────────── */
 .dark {
-  /* zinc-950  #09090b */  --background:              oklch(0.145 0.004 286);
+  /* custom    #1a1a1a */  --background:              oklch(0.17 0 0);
   /* zinc-100  #f4f4f5 */  --foreground:              oklch(0.961 0.001 286);
 
   /* zinc-900  #18181b */  --card:                    oklch(0.21  0.006 286);

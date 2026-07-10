@@ -27,9 +27,11 @@ class DashboardController extends Controller
             $totalOpexMonthly = Printer::where('cost_type', 'OPEX')->sum('monthly_fixed_cost');
             $totalAnnualCost = $totalCapexCost * 0.2 + ($totalOpexMonthly * 12);
 
+            $consumablesTotal = Consumable::count();
             $consumablesLowStock = Consumable::whereRaw('quantity <= low_stock_threshold')->count();
             $consumablesOutOfStock = Consumable::where('quantity', 0)->count();
 
+            $contractsTotal = Contract::count();
             $contractsExpiringSoon = Contract::where('end_date', '<=', now()->addDays(90))
                 ->where('end_date', '>=', now())
                 ->count();
@@ -99,10 +101,12 @@ class DashboardController extends Controller
                     'ytd_spend' => $totalYtdSpend,
                 ],
                 'consumables' => [
+                    'total' => $consumablesTotal,
                     'low_stock' => $consumablesLowStock,
                     'out_of_stock' => $consumablesOutOfStock,
                 ],
                 'contracts' => [
+                    'total' => $contractsTotal,
                     'expiring_90_days' => $contractsExpiringSoon,
                     'expiring_30_days' => $contractsExpiring30,
                 ],

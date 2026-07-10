@@ -59,15 +59,20 @@ class ConsumableController extends Controller
             'printer_id'          => 'nullable|exists:printers,id',
         ]);
 
-        if (!empty($validated['printer_id'])) {
-            $conflict = Consumable::where('name', $validated['name'])
-                ->where('type', $validated['type'])
-                ->whereNotNull('printer_id')
-                ->where('printer_id', '!=', $validated['printer_id'])
-                ->exists();
-            if ($conflict) {
-                return response()->json(['message' => 'This consumable is already assigned to a different printer.'], 422);
-            }
+        $conflict = Consumable::where('name', $validated['name'])
+            ->where('type', $validated['type'])
+            ->where(function ($q) use ($validated) {
+                if (!empty($validated['printer_id'])) {
+                    // Trying to add printer-specific — block if another printer already has it
+                    $q->whereNotNull('printer_id')->where('printer_id', '!=', $validated['printer_id']);
+                } else {
+                    // Trying to add general stock — block if already exists as printer-specific
+                    $q->whereNotNull('printer_id');
+                }
+            })
+            ->exists();
+        if ($conflict) {
+            return response()->json(['message' => 'A consumable with this name and type already exists as a printer-specific item. Manage it from that printer instead.'], 422);
         }
 
         $validated['quantity'] = $validated['quantity'] ?? 1;

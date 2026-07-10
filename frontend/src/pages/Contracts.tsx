@@ -57,6 +57,7 @@ type FormShape = typeof EMPTY_FORM
 type FieldErrors = Partial<Record<keyof FormShape, string>>
 
 function contractToForm(c: Contract): FormShape {
+  const effectiveStatus = c.end_date && new Date(c.end_date.slice(0, 10)) < new Date(new Date().toDateString()) ? 'expired' : c.status
   return {
     name: c.name,
     vendor: c.vendor,
@@ -68,7 +69,7 @@ function contractToForm(c: Contract): FormShape {
     notice_period_days: c.notice_period_days ? String(c.notice_period_days) : '',
     contract_manager: c.contract_manager ?? '',
     notes: c.notes ?? '',
-    status: c.status,
+    status: effectiveStatus,
   }
 }
 
@@ -494,6 +495,15 @@ const ContractsTable = memo(function ContractsTable({
 
   const handleRenew = async () => {
     if (!selectedIds.length) return
+    const selectedRows = table.getSelectedRowModel().rows.map(r => r.original)
+    const nonActive = selectedRows.filter(c => {
+      const effectiveStatus = c.end_date && new Date(c.end_date.slice(0, 10)) < new Date(new Date().toDateString()) ? 'expired' : c.status
+      return effectiveStatus !== 'active'
+    })
+    if (nonActive.length > 0) {
+      toast.error(`Only active contracts can be renewed. Deselect: ${nonActive.map(c => c.name).join(', ')}`)
+      return
+    }
     setRenewing(true)
     try {
       await Promise.all(selectedIds.map(id => renewContract.mutateAsync(id)))

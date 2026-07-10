@@ -272,9 +272,9 @@ export function Suppliers() {
                 <TableRow>
                   <TableHead>
                     <Checkbox
-                      checked={visibleSuppliers.length > 0 && selectedCount === visibleSuppliers.length}
+                      checked={pagedSuppliers.length > 0 && pagedSuppliers.every((_: any, i: number) => !!rowSelection[i])}
                       onCheckedChange={v => {
-                        if (v) setRowSelection(Object.fromEntries(visibleSuppliers.map((_: any, i: number) => [i, true])))
+                        if (v) setRowSelection(Object.fromEntries(pagedSuppliers.map((_: any, i: number) => [i, true])))
                         else setRowSelection({})
                       }}
                       aria-label="Select all"
@@ -492,11 +492,11 @@ export function Suppliers() {
 
             {/* MIDDLE — consumables list */}
             {viewSupplier && (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 min-h-0">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                   <Package size={12} /> Items
                 </p>
-                <div className="flex-1 overflow-y-auto max-h-[500px] rounded-lg border border-border divide-y divide-border">
+                <div className="flex-1 overflow-y-auto max-h-[420px] rounded-lg border border-border divide-y divide-border">
                   {(fullSupplier?.consumables ?? []).length === 0 ? (
                     <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">No purchases recorded yet.</div>
                   ) : (fullSupplier?.consumables ?? []).map((c: any) => (

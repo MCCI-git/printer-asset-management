@@ -112,10 +112,10 @@ export function Budget() {
           value={formatCurrency(totalActual)}
           accentColor="bg-purple-500"
           icon={<TrendingUp size={18} />}
-          subtitle={`${((totalActual / totalBudgeted) * 100).toFixed(1)}% of budget used`}
+          subtitle={totalBudgeted > 0 ? `${((totalActual / totalBudgeted) * 100).toFixed(1)}% of budget used` : 'No budget set'}
         >
           {(() => {
-            const pct = Math.min(100, (totalActual / totalBudgeted) * 100)
+            const pct = totalBudgeted > 0 ? Math.min(100, (totalActual / totalBudgeted) * 100) : 0
             const indicatorClassName = pct >= 90 ? 'bg-red-500' : pct >= 75 ? 'bg-amber-500' : 'bg-emerald-500'
             return <Progress value={pct} className="h-1.5" indicatorClassName={indicatorClassName} />
           })()}
@@ -125,7 +125,7 @@ export function Budget() {
           value={formatCurrency(totalBudgeted - totalActual)}
           accentColor="bg-emerald-500"
           icon={<PiggyBank size={18} />}
-          subtitle={`${(((totalBudgeted - totalActual) / totalBudgeted) * 100).toFixed(1)}% of budget available`}
+          subtitle={totalBudgeted > 0 ? `${(((totalBudgeted - totalActual) / totalBudgeted) * 100).toFixed(1)}% of budget available` : 'No budget set'}
         />
       </div>
 
