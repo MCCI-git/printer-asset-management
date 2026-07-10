@@ -210,7 +210,7 @@ export function Budget() {
             ) : (
               <div className="space-y-4">
                 {(['CAPEX', 'OPEX'] as const).map(group => {
-                  const rows = categoryData.filter((r: any) => r.group === group && r.actual > 0)
+                  const rows = categoryData.filter((r: any) => r.group === group)
                   if (!rows.length) return null
                   return (
                     <div key={group}>
