@@ -47,6 +47,8 @@ export function Budget() {
 
   const totalBudgeted = dbBudget?.total ?? 0
   const totalActual = actualData?.actual ?? 0
+  const capexActual = actualData?.capex ?? 0
+  const opexActual  = actualData?.opex ?? 0
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [budgetInput, setBudgetInput] = useState('')
@@ -101,7 +103,7 @@ export function Budget() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
         <StatCard title="Total Budget" value={formatCurrency(totalBudgeted)} accentColor="bg-blue-500" icon={<DollarSign size={18} />}>
           <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={openDialog}>
             <Plus size={11} /> Set Budget
@@ -121,11 +123,18 @@ export function Budget() {
           })()}
         </StatCard>
         <StatCard
-          title="Remaining"
-          value={formatCurrency(totalBudgeted - totalActual)}
-          accentColor="bg-emerald-500"
-          icon={<PiggyBank size={18} />}
-          subtitle={totalBudgeted > 0 ? `${(((totalBudgeted - totalActual) / totalBudgeted) * 100).toFixed(1)}% of budget available` : 'No budget set'}
+          title="CAPEX Spend"
+          value={formatCurrency(capexActual)}
+          accentColor="bg-blue-400"
+          icon={<DollarSign size={18} />}
+          subtitle="Printer purchases"
+        />
+        <StatCard
+          title="OPEX Spend"
+          value={formatCurrency(opexActual)}
+          accentColor="bg-amber-500"
+          icon={<TrendingUp size={18} />}
+          subtitle="Leases, consumables & contracts"
         />
       </div>
 
@@ -199,28 +208,35 @@ export function Budget() {
                 No spend data yet.
               </div>
             ) : (
-              <div className="divide-y divide-border">
-                {categoryData.map(row => {
-                  const hasBudget = row.budgeted > 0
-                  const pct       = hasBudget ? (row.actual / row.budgeted) * 100 : 0
-                  const remaining = row.budgeted - row.actual
+              <div className="space-y-4">
+                {(['CAPEX', 'OPEX'] as const).map(group => {
+                  const rows = categoryData.filter((r: any) => r.group === group && r.actual > 0)
+                  if (!rows.length) return null
                   return (
-                    <div key={row.category} className="py-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-foreground dark:text-secondary-foreground">{row.category}</p>
-                        </div>
-                        {hasBudget ? (
-                          <div className="text-right">
-                            <p className={`text-sm font-semibold ${remaining < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                              {remaining < 0 ? '-' : '+'}{formatCurrency(Math.abs(remaining))}
-                            </p>
-                          </div>
-                        ) : (
-                          <p className="text-sm font-semibold text-muted-foreground">{formatCurrency(row.actual)}</p>
-                        )}
+                    <div key={group}>
+                      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{group}</p>
+                      <div className="divide-y divide-border">
+                        {rows.map((row: any) => {
+                          const hasBudget = row.budgeted > 0
+                          const pct       = hasBudget ? (row.actual / row.budgeted) * 100 : 0
+                          const remaining = row.budgeted - row.actual
+                          return (
+                            <div key={row.category} className="py-2.5">
+                              <div className="flex items-center justify-between">
+                                <p className="text-sm font-medium text-foreground dark:text-secondary-foreground">{row.category}</p>
+                                {hasBudget ? (
+                                  <p className={`text-sm font-semibold ${remaining < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                                    {remaining < 0 ? '-' : '+'}{formatCurrency(Math.abs(remaining))}
+                                  </p>
+                                ) : (
+                                  <p className="text-sm font-semibold text-muted-foreground">{formatCurrency(row.actual)}</p>
+                                )}
+                              </div>
+                              {hasBudget && <Progress value={pct} className="mt-1.5 h-1.5" />}
+                            </div>
+                          )
+                        })}
                       </div>
-                      {hasBudget && <Progress value={pct} className="mt-1.5 h-1.5" />}
                     </div>
                   )
                 })}

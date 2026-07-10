@@ -41,24 +41,30 @@ class BudgetController extends Controller
     {
         $year = (int) $request->get('year', now()->year);
 
+        // CAPEX: one-time printer purchase costs in this year
         $capexActual = (float) Printer::where('cost_type', 'CAPEX')
             ->whereYear('purchase_date', $year)
             ->sum('purchase_cost');
 
-        $opexActual = (float) Printer::where('cost_type', 'OPEX')
+        // OPEX: lease fees + consumables + all contracts
+        $leaseActual = (float) Printer::where('cost_type', 'OPEX')
             ->where('status', 'active')
             ->whereYear('purchase_date', '<=', $year)
             ->sum('monthly_fixed_cost') * 12;
 
-        $consumableSpend = Consumable::whereYear('purchase_date', $year)
+        $consumableSpend = (float) (Consumable::whereYear('purchase_date', $year)
             ->selectRaw('SUM(unit_cost * quantity) as total')
-            ->value('total') ?? 0;
+            ->value('total') ?? 0);
 
         $contractSpend = $this->proratedContractSpend($year);
 
+        $opexActual = $leaseActual + $consumableSpend + $contractSpend;
+
         return response()->json([
             'year'   => $year,
-            'actual' => round((float) $capexActual + (float) $opexActual + (float) $consumableSpend + (float) $contractSpend, 2),
+            'capex'  => round($capexActual, 2),
+            'opex'   => round($opexActual, 2),
+            'actual' => round($capexActual + $opexActual, 2),
         ]);
     }
 
@@ -74,21 +80,23 @@ class BudgetController extends Controller
                 ->whereYear('purchase_date', $year)
                 ->sum('purchase_cost');
 
-            $opexActual = (float) Printer::where('cost_type', 'OPEX')
+            $leaseActual = (float) Printer::where('cost_type', 'OPEX')
                 ->where('status', 'active')
                 ->whereYear('purchase_date', '<=', $year)
                 ->sum('monthly_fixed_cost') * 12;
 
-            $consumableSpend = Consumable::whereYear('purchase_date', $year)
+            $consumableSpend = (float) (Consumable::whereYear('purchase_date', $year)
                 ->selectRaw('SUM(unit_cost * quantity) as total')
-                ->value('total') ?? 0;
+                ->value('total') ?? 0);
 
             $contractSpend = $this->proratedContractSpend($year);
+
+            $opexActual = $leaseActual + $consumableSpend + $contractSpend;
 
             return [
                 'year'       => $year,
                 'budget'     => (float) ($rows['total']->amount ?? 0),
-                'actual'     => round((float) $capexActual + (float) $opexActual + (float) $consumableSpend + (float) $contractSpend, 2),
+                'actual'     => round($capexActual + $opexActual, 2),
                 'start_date' => $rows['total']->start_date?->toDateString(),
                 'end_date'   => $rows['total']->end_date?->toDateString(),
             ];
@@ -101,11 +109,13 @@ class BudgetController extends Controller
         $year = (int) $request->get('year', now()->year);
         $rows = Budget::where('year', $year)->get()->keyBy('type');
 
+        // CAPEX — printer purchases
         $capexActual = (float) Printer::where('cost_type', 'CAPEX')
             ->whereYear('purchase_date', $year)
             ->sum('purchase_cost');
 
-        $opexActual = (float) Printer::where('cost_type', 'OPEX')
+        // OPEX line items
+        $leaseActual = (float) Printer::where('cost_type', 'OPEX')
             ->where('status', 'active')
             ->whereYear('purchase_date', '<=', $year)
             ->sum('monthly_fixed_cost') * 12;
@@ -116,15 +126,26 @@ class BudgetController extends Controller
 
         $maintenanceActual = $this->proratedContractSpend($year, 'Maintenance');
         $supportActual     = $this->proratedContractSpend($year, 'Support');
+        $serviceActual     = $this->proratedContractSpend($year, 'Service');
+        $leaseContractActual = $this->proratedContractSpend($year, 'Lease');
+
+        $capexBudgeted = (float) ($rows['capex']->amount ?? 0);
+        $opexBudgeted  = (float) ($rows['opex']->amount ?? 0);
 
         return response()->json([
             'year' => $year,
+            'capex_actual' => round($capexActual, 2),
+            'opex_actual'  => round($leaseActual + $consumablesActual + $maintenanceActual + $supportActual + $serviceActual + $leaseContractActual, 2),
             'categories' => [
-                ['category' => 'CAPEX Printers',     'short' => 'CAPEX',   'budgeted' => (float) ($rows['capex']->amount ?? 0), 'actual' => $capexActual],
-                ['category' => 'OPEX Managed Print',  'short' => 'OPEX',    'budgeted' => (float) ($rows['opex']->amount ?? 0),  'actual' => $opexActual],
-                ['category' => 'Consumables',         'short' => 'Consum.', 'budgeted' => 0, 'actual' => $consumablesActual],
-                ['category' => 'Maint. Contracts',    'short' => 'Maint.',  'budgeted' => 0, 'actual' => $maintenanceActual],
-                ['category' => 'Rental Contract',      'short' => 'Rental',  'budgeted' => 0, 'actual' => $supportActual],
+                // CAPEX
+                ['category' => 'Printer Purchases', 'group' => 'CAPEX', 'short' => 'Purchases', 'budgeted' => $capexBudgeted, 'actual' => $capexActual],
+                // OPEX
+                ['category' => 'Lease Fees',        'group' => 'OPEX',  'short' => 'Leases',    'budgeted' => 0, 'actual' => $leaseActual],
+                ['category' => 'Consumables',        'group' => 'OPEX',  'short' => 'Consum.',   'budgeted' => 0, 'actual' => $consumablesActual],
+                ['category' => 'Maintenance Contracts', 'group' => 'OPEX', 'short' => 'Maint.', 'budgeted' => 0, 'actual' => $maintenanceActual],
+                ['category' => 'Support Contracts',  'group' => 'OPEX',  'short' => 'Support',   'budgeted' => 0, 'actual' => $supportActual],
+                ['category' => 'Service Contracts',  'group' => 'OPEX',  'short' => 'Service',   'budgeted' => 0, 'actual' => $serviceActual],
+                ['category' => 'Lease Contracts',    'group' => 'OPEX',  'short' => 'Lease',     'budgeted' => $opexBudgeted, 'actual' => $leaseContractActual],
             ],
         ]);
     }

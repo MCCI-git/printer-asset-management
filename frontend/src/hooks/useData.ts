@@ -362,7 +362,7 @@ export function useActualSpend(year: number) {
     queryKey: ['budgets-actual', year],
     queryFn: async () => {
       const res = await budgetsApi.actual(year)
-      return res.data as { year: number; actual: number }
+      return res.data as { year: number; capex: number; opex: number; actual: number }
     },
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,

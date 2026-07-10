@@ -227,6 +227,7 @@ export function Printers() {
     department: '', cost_type: 'CAPEX' as 'CAPEX' | 'OPEX',
     status: 'active' as string, assigned_to: '',
     last_service_date: '', next_service_date: '',
+    purchase_cost: '', purchase_date: '', monthly_fixed_cost: '', per_page_cost: '',
   })
 
   const openEdit = useCallback((printer: PrinterType) => {
@@ -244,6 +245,10 @@ export function Printers() {
       assigned_to:      printer.assigned_to      ?? '',
       last_service_date: printer.last_service_date ?? '',
       next_service_date: printer.next_service_date ?? '',
+      purchase_cost:      printer.purchase_cost      ? String(printer.purchase_cost)      : '',
+      purchase_date:      printer.purchase_date      ? printer.purchase_date.slice(0, 10) : '',
+      monthly_fixed_cost: printer.monthly_fixed_cost ? String(printer.monthly_fixed_cost) : '',
+      per_page_cost:      printer.per_page_cost      ? String(printer.per_page_cost)      : '',
     })
     setEditError('')
     setEditOpen(true)
@@ -269,11 +274,15 @@ export function Printers() {
           color_capability:  editForm.color_capability || undefined,
           ip_address:        sanitize(editForm.ip_address) || undefined,
           department:        sanitize(editForm.department),
-          cost_type:         editForm.cost_type,
-          status:            editForm.status,
-          assigned_to:       sanitize(editForm.assigned_to),
-          last_service_date: editForm.last_service_date || null,
-          next_service_date: editForm.next_service_date || null,
+          cost_type:          editForm.cost_type,
+          status:             editForm.status,
+          assigned_to:        sanitize(editForm.assigned_to),
+          last_service_date:  editForm.last_service_date || null,
+          next_service_date:  editForm.next_service_date || null,
+          purchase_cost:      editForm.cost_type === 'CAPEX' && editForm.purchase_cost ? Number(editForm.purchase_cost) : null,
+          purchase_date:      editForm.cost_type === 'CAPEX' && editForm.purchase_date ? editForm.purchase_date : null,
+          monthly_fixed_cost: editForm.cost_type === 'OPEX' && editForm.monthly_fixed_cost ? Number(editForm.monthly_fixed_cost) : null,
+          per_page_cost:      editForm.cost_type === 'OPEX' && editForm.per_page_cost ? Number(editForm.per_page_cost) : null,
         },
       })
       setEditOpen(false)
@@ -324,18 +333,22 @@ export function Printers() {
   const [addSaving, setAddSaving]       = useState(false)
   const [addError, setAddError]         = useState('')
   const [form, setForm] = useState({
-    name:              '',
-    model:             '',
-    manufacturer:      '',
-    model_number:      '',
-    color_capability:  '' as '' | 'mono' | 'colour',
-    ip_address:        '',
-    department:        '',
-    cost_type:         'CAPEX' as 'CAPEX' | 'OPEX',
-    status:            'active' as string,
-    assigned_to:       '',
-    last_service_date: '',
-    next_service_date: '',
+    name:               '',
+    model:              '',
+    manufacturer:       '',
+    model_number:       '',
+    color_capability:   '' as '' | 'mono' | 'colour',
+    ip_address:         '',
+    department:         '',
+    cost_type:          'CAPEX' as 'CAPEX' | 'OPEX',
+    status:             'active' as string,
+    assigned_to:        '',
+    last_service_date:  '',
+    next_service_date:  '',
+    purchase_cost:      '',
+    purchase_date:      '',
+    monthly_fixed_cost: '',
+    per_page_cost:      '',
   })
 
   const setField = (k: keyof typeof form, v: string) => setForm(f => ({ ...f, [k]: v }))
@@ -378,23 +391,27 @@ export function Printers() {
     setAddError('')
     try {
       await printersApi.create({
-        name:              sanitize(form.name),
-        model:             sanitize(form.model),
-        manufacturer:      sanitize(form.manufacturer),
-        model_number:      sanitize(form.model_number),
-        color_capability:  form.color_capability || undefined,
-        ip_address:        sanitize(form.ip_address) || undefined,
-        department:        sanitize(form.department),
-        cost_type:         form.cost_type,
-        status:            form.status,
-        assigned_to:       sanitize(form.assigned_to),
-        last_service_date: form.last_service_date || null,
-        next_service_date: form.next_service_date || null,
+        name:               sanitize(form.name),
+        model:              sanitize(form.model),
+        manufacturer:       sanitize(form.manufacturer),
+        model_number:       sanitize(form.model_number),
+        color_capability:   form.color_capability || undefined,
+        ip_address:         sanitize(form.ip_address) || undefined,
+        department:         sanitize(form.department),
+        cost_type:          form.cost_type,
+        status:             form.status,
+        assigned_to:        sanitize(form.assigned_to),
+        last_service_date:  form.last_service_date || null,
+        next_service_date:  form.next_service_date || null,
+        purchase_cost:      form.cost_type === 'CAPEX' && form.purchase_cost ? Number(form.purchase_cost) : null,
+        purchase_date:      form.cost_type === 'CAPEX' && form.purchase_date ? form.purchase_date : null,
+        monthly_fixed_cost: form.cost_type === 'OPEX' && form.monthly_fixed_cost ? Number(form.monthly_fixed_cost) : null,
+        per_page_cost:      form.cost_type === 'OPEX' && form.per_page_cost ? Number(form.per_page_cost) : null,
       })
       queryClient.invalidateQueries({ queryKey: ['printers'], exact: false })
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
       setAddOpen(false)
-      setForm({ name: '', model: '', manufacturer: '', model_number: '', color_capability: '', ip_address: '', department: '', cost_type: 'CAPEX', status: 'active', assigned_to: '', last_service_date: '', next_service_date: '' })
+      setForm({ name: '', model: '', manufacturer: '', model_number: '', color_capability: '', ip_address: '', department: '', cost_type: 'CAPEX', status: 'active', assigned_to: '', last_service_date: '', next_service_date: '', purchase_cost: '', purchase_date: '', monthly_fixed_cost: '', per_page_cost: '' })
     } catch (err: any) {
       const errors = err?.response?.data?.errors
       if (errors) {
@@ -621,7 +638,7 @@ export function Printers() {
 
       {/* Add Printer Dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Plus size={15} /> Add Printer
@@ -649,28 +666,18 @@ export function Printers() {
               <Input
                 placeholder="e.g. HP LaserJet M428fdw"
                 value={form.model}
-                onChange={e => { setField('model', e.target.value); setFieldErrors(fe => ({ ...fe, model: '' })) }}
-                className={fieldErrors.model ? 'border-destructive focus-visible:ring-destructive' : ''}
+                onChange={e => setField('model', e.target.value)}
               />
-              {fieldErrors.model && <p className="text-xs text-destructive">{fieldErrors.model}</p>}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Manufacturer</Label>
-                <Input
-                  placeholder="e.g. HP, Canon, Ricoh"
-                  value={form.manufacturer}
-                  onChange={e => setField('manufacturer', e.target.value)}
-                />
+                <Input placeholder="e.g. HP, Canon, Ricoh" value={form.manufacturer} onChange={e => setField('manufacturer', e.target.value)} />
               </div>
               <div className="space-y-1.5">
                 <Label>Serial Number</Label>
-                <Input
-                  placeholder="e.g. VNB3K12345"
-                  value={form.model_number}
-                  onChange={e => setField('model_number', e.target.value)}
-                />
+                <Input placeholder="e.g. VNB3K12345" value={form.model_number} onChange={e => setField('model_number', e.target.value)} />
               </div>
             </div>
 
@@ -687,11 +694,7 @@ export function Printers() {
               </div>
               <div className="space-y-1.5">
                 <Label>IP Address</Label>
-                <Input
-                  placeholder="e.g. 192.168.1.50"
-                  value={form.ip_address}
-                  onChange={e => setField('ip_address', e.target.value)}
-                />
+                <Input placeholder="e.g. 192.168.1.50" value={form.ip_address} onChange={e => setField('ip_address', e.target.value)} />
               </div>
             </div>
 
@@ -709,31 +712,41 @@ export function Printers() {
             <div className="space-y-1.5">
               <Label>Cost Type</Label>
               <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setForm(f => ({ ...f, cost_type: 'CAPEX' }))}
-                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                    form.cost_type === 'CAPEX'
-                      ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                      : 'border-border text-muted-foreground hover:bg-muted/50'
-                  }`}
-                >
+                <button type="button" onClick={() => setForm(f => ({ ...f, cost_type: 'CAPEX' }))}
+                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${form.cost_type === 'CAPEX' ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'border-border text-muted-foreground hover:bg-muted/50'}`}>
                   CAPEX
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setForm(f => ({ ...f, cost_type: 'OPEX' }))}
-                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                    form.cost_type === 'OPEX'
-                      ? 'border-orange-400 bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                      : 'border-border text-muted-foreground hover:bg-muted/50'
-                  }`}
-                >
+                <button type="button" onClick={() => setForm(f => ({ ...f, cost_type: 'OPEX' }))}
+                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${form.cost_type === 'OPEX' ? 'border-orange-400 bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' : 'border-border text-muted-foreground hover:bg-muted/50'}`}>
                   OPEX
                 </button>
               </div>
               <p className="text-xs text-muted-foreground">Asset Tag is auto-generated.</p>
             </div>
+
+            {form.cost_type === 'CAPEX' ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Purchase Cost (Rs)</Label>
+                  <Input type="number" min="0" placeholder="e.g. 85000" value={form.purchase_cost} onChange={e => setField('purchase_cost', e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Purchase Date</Label>
+                  <Input type="date" value={form.purchase_date} onChange={e => setField('purchase_date', e.target.value)} />
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Monthly Fixed Cost (Rs)</Label>
+                  <Input type="number" min="0" placeholder="e.g. 3500" value={form.monthly_fixed_cost} onChange={e => setField('monthly_fixed_cost', e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Per Page Cost (Rs)</Label>
+                  <Input type="number" min="0" step="0.001" placeholder="e.g. 0.018" value={form.per_page_cost} onChange={e => setField('per_page_cost', e.target.value)} />
+                </div>
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <Label>Status</Label>
@@ -762,19 +775,11 @@ export function Printers() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>Last Service Date</Label>
-                <Input
-                  type="date"
-                  value={form.last_service_date}
-                  onChange={e => setField('last_service_date', e.target.value)}
-                />
+                <Input type="date" value={form.last_service_date} onChange={e => setField('last_service_date', e.target.value)} />
               </div>
               <div className="space-y-1.5">
                 <Label>Next Service Date</Label>
-                <Input
-                  type="date"
-                  value={form.next_service_date}
-                  onChange={e => setField('next_service_date', e.target.value)}
-                />
+                <Input type="date" value={form.next_service_date} onChange={e => setField('next_service_date', e.target.value)} />
               </div>
             </div>
           </div>
@@ -1102,6 +1107,30 @@ export function Printers() {
                 ))}
               </div>
             </div>
+
+            {editForm.cost_type === 'CAPEX' ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Purchase Cost (Rs)</Label>
+                  <Input type="number" min="0" placeholder="e.g. 85000" value={editForm.purchase_cost} onChange={e => setEditForm(f => ({ ...f, purchase_cost: e.target.value }))} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Purchase Date</Label>
+                  <Input type="date" value={editForm.purchase_date} onChange={e => setEditForm(f => ({ ...f, purchase_date: e.target.value }))} />
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Monthly Fixed Cost (Rs)</Label>
+                  <Input type="number" min="0" placeholder="e.g. 3500" value={editForm.monthly_fixed_cost} onChange={e => setEditForm(f => ({ ...f, monthly_fixed_cost: e.target.value }))} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Per Page Cost (Rs)</Label>
+                  <Input type="number" min="0" step="0.001" placeholder="e.g. 0.018" value={editForm.per_page_cost} onChange={e => setEditForm(f => ({ ...f, per_page_cost: e.target.value }))} />
+                </div>
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <Label>Status</Label>
