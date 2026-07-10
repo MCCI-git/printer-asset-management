@@ -32,6 +32,7 @@ import {
 import {
   useContracts, useCreateContract, useDeleteContract, useUpdateContract,
   useRenewContract, useContractRenewals, useCreateRenewalLog, useDeleteRenewalLog,
+  useSuppliers,
 } from '@/hooks/useData'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { DatePicker } from '@/components/ui/date-picker'
@@ -43,6 +44,7 @@ const EMPTY_CONTRACTS: Contract[] = []
 const EMPTY_FORM = {
   name: '',
   vendor: '',
+  supplier_id: '' as string,
   type: 'Service' as string,
   start_date: '',
   end_date: '',
@@ -61,6 +63,7 @@ function contractToForm(c: Contract): FormShape {
   return {
     name: c.name,
     vendor: c.vendor,
+    supplier_id: c.supplier_id ? String(c.supplier_id) : '',
     type: c.type,
     start_date: c.start_date,
     end_date: c.end_date,
@@ -77,6 +80,7 @@ function formToPayload(f: FormShape) {
   return {
     name: f.name.trim(),
     vendor: f.vendor.trim(),
+    supplier_id: f.supplier_id ? Number(f.supplier_id) : null,
     type: f.type,
     start_date: f.start_date,
     end_date: f.end_date,
@@ -92,6 +96,8 @@ function formToPayload(f: FormShape) {
 // ── Edit dialog ────────────────────────────────────────────────────────────────
 function EditContractDialog({ contract, onClose }: { contract: Contract; onClose: () => void }) {
   const updateContract = useUpdateContract()
+  const { data: suppliersData } = useSuppliers({ per_page: 200 })
+  const suppliers: { id: number; name: string }[] = suppliersData?.data ?? []
   const [form, setForm] = useState<FormShape>(() => contractToForm(contract))
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -148,6 +154,16 @@ function EditContractDialog({ contract, onClose }: { contract: Contract; onClose
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Supplier</Label>
+            <Select value={form.supplier_id || 'none'} onValueChange={v => set('supplier_id', v === 'none' ? '' : v)}>
+              <SelectTrigger><SelectValue placeholder="No supplier linked" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No supplier linked</SelectItem>
+                {suppliers.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
@@ -213,6 +229,8 @@ function EditContractDialog({ contract, onClose }: { contract: Contract; onClose
 // ── Add dialog (isolated so form state changes don't re-render the table) ──────
 function AddContractDialog({ onClose }: { onClose: () => void }) {
   const createContract = useCreateContract()
+  const { data: suppliersData } = useSuppliers({ per_page: 200 })
+  const suppliers: { id: number; name: string }[] = suppliersData?.data ?? []
   const [form, setForm] = useState<FormShape>(EMPTY_FORM)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [submitError, setSubmitError] = useState('')
@@ -277,6 +295,16 @@ function AddContractDialog({ onClose }: { onClose: () => void }) {
                 <SelectItem value="Support">Support</SelectItem>
                 <SelectItem value="Lease">Lease</SelectItem>
                 <SelectItem value="Maintenance">Maintenance</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2 space-y-1.5">
+            <Label>Supplier</Label>
+            <Select value={form.supplier_id || 'none'} onValueChange={v => set('supplier_id', v === 'none' ? '' : v)}>
+              <SelectTrigger><SelectValue placeholder="No supplier linked" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No supplier linked</SelectItem>
+                {suppliers.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -423,6 +451,14 @@ const ContractsTable = memo(function ContractsTable({
         </Button>
       ),
       cell: ({ getValue }) => <span className="text-sm">{getValue<string>()}</span>,
+    },
+    {
+      id: 'supplier',
+      header: 'Supplier',
+      cell: ({ row }) => {
+        const s = row.original.supplier
+        return s ? <span className="text-sm">{s.name}</span> : <span className="text-xs text-muted-foreground">—</span>
+      },
     },
     {
       accessorKey: 'type',

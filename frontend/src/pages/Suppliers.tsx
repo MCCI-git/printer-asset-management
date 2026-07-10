@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { TablePagination } from '@/components/ui/table-pagination'
 import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Building2, Download, Trash2, X, Plus, Camera, Package, ChevronDown, Pencil, Star } from 'lucide-react'
+import { Building2, Download, Trash2, X, Plus, Camera, Package, ChevronDown, Pencil, Star, FileText } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -335,11 +335,6 @@ export function Suppliers() {
                 <Pencil size={12} /> Edit
               </Button>
             )}
-            {viewSupplier && editMode && (
-              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setEditMode(false); setAddError('') }}>
-                Cancel
-              </Button>
-            )}
           </DialogHeader>
 
           <div className={`grid grid-cols-1 gap-6 py-2 ${viewSupplier ? 'sm:grid-cols-2 flex-1 overflow-y-auto min-h-0' : ''}`}>
@@ -490,36 +485,62 @@ export function Suppliers() {
               )}
             </div>
 
-            {/* MIDDLE — consumables list */}
+            {/* MIDDLE — consumables + contracts */}
             {viewSupplier && (
-              <div className="flex flex-col gap-2 min-h-0">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                  <Package size={12} /> Items
-                </p>
-                <div className="flex-1 overflow-y-auto max-h-[420px] rounded-lg border border-border divide-y divide-border">
-                  {(fullSupplier?.consumables ?? []).length === 0 ? (
-                    <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">No purchases recorded yet.</div>
-                  ) : (fullSupplier?.consumables ?? []).map((c: any) => (
-                    <div key={c.id} className="flex items-center justify-between px-3 py-2.5 text-sm">
-                      <div>
-                        <p className="font-medium">{c.name}</p>
-                        <p className="text-xs text-muted-foreground">{c.sku} · {c.type}</p>
+              <div className="flex flex-col gap-4 min-h-0 overflow-y-auto">
+                {/* Items */}
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                    <Package size={12} /> Items
+                  </p>
+                  <div className="rounded-lg border border-border divide-y divide-border">
+                    {(fullSupplier?.consumables ?? []).length === 0 ? (
+                      <div className="flex h-20 items-center justify-center text-sm text-muted-foreground">No purchases recorded yet.</div>
+                    ) : (fullSupplier?.consumables ?? []).map((c: any) => (
+                      <div key={c.id} className="flex items-center justify-between px-3 py-2.5 text-sm">
+                        <div>
+                          <p className="font-medium">{c.name}</p>
+                          <p className="text-xs text-muted-foreground">{c.sku} · {c.type}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">{formatCurrency(c.unit_cost)}</p>
+                          <p className="text-xs text-muted-foreground">Qty {c.quantity}</p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold">{formatCurrency(c.unit_cost)}</p>
-                        <p className="text-xs text-muted-foreground">Qty {c.quantity}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {(fullSupplier?.consumables ?? []).length > 0 && (
-                  <div className="flex justify-between text-sm pt-1 border-t border-border">
-                    <span className="text-muted-foreground">Total spend</span>
-                    <span className="font-semibold">
-                      {formatCurrency((fullSupplier?.consumables ?? []).reduce((s: number, c: any) => s + c.unit_cost * c.quantity, 0))}
-                    </span>
+                    ))}
                   </div>
-                )}
+                  {(fullSupplier?.consumables ?? []).length > 0 && (
+                    <div className="flex justify-between text-sm pt-1 border-t border-border">
+                      <span className="text-muted-foreground">Total spend</span>
+                      <span className="font-semibold">
+                        {formatCurrency((fullSupplier?.consumables ?? []).reduce((s: number, c: any) => s + c.unit_cost * c.quantity, 0))}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Contracts */}
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                    <FileText size={12} /> Contracts
+                  </p>
+                  <div className="rounded-lg border border-border divide-y divide-border">
+                    {contracts.filter((c: any) => c.supplier_id === viewSupplierId).length === 0 ? (
+                      <div className="flex h-20 items-center justify-center text-sm text-muted-foreground">No contracts assigned.</div>
+                    ) : contracts.filter((c: any) => c.supplier_id === viewSupplierId).map((c: any) => (
+                      <div key={c.id} className="flex items-center justify-between px-3 py-2.5 text-sm">
+                        <div>
+                          <p className="font-medium">{c.name}</p>
+                          <p className="text-xs text-muted-foreground">{c.type} · {c.status}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">{formatCurrency(c.annual_cost)}<span className="text-xs font-normal text-muted-foreground">/yr</span></p>
+                          <p className="text-xs text-muted-foreground">Ends {c.end_date}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
 

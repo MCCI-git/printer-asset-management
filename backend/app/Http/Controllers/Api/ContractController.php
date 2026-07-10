@@ -30,7 +30,7 @@ class ContractController extends Controller
             $query->where('type', $request->type);
         }
 
-        return response()->json($query->orderBy('end_date')->paginate($request->get('per_page', 15)));
+        return response()->json($query->with('supplier:id,name')->orderBy('end_date')->paginate($request->get('per_page', 15)));
     }
 
     public function store(Request $request): JsonResponse
@@ -38,6 +38,7 @@ class ContractController extends Controller
         $validated = $request->validate([
             'name'               => 'required|string|max:255',
             'vendor'             => 'required|string|max:255',
+            'supplier_id'        => 'nullable|exists:suppliers,id',
             'type'               => 'required|in:Service,Support,Lease,Maintenance',
             'start_date'         => 'required|date',
             'end_date'           => 'required|date|after:start_date',
@@ -73,6 +74,7 @@ class ContractController extends Controller
         $validated = $request->validate([
             'name'               => 'nullable|string|max:255',
             'vendor'             => 'nullable|string|max:255',
+            'supplier_id'        => 'nullable|exists:suppliers,id',
             'type'               => 'nullable|in:Service,Support,Lease,Maintenance',
             'start_date'         => 'nullable|date',
             'end_date'           => 'nullable|date',

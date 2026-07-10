@@ -84,6 +84,8 @@ export interface Contract {
   id: number
   name: string
   vendor: string
+  supplier_id?: number | null
+  supplier?: { id: number; name: string } | null
   type: ContractType
   start_date: string
   end_date: string
