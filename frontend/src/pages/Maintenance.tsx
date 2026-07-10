@@ -78,23 +78,47 @@ export function Maintenance() {
   const deleteWO = useDeleteWorkOrder()
 
   const [search, setSearch] = useState('')
+  const [filterPriority, setFilterPriority] = useState('all')
+  const [filterStatus, setFilterStatus] = useState('all')
+  const [filterCompletedFrom, setFilterCompletedFrom] = useState('')
+  const [filterCompletedTo, setFilterCompletedTo] = useState('')
   const [rowSelection, setRowSelection] = useState<Record<number, boolean>>({})
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<WorkOrder | null>(null)
   const [form, setForm] = useState<WOForm>(emptyForm())
+
+  const activeFilterCount = [
+    filterPriority !== 'all',
+    filterStatus !== 'all',
+    !!filterCompletedFrom || !!filterCompletedTo,
+  ].filter(Boolean).length
+
+  const clearFilters = () => {
+    setFilterPriority('all')
+    setFilterStatus('all')
+    setFilterCompletedFrom('')
+    setFilterCompletedTo('')
+  }
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
-    return workOrders.filter(wo =>
-      wo.wo_number.toLowerCase().includes(q) ||
-      wo.printer?.name?.toLowerCase().includes(q) ||
-      wo.issue.toLowerCase().includes(q) ||
-      (wo.assignee ?? '').toLowerCase().includes(q)
-    )
-  }, [workOrders, search])
+    return workOrders.filter(wo => {
+      if (q && !(
+        wo.wo_number.toLowerCase().includes(q) ||
+        wo.printer?.name?.toLowerCase().includes(q) ||
+        wo.issue.toLowerCase().includes(q) ||
+        (wo.assignee ?? '').toLowerCase().includes(q)
+      )) return false
+      if (filterPriority !== 'all' && wo.priority !== filterPriority) return false
+      if (filterStatus !== 'all' && wo.status !== filterStatus) return false
+      if (filterCompletedFrom && (!wo.completed_date || wo.completed_date < filterCompletedFrom)) return false
+      if (filterCompletedTo && (!wo.completed_date || wo.completed_date > filterCompletedTo)) return false
+      return true
+    })
+  }, [workOrders, search, filterPriority, filterStatus, filterCompletedFrom, filterCompletedTo])
 
   const selectedCount = Object.keys(rowSelection).length
   const selectedIds = Object.keys(rowSelection).map(i => filtered[Number(i)]?.id).filter(Boolean)
@@ -291,14 +315,59 @@ export function Maintenance() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="relative max-w-sm">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/70" />
-                <input
-                  placeholder="Search work orders..."
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-white py-2 pl-9 pr-3 text-sm text-foreground/80 placeholder:text-muted-foreground/50 focus:border-blue-500 focus:outline-none dark:border-border dark:bg-secondary dark:text-muted-foreground/50"
-                />
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/70" />
+                  <input
+                    placeholder="Search work orders..."
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="w-52 rounded-lg border border-border bg-white py-2 pl-9 pr-3 text-sm text-foreground/80 placeholder:text-muted-foreground/50 focus:border-blue-500 focus:outline-none dark:border-border dark:bg-secondary dark:text-muted-foreground/50"
+                  />
+                </div>
+                <select
+                  value={filterPriority}
+                  onChange={e => setFilterPriority(e.target.value)}
+                  className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground/80 focus:border-blue-500 focus:outline-none dark:bg-secondary dark:text-muted-foreground"
+                >
+                  <option value="all">All Priorities</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+                <select
+                  value={filterStatus}
+                  onChange={e => setFilterStatus(e.target.value)}
+                  className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground/80 focus:border-blue-500 focus:outline-none dark:bg-secondary dark:text-muted-foreground"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="open">Open</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="scheduled">Scheduled</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                <div className="flex items-center gap-1.5 ml-auto">
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">Completed Date Range</span>
+                  <input
+                    type="date"
+                    value={filterCompletedFrom}
+                    onChange={e => setFilterCompletedFrom(e.target.value)}
+                    className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground/80 focus:border-blue-500 focus:outline-none dark:bg-secondary dark:text-muted-foreground"
+                  />
+                  <span className="text-xs text-muted-foreground">—</span>
+                  <input
+                    type="date"
+                    value={filterCompletedTo}
+                    onChange={e => setFilterCompletedTo(e.target.value)}
+                    className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground/80 focus:border-blue-500 focus:outline-none dark:bg-secondary dark:text-muted-foreground"
+                  />
+                </div>
+                {(search || activeFilterCount > 0) && (
+                  <Button variant="ghost" size="sm" className="h-9 gap-1 text-xs text-muted-foreground" onClick={() => { setSearch(''); clearFilters() }}>
+                    <X size={12} /> Clear
+                  </Button>
+                )}
               </div>
 
               {selectedCount > 0 && (

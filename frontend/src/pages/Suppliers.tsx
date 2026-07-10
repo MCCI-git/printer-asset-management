@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { TablePagination } from '@/components/ui/table-pagination'
 import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Building2, Download, Trash2, X, Plus, Camera, Package, ChevronDown, Pencil } from 'lucide-react'
+import { Building2, Download, Trash2, X, Plus, Camera, Package, ChevronDown, Pencil, Star } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -166,12 +166,24 @@ export function Suppliers() {
     }
   }
 
+  const [filterPreferred, setFilterPreferred] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
   const selectedCount = Object.keys(rowSelection).length
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(10)
-  const pageCount = Math.ceil(suppliers.length / pageSize)
-  const pagedSuppliers = suppliers.slice(page * pageSize, (page + 1) * pageSize)
+
+  const visibleSuppliers = filterPreferred ? suppliers.filter((s: any) => s.preferred_supplier) : suppliers
+  const pageCount = Math.ceil(visibleSuppliers.length / pageSize)
+  const pagedSuppliers = visibleSuppliers.slice(page * pageSize, (page + 1) * pageSize)
+
+  const togglePreferred = async (s: any, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const fd = new FormData()
+    fd.append('name', s.name)
+    fd.append('preferred_supplier', s.preferred_supplier ? '0' : '1')
+    fd.append('_method', 'PUT')
+    await updateSupplier.mutateAsync({ id: s.id, data: fd })
+  }
 
   return (
     <div className="space-y-5">
@@ -193,6 +205,16 @@ export function Suppliers() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { setFilterPreferred(f => !f); setPage(0) }}
+              className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${filterPreferred ? 'border-amber-400 bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400' : 'border-border text-muted-foreground hover:border-amber-400 hover:text-amber-500'}`}
+            >
+              <Star size={12} className={filterPreferred ? 'fill-amber-400 text-amber-400' : ''} />
+              Preferred Suppliers
+            </button>
+          </div>
+
           {isLoading ? (
             <div className="space-y-1">
               {Array.from({ length: 7 }).map((_, i) => (
@@ -250,14 +272,15 @@ export function Suppliers() {
                 <TableRow>
                   <TableHead>
                     <Checkbox
-                      checked={suppliers.length > 0 && selectedCount === suppliers.length}
+                      checked={visibleSuppliers.length > 0 && selectedCount === visibleSuppliers.length}
                       onCheckedChange={v => {
-                        if (v) setRowSelection(Object.fromEntries(suppliers.map((_: any, i: number) => [i, true])))
+                        if (v) setRowSelection(Object.fromEntries(visibleSuppliers.map((_: any, i: number) => [i, true])))
                         else setRowSelection({})
                       }}
                       aria-label="Select all"
                     />
                   </TableHead>
+                  <TableHead className="w-8"></TableHead>
                   <TableHead>Supplier</TableHead>
                   <TableHead>Contact</TableHead>
                 </TableRow>
@@ -273,6 +296,11 @@ export function Suppliers() {
                   >
                     <TableCell className="align-middle">
                       <Checkbox checked={!!rowSelection[i]} onCheckedChange={v => setRowSelection((sel: any) => { const n = { ...sel }; if (v) n[i] = true; else delete n[i]; return n })} aria-label="Select row" />
+                    </TableCell>
+                    <TableCell className="align-middle w-8">
+                      <button onClick={e => togglePreferred(s, e)} className="flex items-center justify-center rounded p-0.5 hover:scale-110 transition-transform" title={s.preferred_supplier ? 'Remove preferred' : 'Mark as preferred'}>
+                        <Star size={15} className={s.preferred_supplier ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/40 hover:text-amber-400'} />
+                      </button>
                     </TableCell>
                     <TableCell className="align-middle">
                       <p className="font-semibold text-foreground dark:text-secondary-foreground">{s.name}</p>
@@ -466,7 +494,7 @@ export function Suppliers() {
             {viewSupplier && (
               <div className="flex flex-col gap-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                  <Package size={12} /> Consumables
+                  <Package size={12} /> Items
                 </p>
                 <div className="flex-1 overflow-y-auto max-h-[500px] rounded-lg border border-border divide-y divide-border">
                   {(fullSupplier?.consumables ?? []).length === 0 ? (

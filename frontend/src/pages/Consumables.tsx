@@ -647,6 +647,7 @@ export function Consumables() {
                   <TableHead className="text-xs font-semibold">SKU</TableHead>
                   <TableHead className="text-xs font-semibold">Name</TableHead>
                   <TableHead className="text-xs font-semibold">Type</TableHead>
+                  <TableHead className="text-xs font-semibold">Supplier</TableHead>
                   <TableHead className="text-xs font-semibold">Printer</TableHead>
                   <TableHead className="text-xs font-semibold">Assigned At</TableHead>
                   <TableHead />
@@ -660,6 +661,7 @@ export function Consumables() {
                     </TableCell>
                     <TableCell className="font-medium text-foreground dark:text-secondary-foreground">{a.consumable?.name}</TableCell>
                     <TableCell><span className="text-xs text-muted-foreground">{a.consumable?.type}</span></TableCell>
+                    <TableCell><span className="text-xs text-muted-foreground">{a.consumable?.supplier?.name ?? '—'}</span></TableCell>
                     <TableCell><span className="text-xs text-muted-foreground">{a.printer?.name} <span className="opacity-50">({a.printer?.asset_tag})</span></span></TableCell>
                     <TableCell><span className="text-xs text-muted-foreground">{new Date(a.assigned_at).toLocaleDateString()}</span></TableCell>
                     <TableCell>
