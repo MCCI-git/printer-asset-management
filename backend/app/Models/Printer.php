@@ -11,6 +11,7 @@ class Printer extends Model
     protected $fillable = [
         'snipeit_id', 'asset_tag', 'serial', 'name', 'model',
         'manufacturer', 'model_number', 'color_capability', 'ip_address',
+        'snmp_community', 'snmp_status',
         'cost_type', 'purchase_cost', 'purchase_date',
         'monthly_fixed_cost', 'per_page_cost', 'warranty',
         'department', 'location', 'status', 'assigned_to',
