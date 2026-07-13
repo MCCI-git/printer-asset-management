@@ -31,7 +31,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { usePrinters, useDeletePrinter, useUpdatePrinter, usePageCounts, useCreatePageCount, useDeletePageCount, usePrinterConsumables, useConsumableAssignments } from '@/hooks/useData'
 import { useQueryClient } from '@tanstack/react-query'
-import { printersApi } from '@/services/api'
+import { printersApi, topAccessApi } from '@/services/api'
+import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
@@ -392,7 +393,7 @@ export function Printers() {
     setAddSaving(true)
     setAddError('')
     try {
-      await printersApi.create({
+      const created = await printersApi.create({
         name:               sanitize(form.name),
         model:              sanitize(form.model),
         manufacturer:       sanitize(form.manufacturer),
@@ -413,7 +414,25 @@ export function Printers() {
       queryClient.invalidateQueries({ queryKey: ['printers'], exact: false })
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
       setAddOpen(false)
+
+      // Capture ip before resetting form
+      const addedIp = sanitize(form.ip_address)
+      const newPrinterId = created.data?.id
       setForm({ name: '', model: '', manufacturer: '', model_number: '', color_capability: '', ip_address: '', department: '', cost_type: 'CAPEX', status: 'active', assigned_to: '', last_service_date: '', next_service_date: '', purchase_cost: '', purchase_date: '', monthly_fixed_cost: '', per_page_cost: '', contract_start_date: '' })
+
+      // Fire SNMP fetch for the new printer if it has an IP
+      if (addedIp && newPrinterId) {
+        topAccessApi.refreshOne(newPrinterId).then(res => {
+          if (!res.data?.success) {
+            toast.warning('Fetching unavailable on this printer', { description: 'SNMP is not reachable on the provided IP address.' })
+          }
+          queryClient.invalidateQueries({ queryKey: ['printers'], exact: false })
+          queryClient.refetchQueries({ queryKey: ['printers'], exact: false })
+        }).catch(() => {
+          toast.warning('Fetching unavailable on this printer', { description: 'SNMP is not reachable on the provided IP address.' })
+          queryClient.refetchQueries({ queryKey: ['printers'], exact: false })
+        })
+      }
     } catch (err: any) {
       const errors = err?.response?.data?.errors
       if (errors) {
@@ -541,6 +560,18 @@ export function Printers() {
         ),
       },
       {
+        id: 'snmp_status',
+        header: 'SNMP',
+        cell: ({ row }) => {
+          const s = row.original.snmp_status
+          if (!row.original.ip_address) return <span className="text-xs text-muted-foreground">–</span>
+          if (s === 'fetched') return <Badge variant="success">Fetched</Badge>
+          if (s === 'failed') return <Badge variant="destructive">Unavailable</Badge>
+          return <span className="text-xs text-muted-foreground">–</span>
+        },
+        enableSorting: false,
+      },
+      {
         id: 'page_count',
         header: 'Page Count',
         cell: ({ row }) => (
@@ -640,7 +671,7 @@ export function Printers() {
 
       {/* Add Printer Dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-md max-h-[75vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Plus size={15} /> Add Printer

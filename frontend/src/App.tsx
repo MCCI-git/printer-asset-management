@@ -14,12 +14,14 @@ import { Budget } from '@/pages/Budget'
 import { Reports } from '@/pages/Reports'
 import { Maintenance } from '@/pages/Maintenance'
 import { SnipeIt } from '@/pages/SnipeIt'
+import { TopAccess } from '@/pages/TopAccess'
+import { PrintManager } from '@/pages/PrintManager'
 import { Admin } from '@/pages/Admin'
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: Infinity,
+      staleTime: 1000 * 60 * 5,
       retry: 1,
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
@@ -48,6 +50,8 @@ export default function App() {
               <Route path="/reports" element={<Reports />} />
               <Route path="/maintenance" element={<Maintenance />} />
               <Route path="/snipeit" element={<SnipeIt />} />
+              <Route path="/topaccess" element={<TopAccess />} />
+              <Route path="/print-manager" element={<PrintManager />} />
               <Route path="/admin" element={<Admin />} />
             </Route>
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

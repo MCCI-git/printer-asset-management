@@ -67,7 +67,7 @@ export function ProfileSheet({ open, onOpenChange }: ProfileSheetProps) {
     }
   }, [open])
 
-  const initials = user?.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) ?? 'U'
+  const initials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) ?? 'U'
 
   const [avatarSaving, setAvatarSaving] = useState(false)
 

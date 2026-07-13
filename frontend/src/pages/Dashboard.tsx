@@ -105,7 +105,7 @@ export function Dashboard() {
     )
   }
 
-  if (!stats) return null
+  if (!stats?.printers) return null
 
   const pieConfig = {
     capex: { label: 'CAPEX', color: 'var(--color-primary)' },

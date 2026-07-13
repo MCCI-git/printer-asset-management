@@ -46,6 +46,8 @@ const allNavItems = [
   { path: '/reports',     icon: BarChart3,        label: 'Reports',     roles: ['super-admin','admin','reports'], accent: 'violet' },
   { path: '/maintenance', icon: Wrench,           label: 'Maintenance', roles: ['super-admin','admin','reports','view'] },
   { path: '/snipeit',     icon: Link,             label: 'Snipe-IT',    roles: ['super-admin'], accent: 'violet' },
+  { path: '/topaccess',     icon: Printer,         label: 'TopAccess',     roles: ['super-admin'], accent: 'violet' },
+  { path: '/print-manager', icon: BookOpen,        label: 'Print Manager', roles: ['super-admin', 'admin'], accent: 'violet' },
   { path: '/admin',       icon: Shield,           label: 'Admin',       roles: ['super-admin'], accent: 'violet' },
 ]
 
@@ -74,7 +76,7 @@ export function Sidebar() {
   const [signOutOpen, setSignOutOpen] = useState(false)
 
   const navItems = allNavItems.filter(item => user && item.roles.includes(user.role))
-  const initials = user?.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) ?? 'U'
+  const initials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) ?? 'U'
 
   const handleLogout = async () => {
     await logout()

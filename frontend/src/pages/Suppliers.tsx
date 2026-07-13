@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { TablePagination } from '@/components/ui/table-pagination'
 import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Building2, Download, Trash2, X, Plus, Camera, Package, ChevronDown, Pencil, Star, FileText } from 'lucide-react'
+import { Building2, Download, Trash2, X, Plus, Camera, Package, ChevronDown, Pencil, Star, FileText, Search } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -166,6 +166,7 @@ export function Suppliers() {
     }
   }
 
+  const [previewImg, setPreviewImg] = useState<string | null>(null)
   const [filterPreferred, setFilterPreferred] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
   const selectedCount = Object.keys(rowSelection).length
@@ -328,14 +329,14 @@ export function Suppliers() {
 
       <Dialog open={addOpen} onOpenChange={o => { if (!o) { setAddOpen(false); setTimeout(() => { setViewSupplier(null); setViewSupplierId(null); setEditMode(false); setAddError('') }, 150) } }}>
         <DialogContent className={viewSupplier ? "!w-[600px] !max-w-[95vw] sm:!max-w-[600px] !max-h-[700px] flex flex-col" : "max-w-md"}>
-          <DialogHeader className="flex-row items-center justify-between pr-8">
+          <DialogHeader>
             <DialogTitle>{viewSupplier ? (fullSupplier?.name ?? viewSupplier.name) : 'Add Supplier'}</DialogTitle>
-            {viewSupplier && !editMode && (
-              <Button variant="outline" size="sm" className="gap-1.5 h-7 text-xs" onClick={startEdit}>
-                <Pencil size={12} /> Edit
-              </Button>
-            )}
           </DialogHeader>
+          {viewSupplier && !editMode && (
+            <Button variant="outline" size="sm" className="gap-1.5 h-7 text-xs absolute top-2 right-10" onClick={startEdit}>
+              <Pencil size={12} /> Edit
+            </Button>
+          )}
 
           <div className={`grid grid-cols-1 gap-6 py-2 ${viewSupplier ? 'sm:grid-cols-2 flex-1 overflow-y-auto min-h-0' : ''}`}>
             {/* LEFT — form */}
@@ -344,8 +345,15 @@ export function Suppliers() {
               <div className="flex flex-col items-center gap-2">
                 <div
                   className="relative group rounded-full"
-                  style={{ cursor: (!viewSupplier || editMode) ? 'pointer' : 'default' }}
-                  onClick={() => (!viewSupplier || editMode) && fileRef.current?.click()}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    if (!viewSupplier || editMode) {
+                      fileRef.current?.click()
+                    } else {
+                      const src = fullSupplier?.logo_url ?? viewSupplier.logo_url
+                      if (src) setPreviewImg(src)
+                    }
+                  }}
                 >
                   <Avatar className="h-20 w-20">
                     <AvatarImage src={logoPreview ?? (viewSupplier ? (fullSupplier?.logo_url ?? viewSupplier.logo_url) : undefined)} alt="Logo" />
@@ -353,11 +361,15 @@ export function Suppliers() {
                       {(viewSupplier?.name || form.name) ? (viewSupplier?.name || form.name).charAt(0).toUpperCase() : <Building2 size={20} />}
                     </AvatarFallback>
                   </Avatar>
-                  {(!viewSupplier || editMode) && (
+                  {(!viewSupplier || editMode) ? (
                     <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Camera size={18} className="text-white" />
                     </div>
-                  )}
+                  ) : (fullSupplier?.logo_url ?? viewSupplier?.logo_url) ? (
+                    <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Search size={16} className="text-white" />
+                    </div>
+                  ) : null}
                 </div>
                 {(!viewSupplier || editMode) && (
                   <>
@@ -371,30 +383,49 @@ export function Suppliers() {
               </div>
 
               {viewSupplier && !editMode ? (
-                <div className="space-y-2 text-sm">
-                  {fullSupplier?.email && <div><span className="text-muted-foreground text-xs uppercase tracking-wide">Email</span><p>{fullSupplier.email}</p></div>}
-                  {fullSupplier?.phone && <div><span className="text-muted-foreground text-xs uppercase tracking-wide">Phone</span><p>{fullSupplier.phone}</p></div>}
+                <div className="space-y-3 text-sm">
+                  {fullSupplier?.email && (
+                    <div className="space-y-0.5">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Email</p>
+                      <p className="text-sm">{fullSupplier.email}</p>
+                    </div>
+                  )}
+                  {fullSupplier?.phone && (
+                    <div className="space-y-0.5">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Phone</p>
+                      <p className="text-sm">{fullSupplier.phone}</p>
+                    </div>
+                  )}
                   {(fullSupplier?.brn || fullSupplier?.vat_number) && (
-                    <div className="pt-1 border-t border-border">
-                      <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Business Details</p>
-                      {fullSupplier?.brn && <p className="text-xs">BRN: <span className="font-medium">{fullSupplier.brn}</span></p>}
-                      {fullSupplier?.vat_number && <p className="text-xs">VAT: <span className="font-medium">{fullSupplier.vat_number}</span></p>}
+                    <div className="pt-2 border-t border-border space-y-1">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Business Details</p>
+                      {fullSupplier?.brn && <p className="text-sm">BRN: {fullSupplier.brn}</p>}
+                      {fullSupplier?.vat_number && <p className="text-sm">VAT: {fullSupplier.vat_number}</p>}
                     </div>
                   )}
-                  {fullSupplier?.salesperson_name && (
-                    <div className="pt-1 border-t border-border">
-                      <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Salesperson</p>
-                      <p className="font-medium">{fullSupplier.salesperson_name}</p>
-                      {fullSupplier.salesperson_email && <p className="text-xs text-muted-foreground">{fullSupplier.salesperson_email}</p>}
-                      {fullSupplier.salesperson_phone && <p className="text-xs text-muted-foreground">{fullSupplier.salesperson_phone}</p>}
-                    </div>
-                  )}
-                  {fullSupplier?.notes && (
-                    <div className="pt-1 border-t border-border">
-                      <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Notes</p>
-                      <p className="text-sm whitespace-pre-wrap">{fullSupplier.notes}</p>
-                    </div>
-                  )}
+                  <div className="space-y-1">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Salesperson</p>
+                    {fullSupplier?.salesperson_name ? (
+                      <div className="space-y-0.5">
+                        <p className="text-sm">{fullSupplier.salesperson_name}</p>
+                        {fullSupplier.salesperson_email && (
+                          <p className="text-sm">{fullSupplier.salesperson_email}</p>
+                        )}
+                        {fullSupplier.salesperson_phone && (
+                          <p className="text-sm">{fullSupplier.salesperson_phone}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">No salesperson assigned.</p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Notes</p>
+                    {fullSupplier?.notes
+                      ? <p className="text-sm whitespace-pre-wrap">{fullSupplier.notes}</p>
+                      : <p className="text-xs text-muted-foreground">No notes.</p>
+                    }
+                  </div>
                 </div>
               ) : (
                 <>
@@ -456,16 +487,6 @@ export function Suppliers() {
                   </FormSection>
                   <FormSection title="Classification">
                     <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          id="sup-preferred"
-                          checked={form.preferred_supplier}
-                          onChange={e => setForm(f => ({ ...f, preferred_supplier: e.target.checked }))}
-                          className="h-4 w-4 rounded border-border"
-                        />
-                        <Label htmlFor="sup-preferred" className="cursor-pointer">Mark as Preferred Supplier</Label>
-                      </div>
                       <div className="space-y-1.5">
                         <Label>Linked Contract</Label>
                         <Select value={form.contract_id} onValueChange={v => setForm(f => ({ ...f, contract_id: v }))}>
@@ -554,6 +575,23 @@ export function Suppliers() {
               </Button>
             </DialogFooter>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Image lightbox */}
+      <Dialog open={!!previewImg} onOpenChange={o => { if (!o) setPreviewImg(null) }}>
+        <DialogContent
+          showCloseButton={false}
+          onPointerDownOutside={() => setPreviewImg(null)}
+          onInteractOutside={() => setPreviewImg(null)}
+          className="max-w-5xl w-[90vw] bg-transparent border-none shadow-none ring-0 flex items-center justify-center p-0"
+          style={{ zIndex: 9999 }}
+        >
+          <img
+            src={previewImg ?? ''}
+            alt="Preview"
+            className="max-h-[85vh] max-w-full rounded-lg object-contain shadow-2xl"
+          />
         </DialogContent>
       </Dialog>
     </div>

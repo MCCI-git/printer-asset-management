@@ -98,6 +98,29 @@ export const snipeItApi = {
     api.post('/snipeit/config', data),
 }
 
+// Print Manager
+export const printManagerApi = {
+  plans: () => api.get('/print-manager/plans'),
+  updatePlan: (id: number, price: number) => api.put(`/print-manager/plans/${id}`, { price }),
+  students: () => api.get('/print-manager/students'),
+  createStudent: (data: unknown) => api.post('/print-manager/students', data),
+  updateStudent: (id: number, data: unknown) => api.put(`/print-manager/students/${id}`, data),
+  deleteStudent: (id: number) => api.delete(`/print-manager/students/${id}`),
+  logPurchase: (studentId: number, data: { plan_id: number; purchased_at: string }) =>
+    api.post(`/print-manager/students/${studentId}/purchase`, data),
+  sendEmail: (studentId: number, data: { subject: string; body: string }) =>
+    api.post(`/print-manager/students/${studentId}/email`, data),
+  budget: () => api.get('/print-manager/budget'),
+}
+
+// TopAccess (Toshiba SNMP)
+export const topAccessApi = {
+  printers: () => api.get('/topaccess/printers'),
+  printer: (id: number) => api.get('/topaccess/printer', { params: { id } }),
+  refreshOne: (id: number) => api.post(`/topaccess/refresh/${id}`),
+  test: (data: { ip: string; community: string }) => api.post('/topaccess/test', data),
+}
+
 // Admin: SMTP + Notifications
 export const adminApi = {
   getSmtp: () => api.get('/admin/smtp'),

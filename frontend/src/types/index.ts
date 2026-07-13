@@ -26,6 +26,8 @@ export interface Printer {
   model_number?: string
   color_capability?: 'mono' | 'colour'
   ip_address?: string
+  snmp_community?: string
+  snmp_status?: 'fetched' | 'failed' | null
   cost_type: CostType
   purchase_cost?: number
   purchase_date?: string
@@ -105,6 +107,13 @@ export interface Supplier {
   contact_name?: string
   email?: string
   phone?: string
+  brn?: string
+  vat_number?: string
+  notes?: string
+  logo_url?: string
+  salesperson_name?: string
+  salesperson_email?: string
+  salesperson_phone?: string
   spend_2023: number
   spend_2024: number
   spend_2025_ytd: number

@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\ContractController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\PrinterController;
 use App\Http\Controllers\Api\SnipeItController;
+use App\Http\Controllers\Api\TopAccessController;
+use App\Http\Controllers\Api\PrintManagerController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\SmtpController;
 use App\Http\Controllers\Api\UserController;
@@ -52,6 +54,25 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/sync', [SnipeItController::class, 'sync']);
         Route::get('/config', [SnipeItController::class, 'getConfig']);
         Route::post('/config', [SnipeItController::class, 'saveConfig']);
+    });
+
+    Route::prefix('print-manager')->group(function () {
+        Route::get('/plans', [PrintManagerController::class, 'plans']);
+        Route::put('/plans/{id}', [PrintManagerController::class, 'updatePlan']);
+        Route::get('/students', [PrintManagerController::class, 'students']);
+        Route::post('/students', [PrintManagerController::class, 'storeStudent']);
+        Route::put('/students/{id}', [PrintManagerController::class, 'updateStudent']);
+        Route::delete('/students/{id}', [PrintManagerController::class, 'deleteStudent']);
+        Route::post('/students/{id}/purchase', [PrintManagerController::class, 'logPurchase']);
+        Route::post('/students/{id}/email', [PrintManagerController::class, 'sendEmail']);
+        Route::get('/budget', [PrintManagerController::class, 'budget']);
+    });
+
+    Route::prefix('topaccess')->group(function () {
+        Route::get('/printers', [TopAccessController::class, 'printers']);
+        Route::get('/printer', [TopAccessController::class, 'printer']);
+        Route::post('/refresh/{printer}', [TopAccessController::class, 'refreshOne']);
+        Route::post('/test', [TopAccessController::class, 'test']);
     });
 
     Route::prefix('admin')->group(function () {
