@@ -67,4 +67,13 @@ class TopAccessController extends Controller
 
         return response()->json($this->service->testConnection($ip, $community));
     }
+
+    public function diagnostics(): JsonResponse
+    {
+        return response()->json([
+            'snmp_extension_loaded' => extension_loaded('snmp'),
+            'snmpget_exists'        => function_exists('snmpget'),
+            'php_version'           => PHP_VERSION,
+        ]);
+    }
 }
