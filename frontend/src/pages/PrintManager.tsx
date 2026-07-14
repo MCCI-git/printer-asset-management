@@ -45,6 +45,7 @@ interface PurchaseLog {
   plan: string
   price: number
   type: 'purchase' | 'email'
+  locked: boolean
   purchased_at: string
 }
 
@@ -768,7 +769,7 @@ export function PrintManager() {
                         </td>
                         <td className="px-3 py-2 font-medium">{h.price > 0 ? fmt(h.price) : '—'}</td>
                         <td className="px-3 py-2">
-                          {!(h.type === 'purchase' && h.price === 0) && (
+                          {!h.locked && (
                             <Button
                               variant="ghost"
                               size="icon"

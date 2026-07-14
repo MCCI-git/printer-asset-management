@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PrintPurchase extends Model
 {
-    protected $fillable = ['student_id', 'plan_id', 'price', 'type', 'purchased_at'];
+    protected $fillable = ['student_id', 'plan_id', 'price', 'type', 'purchased_at', 'locked'];
 
-    protected $casts = ['purchased_at' => 'datetime', 'price' => 'float'];
+    protected $casts = ['purchased_at' => 'datetime', 'price' => 'float', 'locked' => 'boolean'];
 
     public function student(): BelongsTo
     {

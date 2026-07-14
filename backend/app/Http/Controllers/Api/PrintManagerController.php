@@ -71,6 +71,7 @@ class PrintManagerController extends Controller
                 'price'        => $essentialPlan->price,
                 'type'         => 'purchase',
                 'purchased_at' => now(),
+                'locked'       => true,
             ]);
         }
 
@@ -120,8 +121,8 @@ class PrintManagerController extends Controller
     {
         $purchase = PrintPurchase::with('plan')->findOrFail($id);
 
-        if ($purchase->type === 'purchase' && $purchase->price == 0) {
-            return response()->json(['message' => 'Free plan entries cannot be deleted.'], 403);
+        if ($purchase->locked) {
+            return response()->json(['message' => 'This log entry cannot be deleted.'], 403);
         }
 
         $student  = PrintStudent::findOrFail($purchase->student_id);
@@ -276,6 +277,7 @@ class PrintManagerController extends Controller
                 'plan'         => $p->plan->label ?? '',
                 'price'        => $p->price,
                 'type'         => $p->type,
+                'locked'       => (bool) $p->locked,
                 'purchased_at' => $p->purchased_at?->format('Y-m-d H:i'),
             ])->values(),
         ];
