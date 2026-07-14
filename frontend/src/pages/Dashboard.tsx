@@ -31,7 +31,7 @@ const stagger = {
 }
 
 export function Dashboard() {
-  const { data: stats, isLoading } = useDashboardStats()
+  const { data: stats, isLoading, isError, refetch } = useDashboardStats()
   const [alertsOpen, setAlertsOpen] = useState<string | undefined>(undefined)
 
   const { data: dbBudget } = useBudget(CURRENT_YEAR)
@@ -105,7 +105,16 @@ export function Dashboard() {
     )
   }
 
-  if (!stats?.printers) return null
+  if (isError || !stats?.printers) return (
+    <div className="flex flex-col items-center justify-center py-32 gap-4 text-center">
+      <AlertCircle size={40} className="text-destructive/60" />
+      <div>
+        <p className="font-semibold text-foreground">Dashboard failed to load</p>
+        <p className="text-sm text-muted-foreground mt-1">The server returned an error. Check that the backend is running and the database is reachable.</p>
+      </div>
+      <Button size="sm" variant="outline" onClick={() => refetch()}>Try again</Button>
+    </div>
+  )
 
   const pieConfig = {
     capex: { label: 'CAPEX', color: 'var(--color-primary)' },

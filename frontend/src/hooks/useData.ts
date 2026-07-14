@@ -11,6 +11,7 @@ export function useDashboardStats() {
     },
     staleTime: 0,
     refetchInterval: 30_000,
+    retry: 2,
   })
 }
 
