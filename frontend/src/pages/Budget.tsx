@@ -55,8 +55,8 @@ export function Budget() {
 
   const openDialog = () => {
     setBudgetInput(String(totalBudgeted || ''))
-    setStartDateInput(dbBudget?.start_date ?? '')
-    setEndDateInput(dbBudget?.end_date ?? '')
+    setStartDateInput(dbBudget?.start_date ?? `${selectedYear}-01-01`)
+    setEndDateInput(dbBudget?.end_date ?? `${selectedYear}-12-31`)
     setDialogOpen(true)
   }
 
