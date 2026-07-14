@@ -119,6 +119,7 @@ export const printManagerApi = {
 // TopAccess (Toshiba SNMP)
 export const topAccessApi = {
   printers: () => api.get('/topaccess/printers'),
+  refreshAll: () => api.post('/topaccess/refresh-all'),
   printer: (id: number) => api.get('/topaccess/printer', { params: { id } }),
   refreshOne: (id: number) => api.post(`/topaccess/refresh/${id}`),
   test: (data: { ip: string; community: string }) => api.post('/topaccess/test', data),

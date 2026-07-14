@@ -74,6 +74,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('topaccess')->group(function () {
         Route::get('/printers', [TopAccessController::class, 'printers']);
         Route::get('/printer', [TopAccessController::class, 'printer']);
+        Route::post('/refresh-all', [TopAccessController::class, 'refreshAll']);
         Route::post('/refresh/{printer}', [TopAccessController::class, 'refreshOne']);
         Route::post('/test', [TopAccessController::class, 'test']);
         Route::get('/diagnostics', [TopAccessController::class, 'diagnostics']);

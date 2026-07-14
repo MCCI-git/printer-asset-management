@@ -41,6 +41,16 @@ class TopAccessController extends Controller
         }
     }
 
+    public function refreshAll(): JsonResponse
+    {
+        set_time_limit(0);
+        try {
+            return response()->json($this->service->fetchAllLive());
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 502);
+        }
+    }
+
     public function refreshOne(Printer $printer): JsonResponse
     {
         set_time_limit(0);

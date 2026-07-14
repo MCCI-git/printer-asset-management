@@ -115,24 +115,34 @@ export function TopAccess() {
   const [testResult, setTestResult]       = useState<{ success: boolean; message: string } | null>(null)
   const [testing, setTesting]             = useState(false)
 
-  const fetchPrinters = useCallback(async () => {
+  const loadFromDb = useCallback(async () => {
     setLoading(true)
     try {
       const res = await topAccessApi.printers()
-      if (Array.isArray(res.data)) {
-        setPrinters(res.data)
-      } else {
-        setPrinters([])
-        toast.error('Unexpected response from server.')
-      }
+      if (Array.isArray(res.data)) setPrinters(res.data)
     } catch {
-      toast.error('Failed to fetch printer data.')
+      toast.error('Failed to load printer data.')
     } finally {
       setLoading(false)
     }
   }, [])
 
-  useEffect(() => { fetchPrinters() }, [fetchPrinters])
+  const fetchLive = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await topAccessApi.refreshAll()
+      if (Array.isArray(res.data)) {
+        setPrinters(res.data)
+        toast.success('Live SNMP data fetched.')
+      }
+    } catch {
+      toast.error('Failed to fetch live SNMP data.')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { loadFromDb() }, [loadFromDb])
 
   const testConnection = async () => {
     if (!testIp) { toast.error('Enter an IP address.'); return }
@@ -166,9 +176,9 @@ export function TopAccess() {
           <Button variant="outline" size="sm" onClick={() => { setShowSettings(true); setTestResult(null) }}>
             <Settings size={14} className="mr-1.5" /> Test Connection
           </Button>
-          <Button size="sm" onClick={fetchPrinters} disabled={loading}>
+          <Button size="sm" onClick={fetchLive} disabled={loading}>
             <RefreshCw size={14} className={`mr-1.5 ${loading ? 'animate-spin' : ''}`} />
-            {loading ? 'Fetching…' : 'Fetch Data'}
+            {loading ? 'Fetching…' : 'Fetch Live Data'}
           </Button>
         </div>
       </div>
@@ -189,8 +199,8 @@ export function TopAccess() {
             <p className="text-xs text-muted-foreground max-w-xs">
               Add printers with an IP address from the Printers page. Click Fetch Data to pull live SNMP data.
             </p>
-            <Button size="sm" onClick={fetchPrinters} disabled={loading}>
-              <RefreshCw size={13} className="mr-1.5" /> Fetch Data
+            <Button size="sm" onClick={fetchLive} disabled={loading}>
+              <RefreshCw size={13} className="mr-1.5" /> Fetch Live Data
             </Button>
           </CardContent>
         </Card>

@@ -25,6 +25,15 @@ class TopAccessService
         return $printers->map(fn (Printer $p) => $this->formatPrinter($p))->values()->toArray();
     }
 
+    public function fetchAllLive(): array
+    {
+        $printers = Printer::whereNotNull('ip_address')
+            ->where('ip_address', '!=', '')
+            ->get();
+
+        return $printers->map(fn (Printer $p) => $this->queryPrinter($p))->values()->toArray();
+    }
+
     public function formatPrinter(Printer $printer): array
     {
         return [
