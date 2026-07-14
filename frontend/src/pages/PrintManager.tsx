@@ -194,6 +194,10 @@ export function PrintManager() {
   useEffect(() => {
     fetchAll()
     fetchBudget()
+    if (bodyRef.current) {
+      bodyRef.current.innerHTML = defaultEmailBody
+      setEmailBodyHtml(defaultEmailBody)
+    }
     printManagerApi.getEmailTemplate().then(res => {
       const saved = res.data.template
       if (saved && bodyRef.current) {
@@ -201,7 +205,7 @@ export function PrintManager() {
         setEmailBodyHtml(saved)
       }
     })
-  }, [fetchAll, fetchBudget])
+  }, [fetchAll, fetchBudget]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (activeTab === 'plans') fetchBudget()
@@ -649,7 +653,6 @@ export function PrintManager() {
                   suppressContentEditableWarning
                   onInput={e => setEmailBodyHtml((e.currentTarget as HTMLDivElement).innerHTML)}
                   className="min-h-[260px] rounded-lg border-2 border-dashed border-border bg-background p-3 text-sm leading-relaxed focus:border-primary focus:outline-none hover:border-primary/60 transition-colors overflow-y-auto"
-                  dangerouslySetInnerHTML={{ __html: defaultEmailBody }}
                 />
                 <p className="text-[10px] text-muted-foreground">Use <strong>[STUDENT_NAME]</strong>, <strong>[PRINTER_ID]</strong>, <strong>[PLAN_NAME]</strong></p>
               </div>
