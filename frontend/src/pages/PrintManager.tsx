@@ -151,6 +151,7 @@ export function PrintManager() {
   const [emailSubject, setEmailSubject] = useState('Printing Plan Update')
   const bodyRef = useRef<HTMLDivElement>(null)
   const [emailBodyHtml, setEmailBodyHtml] = useState('')
+  const savedTemplateRef = useRef<string>('')
   const [savingTemplate, setSavingTemplate] = useState(false)
   const [sendingEmail, setSendingEmail] = useState(false)
   const [emailResult, setEmailResult] = useState<{ success: boolean; message: string } | null>(null)
@@ -194,13 +195,10 @@ export function PrintManager() {
   useEffect(() => {
     fetchAll()
     fetchBudget()
-    if (bodyRef.current) {
-      bodyRef.current.innerHTML = defaultEmailBody
-      setEmailBodyHtml(defaultEmailBody)
-    }
     printManagerApi.getEmailTemplate().then(res => {
-      const saved = res.data.template
-      if (saved && bodyRef.current) {
+      const saved = res.data.template || defaultEmailBody
+      savedTemplateRef.current = saved
+      if (bodyRef.current) {
         bodyRef.current.innerHTML = saved
         setEmailBodyHtml(saved)
       }
@@ -209,7 +207,12 @@ export function PrintManager() {
 
   useEffect(() => {
     if (activeTab === 'plans') fetchBudget()
-  }, [activeTab, fetchBudget])
+    if (activeTab === 'students' && bodyRef.current && !emailBodyHtml) {
+      const html = savedTemplateRef.current || defaultEmailBody
+      bodyRef.current.innerHTML = html
+      setEmailBodyHtml(html)
+    }
+  }, [activeTab, fetchBudget]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── pricing ──────────────────────────────────────────── */
 
@@ -349,7 +352,7 @@ export function PrintManager() {
   }
 
   const saveTemplate = async () => {
-    const html = bodyRef.current?.innerHTML ?? ''
+    const html = bodyRef.current?.innerHTML || emailBodyHtml
     if (!html.trim()) { toast.error('Template cannot be empty.'); return }
     setSavingTemplate(true)
     try {
