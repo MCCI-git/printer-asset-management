@@ -596,7 +596,7 @@ export function PrintManager() {
               <table className="min-w-full divide-y divide-border text-sm">
                 <thead className="bg-muted/40">
                   <tr>
-                    {['Printer ID','Student','Email','Purchases','Plan','Actions'].map(h => (
+                    {['Printer Code','Student','Email','Purchases','Plan','Actions'].map(h => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
@@ -719,7 +719,7 @@ export function PrintManager() {
                 </Button>
                 <Button size="sm" variant="outline" onClick={sendEmail} disabled={sendingEmail || !selectedStudent}>
                   {sendingEmail ? <RefreshCw size={13} className="mr-1.5 animate-spin" /> : <Send size={13} className="mr-1.5" />}
-                  {sendingEmail ? 'Sending…' : 'Send via SMTP'}
+                  {sendingEmail ? 'Sending…' : 'Send'}
                 </Button>
               </div>
 
@@ -747,8 +747,8 @@ export function PrintManager() {
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1">
-              <Label className="text-xs">Printer ID</Label>
-              <Input placeholder="e.g. PR-001" value={studentForm.printer_id} onChange={e => setStudentForm(f => ({ ...f, printer_id: e.target.value }))} />
+              <Label className="text-xs">Printer Code</Label>
+              <Input placeholder="e.g. 001" value={studentForm.printer_id} onChange={e => setStudentForm(f => ({ ...f, printer_id: e.target.value }))} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Full Name *</Label>
@@ -783,7 +783,7 @@ export function PrintManager() {
           <DialogHeader>
             <DialogTitle>Activity Log</DialogTitle>
             {historyModal.student && (
-              <p className="text-sm text-muted-foreground">{historyModal.student.name} · {historyModal.student.printer_id || 'No Printer ID'}</p>
+              <p className="text-sm text-muted-foreground">{historyModal.student.name} · {historyModal.student.printer_id || 'No Printer Code'}</p>
             )}
           </DialogHeader>
           {historyModal.student && (
