@@ -100,6 +100,15 @@ class PrintManagerController extends Controller
         return response()->json(['message' => 'Student deleted.']);
     }
 
+    public function deletePurchase(int $id): JsonResponse
+    {
+        $purchase = PrintPurchase::findOrFail($id);
+        $student  = PrintStudent::with(['plan', 'purchases.plan'])->findOrFail($purchase->student_id);
+        $purchase->delete();
+        $student->refresh()->load(['plan', 'purchases.plan']);
+        return response()->json($this->formatStudent($student));
+    }
+
     // ── Purchases ────────────────────────────────────────────────────
 
     public function logPurchase(Request $request, int $studentId): JsonResponse

@@ -64,6 +64,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/students/{id}', [PrintManagerController::class, 'updateStudent']);
         Route::delete('/students/{id}', [PrintManagerController::class, 'deleteStudent']);
         Route::post('/students/{id}/purchase', [PrintManagerController::class, 'logPurchase']);
+        Route::delete('/purchases/{id}', [PrintManagerController::class, 'deletePurchase']);
         Route::post('/students/{id}/email', [PrintManagerController::class, 'sendEmail']);
         Route::get('/budget', [PrintManagerController::class, 'budget']);
     });

@@ -140,6 +140,7 @@ export function PrintManager() {
 
   // history modal
   const [historyModal, setHistoryModal] = useState<{ open: boolean; student: Student | null }>({ open: false, student: null })
+  const [deletingLogId, setDeletingLogId] = useState<number | null>(null)
 
   // delete confirmation
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; student: Student | null }>({ open: false, student: null })
@@ -245,6 +246,23 @@ export function PrintManager() {
       toast.error(printerIdError ?? 'Failed to save student.')
     } finally {
       setSavingStudent(false)
+    }
+  }
+
+  const deleteLog = async (purchaseId: number) => {
+    setDeletingLogId(purchaseId)
+    try {
+      const res = await printManagerApi.deletePurchase(purchaseId)
+      const updated: Student = res.data
+      setStudents(prev => prev.map(s => s.id === updated.id ? updated : s))
+      setHistoryModal(prev => ({ ...prev, student: updated }))
+      setBudget(null) // trigger re-fetch
+      printManagerApi.budget().then(r => setBudget(r.data))
+      toast.success('Log entry deleted.')
+    } catch {
+      toast.error('Failed to delete log entry.')
+    } finally {
+      setDeletingLogId(null)
     }
   }
 
@@ -689,14 +707,14 @@ export function PrintManager() {
                 <table className="min-w-full divide-y divide-border text-sm">
                   <thead className="bg-muted/40">
                     <tr>
-                      {['Date & Time', 'Plan / Type', 'Amount'].map(h => (
+                      {['Date & Time', 'Plan / Type', 'Amount', ''].map(h => (
                         <th key={h} className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
                     {historyModal.student.history.length === 0 && (
-                      <tr><td colSpan={3} className="px-3 py-6 text-center text-muted-foreground">No entries yet.</td></tr>
+                      <tr><td colSpan={4} className="px-3 py-6 text-center text-muted-foreground">No entries yet.</td></tr>
                     )}
                     {historyModal.student.history.map(h => (
                       <tr key={h.id}>
@@ -707,6 +725,17 @@ export function PrintManager() {
                             : h.plan}
                         </td>
                         <td className="px-3 py-2 font-medium">{h.price > 0 ? fmt(h.price) : '—'}</td>
+                        <td className="px-3 py-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                            disabled={deletingLogId === h.id}
+                            onClick={() => deleteLog(h.id)}
+                          >
+                            <Trash2 size={12} />
+                          </Button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

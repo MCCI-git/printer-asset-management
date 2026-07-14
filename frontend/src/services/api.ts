@@ -110,6 +110,7 @@ export const printManagerApi = {
     api.post(`/print-manager/students/${studentId}/purchase`, data),
   sendEmail: (studentId: number, data: { subject: string; body: string }) =>
     api.post(`/print-manager/students/${studentId}/email`, data),
+  deletePurchase: (id: number) => api.delete(`/print-manager/purchases/${id}`),
   budget: () => api.get('/print-manager/budget'),
 }
 
