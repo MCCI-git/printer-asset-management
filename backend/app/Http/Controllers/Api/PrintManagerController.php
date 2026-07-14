@@ -104,8 +104,18 @@ class PrintManagerController extends Controller
     public function deletePurchase(int $id): JsonResponse
     {
         $purchase = PrintPurchase::findOrFail($id);
-        $student  = PrintStudent::with(['plan', 'purchases.plan'])->findOrFail($purchase->student_id);
+        $student  = PrintStudent::findOrFail($purchase->student_id);
         $purchase->delete();
+
+        $lastPurchase = PrintPurchase::where('student_id', $student->id)
+            ->where('type', 'purchase')
+            ->orderBy('purchased_at', 'desc')
+            ->first();
+
+        if ($lastPurchase) {
+            $student->update(['plan_id' => $lastPurchase->plan_id]);
+        }
+
         $student->refresh()->load(['plan', 'purchases.plan']);
         return response()->json($this->formatStudent($student));
     }
