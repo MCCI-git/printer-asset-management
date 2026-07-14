@@ -10,6 +10,11 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Calendar } from '@/components/ui/calendar'
+import { CalendarIcon } from 'lucide-react'
+import { format, parse, isValid } from 'date-fns'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
@@ -22,7 +27,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
-import { PolarGrid, RadialBar, RadialBarChart } from 'recharts'
+import { PolarGrid, RadialBar, RadialBarChart, Label as RechartsLabel } from 'recharts'
 import { printManagerApi } from '@/services/api'
 
 /* ── types ───────────────────────────────────────────────── */
@@ -218,8 +223,9 @@ export function PrintManager() {
   }
 
   const saveStudent = async () => {
-    if (!studentForm.name || !studentForm.email || !studentForm.plan_id) {
-      toast.error('Name, email and plan are required.')
+    const isEditing = !!studentModal.editing
+    if (!studentForm.name || !studentForm.email || (isEditing && !studentForm.plan_id)) {
+      toast.error(isEditing ? 'Name, email and plan are required.' : 'Name and email are required.')
       return
     }
     setSavingStudent(true)
@@ -234,8 +240,9 @@ export function PrintManager() {
         toast.success('Student added.')
       }
       setStudentModal({ open: false, editing: null })
-    } catch {
-      toast.error('Failed to save student.')
+    } catch (err: any) {
+      const printerIdError = err?.response?.data?.errors?.printer_id?.[0]
+      toast.error(printerIdError ?? 'Failed to save student.')
     } finally {
       setSavingStudent(false)
     }
@@ -290,12 +297,16 @@ export function PrintManager() {
 
   /* ── email ────────────────────────────────────────────── */
 
+  const escapeHtml = (str: string) =>
+    str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+       .replace(/"/g, '&quot;').replace(/'/g, '&#039;')
+
   const getPreview = (student: Student | null) => {
     if (!student || !bodyRef.current) return ''
     return bodyRef.current.innerHTML
-      .replace(/\[STUDENT_NAME\]/g, student.name)
-      .replace(/\[PRINTER_ID\]/g, student.printer_id ?? 'Not assigned')
-      .replace(/\[PLAN_NAME\]/g, student.plan_label)
+      .replace(/\[STUDENT_NAME\]/g, escapeHtml(student.name))
+      .replace(/\[PRINTER_ID\]/g, escapeHtml(student.printer_id ?? 'Not assigned'))
+      .replace(/\[PLAN_NAME\]/g, escapeHtml(student.plan_label))
   }
 
   const sendEmail = async () => {
@@ -335,11 +346,11 @@ export function PrintManager() {
   /* ── render ───────────────────────────────────────────── */
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 -mt-2">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+          <h1 className="text-xl font-bold text-foreground dark:text-secondary-foreground flex items-center gap-2">
             <GraduationCap size={22} className="text-primary" />
             Print Manager
           </h1>
@@ -440,19 +451,56 @@ export function PrintManager() {
                     { label: p.label, color: planChartColors[p.label] ?? 'var(--chart-4)' },
                   ])
                 )
+                const totalStudents = budget.plans.reduce((s, p) => s + p.total_purchases, 0)
+                const topPlan = [...budget.plans].sort((a, b) => b.total_purchases - a.total_purchases)[0]
                 return (
                   <Card className="shrink-0 flex flex-col" style={{ width: '22rem', height: '22rem' }}>
-                    <CardHeader className="items-center pt-4 pb-0 px-4">
+                    <CardHeader className="items-center pt-4 pb-2 px-4">
                       <CardTitle className="text-sm">Purchases by Plan</CardTitle>
                     </CardHeader>
-                    <CardContent className="flex-1 pb-4 px-4">
-                      <ChartContainer config={chartConfig} className="mx-auto h-full w-full">
-                        <RadialBarChart data={chartData} innerRadius={30} outerRadius={100}>
-                          <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel nameKey="name" />} />
+                    <CardContent className="flex-1 p-0 min-h-0 flex flex-col">
+                      <ChartContainer config={chartConfig} className="mx-auto flex-1 w-full !aspect-auto">
+                        <RadialBarChart data={chartData} innerRadius={55} outerRadius={100}>
+                          <ChartTooltip
+                            cursor={false}
+                            content={({ active, payload }) => {
+                              if (!active || !payload?.length) return null
+                              const d = payload[0].payload
+                              return (
+                                <div className="rounded-lg border border-border bg-popover px-2.5 py-1.5 text-xs shadow-md">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="h-2 w-2 rounded-full shrink-0" style={{ background: d.fill }} />
+                                    <span className="font-medium text-popover-foreground">{d.name}</span>
+                                    <span className="text-muted-foreground">— {d.purchases} purchase{d.purchases !== 1 ? 's' : ''}</span>
+                                  </div>
+                                </div>
+                              )
+                            }}
+                          />
                           <PolarGrid gridType="circle" />
-                          <RadialBar dataKey="purchases" />
+                          <RadialBar dataKey="purchases">
+                            <RechartsLabel
+                              content={({ viewBox }) => {
+                                if (!viewBox || !('cx' in viewBox)) return null
+                                return (
+                                  <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
+                                    <tspan x={viewBox.cx} dy="-0.4em" className="fill-foreground text-sm font-bold">
+                                      Rs {budget.total_income.toLocaleString()}
+                                    </tspan>
+                                    <tspan x={viewBox.cx} dy="1.4em" className="fill-muted-foreground text-[10px]">
+                                      Total Income
+                                    </tspan>
+                                  </text>
+                                )
+                              }}
+                            />
+                          </RadialBar>
                         </RadialBarChart>
                       </ChartContainer>
+                      <p className="pb-3 text-[11px] text-muted-foreground text-center">
+                        {totalStudents} student{totalStudents !== 1 ? 's' : ''} enrolled
+                        {topPlan && topPlan.total_purchases > 0 && ` · ${topPlan.label} most popular`}
+                      </p>
                     </CardContent>
                   </Card>
                 )
@@ -590,7 +638,7 @@ export function PrintManager() {
 
       {/* ── DIALOG: Add / Edit Student ─────────────────── */}
       <Dialog open={studentModal.open} onOpenChange={open => !open && setStudentModal({ open: false, editing: null })}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[300px]">
           <DialogHeader>
             <DialogTitle>{studentModal.editing ? 'Edit Student' : 'Add Student'}</DialogTitle>
           </DialogHeader>
@@ -607,16 +655,17 @@ export function PrintManager() {
               <Label className="text-xs">Email *</Label>
               <Input type="email" value={studentForm.email} onChange={e => setStudentForm(f => ({ ...f, email: e.target.value }))} />
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Pricing Plan *</Label>
-              <select
-                value={studentForm.plan_id}
-                onChange={e => setStudentForm(f => ({ ...f, plan_id: Number(e.target.value) }))}
-                className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
-              >
-                {plans.map(p => <option key={p.id} value={p.id}>{p.label} ({p.pages} pages — {p.price === 0 ? 'Free' : fmt(p.price)})</option>)}
-              </select>
-            </div>
+            {studentModal.editing && (
+              <div className="space-y-1">
+                <Label className="text-xs">Pricing Plan *</Label>
+                <Select value={String(studentForm.plan_id)} onValueChange={v => setStudentForm(f => ({ ...f, plan_id: Number(v) }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {plans.map(p => <SelectItem key={p.id} value={String(p.id)}>{p.label} ({p.pages} pages — {p.price === 0 ? 'Free' : fmt(p.price)})</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setStudentModal({ open: false, editing: null })}>Cancel</Button>
@@ -686,17 +735,49 @@ export function PrintManager() {
           <div className="space-y-3 py-2">
             <div className="space-y-1">
               <Label className="text-xs">Plan</Label>
-              <select
-                value={logForm.plan_id}
-                onChange={e => setLogForm(f => ({ ...f, plan_id: Number(e.target.value) }))}
-                className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
-              >
-                {plans.map(p => <option key={p.id} value={p.id}>{p.label} ({p.pages} pages — {p.price === 0 ? 'Free' : fmt(p.price)})</option>)}
-              </select>
+              <Select value={String(logForm.plan_id)} onValueChange={v => setLogForm(f => ({ ...f, plan_id: Number(v) }))}>
+                <SelectTrigger><SelectValue placeholder="Select plan…" /></SelectTrigger>
+                <SelectContent>
+                  {plans.filter(p => p.price > 0).map(p => <SelectItem key={p.id} value={String(p.id)}>{p.label} ({p.pages} pages — {fmt(p.price)})</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Date & Time</Label>
-              <Input type="datetime-local" value={logForm.purchased_at} onChange={e => setLogForm(f => ({ ...f, purchased_at: e.target.value }))} />
+              <div className="flex gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="flex-1 justify-start text-left font-normal">
+                      <CalendarIcon size={14} className="mr-2 text-muted-foreground" />
+                      {logForm.purchased_at
+                        ? format(new Date(logForm.purchased_at), 'dd MMM yyyy')
+                        : <span className="text-muted-foreground">Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      disabled={{ after: new Date() }}
+                      selected={logForm.purchased_at ? new Date(logForm.purchased_at) : undefined}
+                      onSelect={day => {
+                        if (!day) return
+                        const existing = logForm.purchased_at ? new Date(logForm.purchased_at) : new Date()
+                        day.setHours(existing.getHours(), existing.getMinutes())
+                        setLogForm(f => ({ ...f, purchased_at: format(day, "yyyy-MM-dd'T'HH:mm") }))
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Input
+                  type="time"
+                  className="w-28"
+                  value={logForm.purchased_at ? logForm.purchased_at.slice(11, 16) : ''}
+                  onChange={e => {
+                    const base = logForm.purchased_at ? logForm.purchased_at.slice(0, 10) : format(new Date(), 'yyyy-MM-dd')
+                    setLogForm(f => ({ ...f, purchased_at: `${base}T${e.target.value}` }))
+                  }}
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>

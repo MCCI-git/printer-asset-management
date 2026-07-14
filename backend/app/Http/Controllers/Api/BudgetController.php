@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Budget;
 use App\Services\ActivityLogger;
+use App\Services\Calendar;
 use App\Models\Consumable;
 use App\Models\Contract;
 use App\Models\Printer;
@@ -17,7 +18,7 @@ class BudgetController extends Controller
     // GET /api/budgets?year=2026  — returns all types for that year
     public function index(Request $request): JsonResponse
     {
-        $year = $request->get('year', now()->year);
+        $year = $request->get('year', Calendar::currentYear());
         $rows = Budget::where('year', $year)->get()->keyBy('type');
         return response()->json([
             'year'       => (int) $year,
@@ -39,7 +40,7 @@ class BudgetController extends Controller
     // GET /api/budgets/actual?year=YYYY — computed actual spend for a year
     public function actual(Request $request): JsonResponse
     {
-        $year = (int) $request->get('year', now()->year);
+        $year = (int) $request->get('year', Calendar::currentYear());
 
         // CAPEX: one-time printer purchase costs in this year
         $capexActual = (float) Printer::where('cost_type', 'CAPEX')
@@ -106,7 +107,7 @@ class BudgetController extends Controller
     // GET /api/budgets/breakdown?year=YYYY — real spend per category vs tracked budget
     public function breakdown(Request $request): JsonResponse
     {
-        $year = (int) $request->get('year', now()->year);
+        $year = (int) $request->get('year', Calendar::currentYear());
         $rows = Budget::where('year', $year)->get()->keyBy('type');
 
         // CAPEX — printer purchases

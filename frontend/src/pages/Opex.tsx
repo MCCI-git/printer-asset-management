@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { usePrinters, useDeletePrinter, useOpexYtd } from '@/hooks/useData'
 import { formatCurrency } from '@/lib/utils'
+import { CURRENT_YEAR } from '@/lib/timeline'
 import type { Printer } from '@/types'
 
 export function Opex() {
@@ -35,14 +36,14 @@ export function Opex() {
 
   const monthlyPages = pages[0]
 
-  const currentYear = new Date().getFullYear()
+
   const totalMonthly = printers.reduce((s, p) => s + (p.monthly_fixed_cost ?? 0), 0)
   const perPagePrinters = printers.filter(p => p.per_page_cost)
   const avgPerPage =
     perPagePrinters.reduce((s, p) => s + (p.per_page_cost ?? 0), 0) /
     (perPagePrinters.length || 1)
 
-  const { data: opexYtdData } = useOpexYtd(currentYear)
+  const { data: opexYtdData } = useOpexYtd(CURRENT_YEAR)
   const ytdTotal = opexYtdData?.total ?? 0
   const monthsElapsed = opexYtdData?.months_elapsed ?? (new Date().getMonth() + 1)
 

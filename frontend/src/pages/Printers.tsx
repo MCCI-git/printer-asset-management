@@ -39,6 +39,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { formatCurrency } from '@/lib/utils'
+import { PRINTER_STATUSES, COST_TYPES, COLOR_CAPABILITIES } from '@/lib/constants'
+import { CURRENT_YEAR } from '@/lib/timeline'
 import type { Printer as PrinterType, PrinterPageCount } from '@/types'
 import { DatePicker } from '@/components/ui/date-picker'
 import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts'
@@ -147,11 +149,11 @@ export function Printers() {
   // Show Details dialog state
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [detailsTarget, setDetailsTarget] = useState<PrinterType | null>(null)
-  const [detailsYear, setDetailsYear] = useState(new Date().getFullYear())
+  const [detailsYear, setDetailsYear] = useState(CURRENT_YEAR)
 
   const openDetails = useCallback((printer: PrinterType) => {
     setDetailsTarget(printer)
-    setDetailsYear(new Date().getFullYear())
+    setDetailsYear(CURRENT_YEAR)
     setDetailsOpen(true)
   }, [])
 
@@ -181,7 +183,7 @@ export function Printers() {
   // Years that have page count data for this printer
   const detailsPageCountYears = useMemo(() => {
     const years = new Set<number>()
-    years.add(new Date().getFullYear())
+    years.add(CURRENT_YEAR)
     for (const log of detailsPageCounts) {
       years.add(new Date(log.logged_at).getFullYear())
     }
@@ -720,8 +722,7 @@ export function Printers() {
                 <Select value={form.color_capability} onValueChange={v => setForm(f => ({ ...f, color_capability: v as '' | 'mono' | 'colour' }))}>
                   <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="mono">Mono</SelectItem>
-                    <SelectItem value="colour">Colour</SelectItem>
+                    {COLOR_CAPABILITIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -745,14 +746,18 @@ export function Printers() {
             <div className="space-y-1.5">
               <Label>Cost Type</Label>
               <div className="flex gap-2">
-                <button type="button" onClick={() => setForm(f => ({ ...f, cost_type: 'CAPEX' }))}
-                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${form.cost_type === 'CAPEX' ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'border-border text-muted-foreground hover:bg-muted/50'}`}>
-                  CAPEX
-                </button>
-                <button type="button" onClick={() => setForm(f => ({ ...f, cost_type: 'OPEX' }))}
-                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${form.cost_type === 'OPEX' ? 'border-orange-400 bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' : 'border-border text-muted-foreground hover:bg-muted/50'}`}>
-                  OPEX
-                </button>
+                {COST_TYPES.map(({ value: ct }) => (
+                  <button key={ct} type="button" onClick={() => setForm(f => ({ ...f, cost_type: ct }))}
+                    className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                      form.cost_type === ct
+                        ? ct === 'CAPEX'
+                          ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                          : 'border-orange-400 bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                        : 'border-border text-muted-foreground hover:bg-muted/50'
+                    }`}>
+                    {ct}
+                  </button>
+                ))}
               </div>
               <p className="text-xs text-muted-foreground">Asset Tag is auto-generated.</p>
             </div>
@@ -792,10 +797,7 @@ export function Printers() {
               <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="retired">Retired</SelectItem>
-                  <SelectItem value="lost">Lost</SelectItem>
+                  {PRINTER_STATUSES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -1101,8 +1103,7 @@ export function Printers() {
                 <Select value={editForm.color_capability} onValueChange={v => setEditForm(f => ({ ...f, color_capability: v as '' | 'mono' | 'colour' }))}>
                   <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="mono">Mono</SelectItem>
-                    <SelectItem value="colour">Colour</SelectItem>
+                    {COLOR_CAPABILITIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -1128,7 +1129,7 @@ export function Printers() {
             <div className="space-y-1.5">
               <Label>Cost Type</Label>
               <div className="flex gap-2">
-                {(['CAPEX', 'OPEX'] as const).map(ct => (
+                {COST_TYPES.map(({ value: ct }) => (
                   <button
                     key={ct}
                     type="button"
@@ -1184,10 +1185,7 @@ export function Printers() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="retired">Retired</SelectItem>
-                  <SelectItem value="lost">Lost</SelectItem>
+                  {PRINTER_STATUSES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -1272,8 +1270,7 @@ export function Printers() {
               className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground/80 focus:border-blue-500 focus:outline-none dark:border-border dark:bg-secondary dark:text-muted-foreground/50"
             >
               <option value="">All Cost Types</option>
-              <option value="CAPEX">CAPEX</option>
-              <option value="OPEX">OPEX</option>
+              {COST_TYPES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
             <select
               value={status}
@@ -1284,10 +1281,7 @@ export function Printers() {
               className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground/80 focus:border-blue-500 focus:outline-none dark:border-border dark:bg-secondary dark:text-muted-foreground/50"
             >
               <option value="">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="maintenance">Maintenance</option>
-              <option value="retired">Retired</option>
-              <option value="lost">Lost</option>
+              {PRINTER_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
           </div>
 
@@ -1424,7 +1418,7 @@ export function Printers() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Date</Label>
-                  <DatePicker value={pcDate} onChange={setPcDate} toYear={new Date().getFullYear() + 1} />
+                  <DatePicker value={pcDate} onChange={setPcDate} toYear={CURRENT_YEAR + 1} />
                 </div>
               </div>
               <div className="space-y-1.5">

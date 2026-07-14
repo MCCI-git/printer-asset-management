@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Printer;
 use App\Models\PrinterPageCount;
+use App\Services\Calendar;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -44,8 +45,8 @@ class PrinterPageCountController extends Controller
     // GET /api/printers/opex-ytd?year=YYYY
     public function opexYtd(Request $request): JsonResponse
     {
-        $year = (int) $request->get('year', now()->year);
-        $monthsElapsed = $year === now()->year ? now()->month : 12;
+        $year = (int) $request->get('year', Calendar::currentYear());
+        $monthsElapsed = Calendar::monthsElapsed($year);
 
         $opexPrinters = Printer::where('cost_type', 'OPEX')->get();
 

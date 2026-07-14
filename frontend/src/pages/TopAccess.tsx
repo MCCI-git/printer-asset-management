@@ -149,10 +149,10 @@ export function TopAccess() {
   const offlineCount = printers.filter(p => !p.reachable).length
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 -mt-2">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+          <h1 className="text-xl font-bold text-foreground dark:text-secondary-foreground flex items-center gap-2">
             <Printer size={22} className="text-primary" /> TopAccess — Live Printer Data
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">

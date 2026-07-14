@@ -8,6 +8,7 @@ use App\Models\Contract;
 use App\Models\Printer;
 use App\Models\PrinterPageCount;
 use App\Models\Supplier;
+use App\Services\Calendar;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -130,7 +131,7 @@ class DashboardController extends Controller
             9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dec',
         ];
 
-        $year = Carbon::now()->year;
+        $year = Calendar::currentYear();
 
         $rows = PrinterPageCount::selectRaw('MONTH(logged_at) as month, SUM(count) as total')
             ->whereYear('logged_at', $year)

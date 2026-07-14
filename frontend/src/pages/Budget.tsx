@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { DatePicker } from '@/components/ui/date-picker'
 import { formatCurrency } from '@/lib/utils'
+import { CURRENT_YEAR, NEXT_YEAR, yearLabel } from '@/lib/timeline'
 import { useBudget, useUpsertBudget, useAllBudgets, useActualSpend, useBudgetBreakdown, useBudgetHistory } from '@/hooks/useData'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -24,19 +25,15 @@ const yearChartConfig = {
 } satisfies ChartConfig
 
 export function Budget() {
-  const currentYear = new Date().getFullYear()
-  const nextYear = currentYear + 1
-
   const { data: budgetHistory = [] } = useBudgetHistory()
 
-  // Build year options: always include current, next year, and any years with existing budgets
   const yearOptions = Array.from(new Set([
-    nextYear,
-    currentYear,
+    NEXT_YEAR,
+    CURRENT_YEAR,
     ...budgetHistory,
   ])).sort((a, b) => b - a)
 
-  const [selectedYear, setSelectedYear] = useState(currentYear)
+  const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR)
 
   const { data: dbBudget } = useBudget(selectedYear)
   const upsertBudget = useUpsertBudget()
@@ -96,7 +93,7 @@ export function Budget() {
           >
             {yearOptions.map(y => (
               <option key={y} value={y}>
-                {y === nextYear ? `${y} (Next Year)` : y === currentYear ? `${y} (Current)` : y}
+                {yearLabel(y)}
               </option>
             ))}
           </select>

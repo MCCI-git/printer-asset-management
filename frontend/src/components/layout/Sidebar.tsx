@@ -45,9 +45,9 @@ const allNavItems = [
   { path: '/budget',      icon: BookOpen,         label: 'Budget',      roles: ['super-admin','admin','reports','view'] },
   { path: '/reports',     icon: BarChart3,        label: 'Reports',     roles: ['super-admin','admin','reports'], accent: 'violet' },
   { path: '/maintenance', icon: Wrench,           label: 'Maintenance', roles: ['super-admin','admin','reports','view'] },
-  { path: '/snipeit',     icon: Link,             label: 'Snipe-IT',    roles: ['super-admin'], accent: 'violet' },
-  { path: '/topaccess',     icon: Printer,         label: 'TopAccess',     roles: ['super-admin'], accent: 'violet' },
+  { path: '/topaccess',     icon: Printer,         label: 'TopAccess',     roles: ['super-admin', 'admin', 'reports', 'view'], accent: 'violet' },
   { path: '/print-manager', icon: BookOpen,        label: 'Print Manager', roles: ['super-admin', 'admin'], accent: 'violet' },
+  { path: '/snipeit',     icon: Link,             label: 'Snipe-IT',    roles: ['super-admin'], accent: 'violet', separator: true },
   { path: '/admin',       icon: Shield,           label: 'Admin',       roles: ['super-admin'], accent: 'violet' },
 ]
 
@@ -78,6 +78,14 @@ export function Sidebar() {
   const navItems = allNavItems.filter(item => user && item.roles.includes(user.role))
   const initials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) ?? 'U'
 
+  const roleActiveStyle: Record<string, { bg: string; text: string; pill: string; iconBg: string; iconText: string }> = {
+    'super-admin': { bg: 'bg-[#f3e8ff] dark:bg-[#581c87]/40', text: 'text-[#6b21a8] dark:text-[#d8b4fe]', pill: 'bg-[#f3e8ff] dark:bg-[#581c87]/40', iconBg: 'bg-[#6b21a8] dark:bg-[#581c87]', iconText: 'text-white' },
+    'admin':       { bg: 'bg-[#dbeafe] dark:bg-[#1e3a8a]/40', text: 'text-[#1e40af] dark:text-[#93c5fd]', pill: 'bg-[#dbeafe] dark:bg-[#1e3a8a]/40', iconBg: 'bg-[#1e40af] dark:bg-[#1e3a8a]', iconText: 'text-white' },
+    'reports':     { bg: 'bg-[#fef3c7] dark:bg-[#78350f]/40', text: 'text-[#92400e] dark:text-[#fcd34d]', pill: 'bg-[#fef3c7] dark:bg-[#78350f]/40', iconBg: 'bg-[#92400e] dark:bg-[#78350f]', iconText: 'text-white' },
+    'view':        { bg: 'bg-[#dcfce7] dark:bg-[#14532d]/40', text: 'text-[#166534] dark:text-[#86efac]', pill: 'bg-[#dcfce7] dark:bg-[#14532d]/40', iconBg: 'bg-[#166534] dark:bg-[#14532d]', iconText: 'text-white' },
+  }
+  const roleStyle = roleActiveStyle[user?.role ?? 'view']
+
   const handleLogout = async () => {
     await logout()
     navigate('/login')
@@ -89,8 +97,8 @@ export function Sidebar() {
         {/* Logo header */}
         <SidebarHeader className="h-16 justify-center border-b border-border/40 px-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-all duration-200 group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:w-6 group-data-[collapsible=icon]:rounded-md">
-              <Printer className="transition-all duration-200 group-data-[collapsible=icon]:size-3.5" size={15} />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary transition-all duration-200 group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:w-6 group-data-[collapsible=icon]:rounded-md">
+              <Printer className="text-primary-foreground transition-all duration-200 group-data-[collapsible=icon]:size-3.5" size={15} />
             </div>
             {!collapsed && (
               <span className="whitespace-nowrap text-sm font-bold text-foreground">
@@ -108,33 +116,25 @@ export function Sidebar() {
                 {navItems.map(item => {
                   const isActive = location.pathname === item.path
                   const Icon = item.icon
-                  const isViolet = item.accent === 'violet'
 
                   return (
                     <SidebarMenuItem key={item.path}>
+                      {item.separator && <div className="my-1 mx-2 border-t border-border/50" />}
                       <SidebarMenuButton
                         asChild
                         isActive={isActive}
                         tooltip={item.label}
                         className={cn(
                           'relative rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150',
-                          isActive
-                            ? isViolet
-                              ? 'text-violet-700 dark:text-violet-300'
-                              : 'text-primary'
-                            : 'text-muted-foreground hover:text-foreground',
-                          isActive && !isViolet && 'bg-primary/10',
-                          isActive && isViolet && 'bg-violet-50 dark:bg-violet-900/20',
+                          isActive ? roleStyle.text : 'text-muted-foreground hover:text-foreground',
+                          isActive && roleStyle.bg,
                         )}
                       >
                         <NavLink to={item.path} className="flex items-center gap-3">
                           {isActive && (
                             <motion.span
                               layoutId="nav-pill"
-                              className={cn(
-                                'absolute inset-0 rounded-lg',
-                                isViolet ? 'bg-violet-50 dark:bg-violet-900/20' : 'bg-primary/10'
-                              )}
+                              className={cn('absolute inset-0 rounded-lg', roleStyle.pill)}
                               transition={{ type: 'spring', stiffness: 380, damping: 32 }}
                             />
                           )}

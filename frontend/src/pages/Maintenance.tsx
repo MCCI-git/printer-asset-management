@@ -31,6 +31,7 @@ import {
   usePrinters,
 } from '@/hooks/useData'
 import type { WorkOrder, WorkOrderStatus, WorkOrderPriority } from '@/types'
+import { WORK_ORDER_STATUSES, WORK_ORDER_PRIORITIES } from '@/lib/constants'
 
 const priorityVariant: Record<WorkOrderPriority, BadgeProps['variant']> = {
   high:   'destructive',
@@ -331,9 +332,7 @@ export function Maintenance() {
                   className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground/80 focus:border-blue-500 focus:outline-none dark:bg-secondary dark:text-muted-foreground"
                 >
                   <option value="all">All Priorities</option>
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
+                  {WORK_ORDER_PRIORITIES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                 </select>
                 <select
                   value={filterStatus}
@@ -341,11 +340,7 @@ export function Maintenance() {
                   className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground/80 focus:border-blue-500 focus:outline-none dark:bg-secondary dark:text-muted-foreground"
                 >
                   <option value="all">All Statuses</option>
-                  <option value="open">Open</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="scheduled">Scheduled</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
+                  {WORK_ORDER_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                 </select>
                 <div className="flex items-center gap-1.5 ml-auto">
                   <span className="text-xs text-muted-foreground whitespace-nowrap">Completed Date Range</span>
@@ -521,9 +516,7 @@ export function Maintenance() {
                 <Select value={form.priority} onValueChange={v => setForm(f => ({ ...f, priority: v as WorkOrderPriority }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
+                    {WORK_ORDER_PRIORITIES.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -532,11 +525,7 @@ export function Maintenance() {
                 <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v as WorkOrderStatus }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="open">Open</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="scheduled">Scheduled</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    {WORK_ORDER_STATUSES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

@@ -43,6 +43,7 @@ import {
 import { useConsumables, useCreateConsumable, useUpdateConsumable, useDeleteConsumable, useSuppliers, usePrinters, useConsumableAssignments, useAssignConsumable, useUnassignConsumable } from '@/hooks/useData'
 import { formatCurrency, getConsumableStockStatus } from '@/lib/utils'
 import type { Consumable, ConsumableType, Supplier, ConsumableAssignment } from '@/types'
+import { CONSUMABLE_STATUSES, TONER_COLORS } from '@/lib/constants'
 
 export function Consumables() {
   const { data: rawData, isLoading } = useConsumables({ per_page: 500 })
@@ -451,8 +452,7 @@ export function Consumables() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__all__">All Statuses</SelectItem>
-                <SelectItem value="in stock">In Stock</SelectItem>
-                <SelectItem value="out of stock">Out of Stock</SelectItem>
+                {CONSUMABLE_STATUSES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
               </SelectContent>
             </Select>
 
@@ -727,10 +727,7 @@ export function Consumables() {
                   <Select value={editForm.color} onValueChange={v => setEditForm(f => ({ ...f, color: v as '' | 'Black' | 'Cyan' | 'Magenta' | 'Yellow' }))} onOpenChange={o => o ? onSelectOpen() : onSelectClose()}>
                     <SelectTrigger className="w-full"><SelectValue placeholder="Select colour…" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Black">Black</SelectItem>
-                      <SelectItem value="Cyan">Cyan</SelectItem>
-                      <SelectItem value="Magenta">Magenta</SelectItem>
-                      <SelectItem value="Yellow">Yellow</SelectItem>
+                      {TONER_COLORS.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>

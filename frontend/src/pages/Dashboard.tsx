@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { useDashboardStats, useBudget, useUpsertBudget, useActualSpend } from '@/hooks/useData'
 import { formatCurrency } from '@/lib/utils'
+import { CURRENT_YEAR, yearLabel } from '@/lib/timeline'
 import {
   RadialBarChart, RadialBar, PolarRadiusAxis, Label as RechartsLabel,
   BarChart, Bar, XAxis, CartesianGrid, LabelList,
@@ -33,9 +34,8 @@ export function Dashboard() {
   const { data: stats, isLoading } = useDashboardStats()
   const [alertsOpen, setAlertsOpen] = useState<string | undefined>(undefined)
 
-  const currentYear = new Date().getFullYear()
-  const { data: dbBudget } = useBudget(currentYear)
-  const { data: actualData } = useActualSpend(currentYear)
+  const { data: dbBudget } = useBudget(CURRENT_YEAR)
+  const { data: actualData } = useActualSpend(CURRENT_YEAR)
   const totalActual = actualData?.actual ?? 0
   const upsertBudget = useUpsertBudget()
   const opexBudget = dbBudget?.total ?? 0
@@ -50,7 +50,7 @@ export function Dashboard() {
   const saveBudget = async () => {
     const val = Number(budgetInput)
     if (isNaN(val) || val < 0) return
-    await upsertBudget.mutateAsync({ year: currentYear, type: 'total', amount: val })
+    await upsertBudget.mutateAsync({ year: CURRENT_YEAR, type: 'total', amount: val })
     setBudgetDialog(false)
   }
 
@@ -266,7 +266,7 @@ export function Dashboard() {
               <CardHeader className="py-3">
                 <CardTitle>Monthly Print Volume</CardTitle>
                 <CardDescription className="text-xs">
-                  Total pages printed per month · {new Date().getFullYear()} · {totalPages.toLocaleString()} pages YTD
+                  Total pages printed per month · {CURRENT_YEAR} · {totalPages.toLocaleString()} pages YTD
                 </CardDescription>
               </CardHeader>
               <CardContent className="pb-3">

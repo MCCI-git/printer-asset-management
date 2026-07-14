@@ -1,14 +1,15 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import type { Printer, Consumable, Supplier, Contract } from '@/types'
+import { CURRENT_YEAR, CURRENT_MONTH, NEXT_YEAR } from '@/lib/timeline'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 const fmt = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 const pct = (a: number, b: number) => b === 0 ? 'N/A' : `${((a / b) * 100).toFixed(1)}%`
 const today = () => new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-const thisYear = new Date().getFullYear()
-const nextYear = thisYear + 1
+const thisYear = CURRENT_YEAR
+const nextYear = NEXT_YEAR
 
 // ─── CSV builder ─────────────────────────────────────────────────────────────
 
@@ -436,7 +437,7 @@ export function exportSupplierSpend(format: 'csv' | 'pdf', suppliers: Supplier[]
   const yoyChange  = total2024 > 0 ? ((total2023 > 0 ? total2024 - total2023 : 0) / total2023) * 100 : 0
   const overBudget = suppliers.filter(s => s.spend_2025_ytd > s.budget_2025)
   const underRated = suppliers.filter(s => s.rating < 3)
-  const monthsElapsed = new Date().getMonth() + 1
+  const monthsElapsed = CURRENT_MONTH
   const monthlyBurnRate = totalYtd / monthsElapsed
   const forecastFY = monthlyBurnRate * 12
   const nextYearForecast = forecastFY * 1.04  // 4% uplift
@@ -602,7 +603,7 @@ export function exportOpexYtd(
   const opexPrinters = printers.filter(p => p.cost_type === 'OPEX')
   const monthlyOpex = opexPrinters.reduce((s, p) => s + (p.monthly_fixed_cost ?? 0), 0)
   const consumableValue = consumables.reduce((s, c) => s + c.unit_cost * c.quantity, 0)
-  const monthsElapsed = new Date().getMonth() + 1
+  const monthsElapsed = CURRENT_MONTH
   const ytdOpex = monthlyOpex * monthsElapsed
   const totalYtdOpex = ytdOpex + totalContractCost
   const currentBudget = budgets.find(b => b.year === thisYear)

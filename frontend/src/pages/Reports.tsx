@@ -23,6 +23,7 @@ import {
 import { activityLogsApi } from '@/services/api'
 import { toast } from 'sonner'
 import type { Printer, Consumable, Supplier, Contract } from '@/types'
+import { ACTIVITY_LOG_TYPES, ACTIVITY_LOG_ACTIONS } from '@/lib/constants'
 
 type Format = 'csv' | 'pdf'
 type ReportKey = 'asset' | 'opex-monthly' | 'consumable' | 'supplier' | 'maintenance' | 'opex-ytd'
@@ -203,12 +204,7 @@ export function Reports() {
               <SelectTrigger className="w-[140px]"><SelectValue placeholder="All types" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="Printer">Printer</SelectItem>
-                <SelectItem value="Consumable">Consumable</SelectItem>
-                <SelectItem value="WorkOrder">Work Order</SelectItem>
-                <SelectItem value="Contract">Contract</SelectItem>
-                <SelectItem value="Supplier">Supplier</SelectItem>
-                <SelectItem value="Budget">Budget</SelectItem>
+                {ACTIVITY_LOG_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
               </SelectContent>
             </Select>
 
@@ -216,11 +212,7 @@ export function Reports() {
               <SelectTrigger className="w-[130px]"><SelectValue placeholder="All actions" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Actions</SelectItem>
-                <SelectItem value="created">Created</SelectItem>
-                <SelectItem value="updated">Updated</SelectItem>
-                <SelectItem value="deleted">Deleted</SelectItem>
-                <SelectItem value="assigned">Assigned</SelectItem>
-                <SelectItem value="unassigned">Unassigned</SelectItem>
+                {ACTIVITY_LOG_ACTIONS.map(a => <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>)}
               </SelectContent>
             </Select>
 

@@ -50,13 +50,29 @@ class PrintManagerController extends Controller
         $validator = Validator::make($request->all(), [
             'name'       => 'required|string|max:255',
             'email'      => 'required|email|max:255',
-            'plan_id'    => 'required|exists:print_plans,id',
-            'printer_id' => 'nullable|string|max:50',
+            'plan_id'    => 'nullable|exists:print_plans,id',
+            'printer_id' => 'nullable|string|max:50|unique:print_students,printer_id',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        $student = PrintStudent::create($request->only('name', 'email', 'plan_id', 'printer_id'));
+        $essentialPlan = PrintPlan::where('label', 'Essential')->first();
+        $planId = $request->input('plan_id') ?? $essentialPlan?->id;
+
+        $student = PrintStudent::create([
+            ...$request->only('name', 'email', 'printer_id'),
+            'plan_id' => $planId,
+        ]);
+        if ($essentialPlan) {
+            PrintPurchase::create([
+                'student_id'   => $student->id,
+                'plan_id'      => $essentialPlan->id,
+                'price'        => $essentialPlan->price,
+                'type'         => 'purchase',
+                'purchased_at' => now(),
+            ]);
+        }
+
         $student->load(['plan', 'purchases.plan']);
         return response()->json($this->formatStudent($student), 201);
     }
@@ -68,7 +84,7 @@ class PrintManagerController extends Controller
             'name'       => 'sometimes|required|string|max:255',
             'email'      => 'sometimes|required|email|max:255',
             'plan_id'    => 'sometimes|required|exists:print_plans,id',
-            'printer_id' => 'nullable|string|max:50',
+            'printer_id' => 'nullable|string|max:50|unique:print_students,printer_id,' . $id,
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -122,9 +138,14 @@ class PrintManagerController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        $esc = fn(string $v) => htmlspecialchars($v, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $compiledBody = str_replace(
             ['[STUDENT_NAME]', '[PRINTER_ID]', '[PLAN_NAME]'],
-            [$student->name, $student->printer_id ?? 'Not assigned', $student->plan->label],
+            [
+                $esc($student->name),
+                $esc($student->printer_id ?? 'Not assigned'),
+                $esc($student->plan->label),
+            ],
             $request->input('body')
         );
 
