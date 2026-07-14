@@ -27,14 +27,26 @@ const yearChartConfig = {
 export function Budget() {
   const { data: budgetHistory = [] } = useBudgetHistory()
 
+  const [extraYears, setExtraYears] = useState<number[]>([])
   const yearOptions = Array.from(new Set([
-    NEXT_YEAR + 1,
     NEXT_YEAR,
     CURRENT_YEAR,
     ...budgetHistory,
+    ...extraYears,
   ])).sort((a, b) => b - a)
 
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR)
+  const [addYearInput, setAddYearInput] = useState('')
+  const [showAddYear, setShowAddYear] = useState(false)
+
+  const handleAddYear = () => {
+    const y = parseInt(addYearInput)
+    if (isNaN(y) || y < 2000 || y > 2100) return
+    setExtraYears(prev => [...new Set([...prev, y])])
+    setSelectedYear(y)
+    setAddYearInput('')
+    setShowAddYear(false)
+  }
 
   const { data: dbBudget } = useBudget(selectedYear)
   const upsertBudget = useUpsertBudget()
@@ -98,6 +110,24 @@ export function Budget() {
               </option>
             ))}
           </select>
+          <div className="relative">
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={() => setShowAddYear(v => !v)} title="Plan a new year">
+              <Plus size={14} />
+            </Button>
+            {showAddYear && (
+              <div className="absolute right-0 top-9 z-50 flex items-center gap-2 rounded-lg border border-border bg-background p-2 shadow-lg">
+                <Input
+                  className="h-7 w-24 text-sm"
+                  placeholder="e.g. 2029"
+                  value={addYearInput}
+                  onChange={e => setAddYearInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleAddYear()}
+                  autoFocus
+                />
+                <Button size="sm" className="h-7 text-xs" onClick={handleAddYear}>Add</Button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

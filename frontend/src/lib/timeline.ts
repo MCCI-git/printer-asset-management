@@ -27,8 +27,7 @@ export function isThisYear(dateStr: string): boolean {
 
 /** Label for a year selector option. */
 export function yearLabel(year: number): string {
-  if (year === CURRENT_YEAR)     return `${year} (Current)`
-  if (year === NEXT_YEAR)        return `${year} (Next Year)`
-  if (year === NEXT_YEAR + 1)    return `${year} (2 Years Ahead)`
+  if (year === CURRENT_YEAR) return `${year} (Current)`
+  if (year === NEXT_YEAR)    return `${year} (Next Year)`
   return String(year)
 }
