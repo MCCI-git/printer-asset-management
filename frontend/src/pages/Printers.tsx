@@ -1051,11 +1051,11 @@ export function Printers() {
 
       {/* Edit Printer Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
+        <DialogContent className="max-w-md flex flex-col max-h-[80vh]">
+          <DialogHeader className="shrink-0">
             <DialogTitle>Edit Printer</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
+          <div className="space-y-4 py-2 overflow-y-auto flex-1 pr-1">
             {editError && (
               <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">{editError}</p>
             )}
@@ -1219,7 +1219,7 @@ export function Printers() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="shrink-0 pt-2 border-t border-border/40">
             <Button variant="outline" onClick={() => setEditOpen(false)} disabled={editSaving}>
               Cancel
             </Button>
