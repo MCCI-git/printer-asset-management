@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { toast } from 'sonner'
 import {
   Printer, RefreshCw, CheckCircle2, XCircle, AlertCircle,
@@ -132,6 +132,8 @@ export function TopAccess() {
     }
   }, [])
 
+  useEffect(() => { fetchPrinters() }, [fetchPrinters])
+
   const testConnection = async () => {
     if (!testIp) { toast.error('Enter an IP address.'); return }
     setTesting(true)
@@ -185,7 +187,7 @@ export function TopAccess() {
             <Printer size={40} className="text-muted-foreground/40" />
             <p className="text-sm font-medium text-muted-foreground">No printers found.</p>
             <p className="text-xs text-muted-foreground max-w-xs">
-              Add printers with an IP address from the Printers page, then click Fetch Data.
+              Add printers with an IP address from the Printers page. Click Fetch Data to pull live SNMP data.
             </p>
             <Button size="sm" onClick={fetchPrinters} disabled={loading}>
               <RefreshCw size={13} className="mr-1.5" /> Fetch Data
