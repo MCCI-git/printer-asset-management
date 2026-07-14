@@ -144,6 +144,7 @@ export function PrintManager() {
 
   // delete confirmation
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; student: Student | null }>({ open: false, student: null })
+  const [deleteLogModal, setDeleteLogModal] = useState<{ open: boolean; purchaseId: number | null }>({ open: false, purchaseId: null })
 
   // email
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
@@ -249,14 +250,17 @@ export function PrintManager() {
     }
   }
 
-  const deleteLog = async (purchaseId: number) => {
-    setDeletingLogId(purchaseId)
+  const deleteLog = (purchaseId: number) => setDeleteLogModal({ open: true, purchaseId })
+
+  const confirmDeleteLog = async () => {
+    if (!deleteLogModal.purchaseId) return
+    setDeletingLogId(deleteLogModal.purchaseId)
+    setDeleteLogModal({ open: false, purchaseId: null })
     try {
-      const res = await printManagerApi.deletePurchase(purchaseId)
+      const res = await printManagerApi.deletePurchase(deleteLogModal.purchaseId)
       const updated: Student = res.data
       setStudents(prev => prev.map(s => s.id === updated.id ? updated : s))
       setHistoryModal(prev => ({ ...prev, student: updated }))
-      setBudget(null) // trigger re-fetch
       printManagerApi.budget().then(r => setBudget(r.data))
       toast.success('Log entry deleted.')
     } catch {
@@ -817,6 +821,21 @@ export function PrintManager() {
       </Dialog>
 
       {/* ── DIALOG: Delete Confirmation ───────────────── */}
+      <AlertDialog open={deleteLogModal.open} onOpenChange={open => !open && setDeleteLogModal({ open: false, purchaseId: null })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete log entry?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove this entry from the activity log and update the budget totals.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={confirmDeleteLog}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={deleteModal.open} onOpenChange={open => !open && setDeleteModal({ open: false, student: null })}>
         <AlertDialogContent>
           <AlertDialogHeader>
