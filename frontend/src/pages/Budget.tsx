@@ -28,6 +28,7 @@ export function Budget() {
   const { data: budgetHistory = [] } = useBudgetHistory()
 
   const yearOptions = Array.from(new Set([
+    NEXT_YEAR + 1,
     NEXT_YEAR,
     CURRENT_YEAR,
     ...budgetHistory,
