@@ -103,7 +103,12 @@ class PrintManagerController extends Controller
 
     public function deletePurchase(int $id): JsonResponse
     {
-        $purchase = PrintPurchase::findOrFail($id);
+        $purchase = PrintPurchase::with('plan')->findOrFail($id);
+
+        if ($purchase->type === 'purchase' && $purchase->price == 0) {
+            return response()->json(['message' => 'Free plan entries cannot be deleted.'], 403);
+        }
+
         $student  = PrintStudent::findOrFail($purchase->student_id);
         $purchase->delete();
 

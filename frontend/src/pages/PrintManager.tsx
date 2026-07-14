@@ -768,15 +768,17 @@ export function PrintManager() {
                         </td>
                         <td className="px-3 py-2 font-medium">{h.price > 0 ? fmt(h.price) : '—'}</td>
                         <td className="px-3 py-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                            disabled={deletingLogId === h.id}
-                            onClick={() => deleteLog(h.id)}
-                          >
-                            <Trash2 size={12} />
-                          </Button>
+                          {!(h.type === 'purchase' && h.price === 0) && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                              disabled={deletingLogId === h.id}
+                              onClick={() => deleteLog(h.id)}
+                            >
+                              <Trash2 size={12} />
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     ))}
