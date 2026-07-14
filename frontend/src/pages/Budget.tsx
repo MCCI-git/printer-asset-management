@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { BookOpen, DollarSign, TrendingUp, PiggyBank, Plus } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { DatePicker } from '@/components/ui/date-picker'
 import { formatCurrency } from '@/lib/utils'
-import { CURRENT_YEAR, NEXT_YEAR, yearLabel } from '@/lib/timeline'
+import { CURRENT_YEAR, yearLabel } from '@/lib/timeline'
 import { useBudget, useUpsertBudget, useAllBudgets, useActualSpend, useBudgetBreakdown, useBudgetHistory } from '@/hooks/useData'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -29,14 +29,19 @@ export function Budget() {
 
   const [extraYears, setExtraYears] = useState<number[]>([])
   const yearOptions = Array.from(new Set([
-    NEXT_YEAR,
-    CURRENT_YEAR,
     ...budgetHistory,
     ...extraYears,
   ])).sort((a, b) => b - a)
 
-  const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR)
+  const [selectedYear, setSelectedYear] = useState<number | null>(null)
   const [addYearInput, setAddYearInput] = useState('')
+
+  // Auto-select most recent year once history loads
+  useEffect(() => {
+    if (yearOptions.length > 0 && selectedYear === null) {
+      setSelectedYear(yearOptions[0])
+    }
+  }, [yearOptions.length])
   const [showAddYear, setShowAddYear] = useState(false)
 
   const handleAddYear = () => {
@@ -48,11 +53,12 @@ export function Budget() {
     setShowAddYear(false)
   }
 
-  const { data: dbBudget } = useBudget(selectedYear)
+  const activeYear = selectedYear ?? CURRENT_YEAR
+  const { data: dbBudget } = useBudget(activeYear)
   const upsertBudget = useUpsertBudget()
   const { data: allBudgets = [] } = useAllBudgets()
-  const { data: actualData } = useActualSpend(selectedYear)
-  const { data: breakdownData } = useBudgetBreakdown(selectedYear)
+  const { data: actualData } = useActualSpend(activeYear)
+  const { data: breakdownData } = useBudgetBreakdown(activeYear)
   const categoryData = breakdownData?.categories ?? []
 
   const totalBudgeted = dbBudget?.total ?? 0
@@ -67,8 +73,8 @@ export function Budget() {
 
   const openDialog = () => {
     setBudgetInput(String(totalBudgeted || ''))
-    setStartDateInput(dbBudget?.start_date ?? `${selectedYear}-01-01`)
-    setEndDateInput(dbBudget?.end_date ?? `${selectedYear}-12-31`)
+    setStartDateInput(dbBudget?.start_date ?? `${activeYear}-01-01`)
+    setEndDateInput(dbBudget?.end_date ?? `${activeYear}-12-31`)
     setDialogOpen(true)
   }
 
@@ -77,7 +83,7 @@ export function Budget() {
     if (isNaN(budgetVal) || budgetVal < 0) return
     if (startDateInput && endDateInput && endDateInput < startDateInput) return
     await upsertBudget.mutateAsync({
-      year: selectedYear,
+      year: activeYear,
       type: 'total',
       amount: budgetVal,
       start_date: startDateInput || undefined,
@@ -92,7 +98,7 @@ export function Budget() {
         <div>
           <h1 className="text-xl font-bold text-foreground dark:text-secondary-foreground">Budget</h1>
           <p className="text-sm text-muted-foreground dark:text-muted-foreground/70">
-            FY {selectedYear} budget vs actual spend tracking
+            FY {activeYear} budget vs actual spend tracking
             {dbBudget?.start_date && dbBudget?.end_date && (
               <> · {format(new Date(dbBudget.start_date), 'dd MMM yyyy')} – {format(new Date(dbBudget.end_date), 'dd MMM yyyy')}</>
             )}
@@ -100,7 +106,7 @@ export function Budget() {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <select
-            value={selectedYear}
+            value={activeYear}
             onChange={e => setSelectedYear(Number(e.target.value))}
             className="h-8 rounded-md border border-border bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           >
@@ -276,11 +282,11 @@ export function Budget() {
       <Dialog open={dialogOpen} onOpenChange={o => { if (!o) setDialogOpen(false) }}>
         <DialogContent className="max-w-xs">
           <DialogHeader>
-            <DialogTitle>Set Budget — FY {selectedYear}</DialogTitle>
+            <DialogTitle>Set Budget — FY {activeYear}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1.5">
-              <Label htmlFor="total-budget-input">Allocated Budget (Rs) — {selectedYear}</Label>
+              <Label htmlFor="total-budget-input">Allocated Budget (Rs) — {activeYear}</Label>
               <Input
                 id="total-budget-input"
                 type="number"
@@ -295,11 +301,11 @@ export function Budget() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Start Date</Label>
-                <DatePicker value={startDateInput} onChange={setStartDateInput} placeholder="Start" toYear={selectedYear + 1} />
+                <DatePicker value={startDateInput} onChange={setStartDateInput} placeholder="Start" toYear={activeYear + 1} />
               </div>
               <div className="space-y-1.5">
                 <Label>Finish Date</Label>
-                <DatePicker value={endDateInput} onChange={setEndDateInput} placeholder="Finish" toYear={selectedYear + 1} />
+                <DatePicker value={endDateInput} onChange={setEndDateInput} placeholder="Finish" toYear={activeYear + 1} />
               </div>
             </div>
           </div>
