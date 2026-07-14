@@ -623,7 +623,7 @@ export function PrintManager() {
                   contentEditable
                   suppressContentEditableWarning
                   onInput={e => setEmailBodyHtml((e.currentTarget as HTMLDivElement).innerHTML)}
-                  className="min-h-[140px] rounded-lg border-2 border-dashed border-border bg-background p-3 text-sm leading-relaxed focus:border-primary focus:outline-none hover:border-primary/60 transition-colors"
+                  className="min-h-[260px] rounded-lg border-2 border-dashed border-border bg-background p-3 text-sm leading-relaxed focus:border-primary focus:outline-none hover:border-primary/60 transition-colors overflow-y-auto"
                   dangerouslySetInnerHTML={{ __html: defaultEmailBody }}
                 />
                 <p className="text-[10px] text-muted-foreground">Use <strong>[STUDENT_NAME]</strong>, <strong>[PRINTER_ID]</strong>, <strong>[PLAN_NAME]</strong></p>
