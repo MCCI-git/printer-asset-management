@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 import {
   GraduationCap, DollarSign, BookOpen, Plus, Trash2,
   Pencil, Mail, ClipboardList, RefreshCw, Save, Send,
-  CheckCircle2, XCircle,
+  CheckCircle2, XCircle, Paperclip,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -154,6 +154,7 @@ export function PrintManager() {
   const [emailBodyHtml, setEmailBodyHtml] = useState('')
   const savedTemplateRef = useRef<string>('')
   const [savingTemplate, setSavingTemplate] = useState(false)
+  const [emailAttachments, setEmailAttachments] = useState<File[]>([])
   const [sendingEmail, setSendingEmail] = useState(false)
   const [emailResult, setEmailResult] = useState<{ success: boolean; message: string } | null>(null)
 
@@ -373,11 +374,16 @@ export function PrintManager() {
     setSendingEmail(true)
     setEmailResult(null)
     try {
-      const res = await printManagerApi.sendEmail(selectedStudent.id, { subject: emailSubject, body })
+      const fd = new FormData()
+      fd.append('subject', emailSubject)
+      fd.append('body', body)
+      emailAttachments.forEach(f => fd.append('attachments[]', f))
+      const res = await printManagerApi.sendEmail(selectedStudent.id, fd)
       setEmailResult({ success: true, message: res.data.message })
       // refresh student to pick up logged email
       const sRes = await printManagerApi.students()
       setStudents(sRes.data)
+      setEmailAttachments([])
       toast.success('Email sent.')
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to send email.'
@@ -659,6 +665,42 @@ export function PrintManager() {
                   className="min-h-[260px] rounded-lg border-2 border-dashed border-border bg-background p-3 text-sm leading-relaxed focus:border-primary focus:outline-none hover:border-primary/60 transition-colors overflow-y-auto"
                 />
                 <p className="text-[10px] text-muted-foreground">Use <strong>[STUDENT_NAME]</strong>, <strong>[PRINTER_ID]</strong>, <strong>[PLAN_NAME]</strong></p>
+              </div>
+
+              {/* Attachments */}
+              <div className="space-y-1">
+                <Label className="text-xs">Attachments</Label>
+                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground hover:border-primary/60 transition-colors">
+                  <Paperclip size={13} />
+                  <span>Click to add files (images, PDF, Word…)</span>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                    className="hidden"
+                    onChange={e => {
+                      const files = Array.from(e.target.files ?? [])
+                      setEmailAttachments(prev => [...prev, ...files])
+                      e.target.value = ''
+                    }}
+                  />
+                </label>
+                {emailAttachments.length > 0 && (
+                  <ul className="mt-1 space-y-1">
+                    {emailAttachments.map((f, i) => (
+                      <li key={i} className="flex items-center justify-between rounded-md bg-muted/40 px-2 py-1 text-xs">
+                        <span className="truncate max-w-[220px]">{f.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => setEmailAttachments(prev => prev.filter((_, j) => j !== i))}
+                          className="ml-2 text-muted-foreground hover:text-destructive"
+                        >
+                          <XCircle size={13} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
 
               {/* Live preview */}

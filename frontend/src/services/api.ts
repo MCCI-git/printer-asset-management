@@ -108,8 +108,8 @@ export const printManagerApi = {
   deleteStudent: (id: number) => api.delete(`/print-manager/students/${id}`),
   logPurchase: (studentId: number, data: { plan_id: number; purchased_at: string }) =>
     api.post(`/print-manager/students/${studentId}/purchase`, data),
-  sendEmail: (studentId: number, data: { subject: string; body: string }) =>
-    api.post(`/print-manager/students/${studentId}/email`, data),
+  sendEmail: (studentId: number, data: FormData) =>
+    api.post(`/print-manager/students/${studentId}/email`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   deletePurchase: (id: number) => api.delete(`/print-manager/purchases/${id}`),
   budget: () => api.get('/print-manager/budget'),
   getEmailTemplate: () => api.get('/print-manager/email-template'),

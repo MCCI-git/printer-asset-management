@@ -172,8 +172,10 @@ class PrintManagerController extends Controller
     {
         $student = PrintStudent::with('plan')->findOrFail($studentId);
         $validator = Validator::make($request->all(), [
-            'subject' => 'required|string',
-            'body'    => 'required|string',
+            'subject'          => 'required|string',
+            'body'             => 'required|string',
+            'attachments'      => 'nullable|array',
+            'attachments.*'    => 'file|max:10240',
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -190,10 +192,18 @@ class PrintManagerController extends Controller
             $request->input('body')
         );
 
+        $attachments = $request->file('attachments') ?? [];
+
         try {
-            Mail::html($compiledBody, function ($message) use ($student, $request) {
+            Mail::html($compiledBody, function ($message) use ($student, $request, $attachments) {
                 $message->to($student->email, $student->name)
                         ->subject($request->input('subject'));
+                foreach ($attachments as $file) {
+                    $message->attach($file->getRealPath(), [
+                        'as'   => $file->getClientOriginalName(),
+                        'mime' => $file->getMimeType(),
+                    ]);
+                }
             });
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Mail error: ' . $e->getMessage()], 500);
