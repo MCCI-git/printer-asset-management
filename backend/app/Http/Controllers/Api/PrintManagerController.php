@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppSetting;
 use App\Models\PrintPlan;
 use App\Models\PrintPurchase;
 use App\Models\PrintStudent;
@@ -178,6 +179,25 @@ class PrintManagerController extends Controller
         ]);
 
         return response()->json(['success' => true, 'message' => "Email sent to {$student->email}."]);
+    }
+
+    // ── Email Template ───────────────────────────────────────────────
+
+    public function getEmailTemplate(): JsonResponse
+    {
+        return response()->json(['template' => AppSetting::get('email_template')]);
+    }
+
+    public function saveEmailTemplate(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'template' => 'required|string',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+        AppSetting::set('email_template', $request->input('template'));
+        return response()->json(['success' => true]);
     }
 
     // ── Budget ────────────────────────────────────────────────────────

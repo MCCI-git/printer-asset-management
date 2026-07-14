@@ -151,6 +151,7 @@ export function PrintManager() {
   const [emailSubject, setEmailSubject] = useState('Printing Plan Update')
   const bodyRef = useRef<HTMLDivElement>(null)
   const [emailBodyHtml, setEmailBodyHtml] = useState('')
+  const [savingTemplate, setSavingTemplate] = useState(false)
   const [sendingEmail, setSendingEmail] = useState(false)
   const [emailResult, setEmailResult] = useState<{ success: boolean; message: string } | null>(null)
 
@@ -190,7 +191,17 @@ export function PrintManager() {
     }
   }, [])
 
-  useEffect(() => { fetchAll(); fetchBudget() }, [fetchAll, fetchBudget])
+  useEffect(() => {
+    fetchAll()
+    fetchBudget()
+    printManagerApi.getEmailTemplate().then(res => {
+      const saved = res.data.template
+      if (saved && bodyRef.current) {
+        bodyRef.current.innerHTML = saved
+        setEmailBodyHtml(saved)
+      }
+    })
+  }, [fetchAll, fetchBudget])
 
   useEffect(() => {
     if (activeTab === 'plans') fetchBudget()
@@ -331,6 +342,20 @@ export function PrintManager() {
       .replace(/\[STUDENT_NAME\]/g, escapeHtml(student.name))
       .replace(/\[PRINTER_ID\]/g, escapeHtml(student.printer_id ?? 'Not assigned'))
       .replace(/\[PLAN_NAME\]/g, escapeHtml(student.plan_label))
+  }
+
+  const saveTemplate = async () => {
+    const html = bodyRef.current?.innerHTML ?? ''
+    if (!html.trim()) { toast.error('Template cannot be empty.'); return }
+    setSavingTemplate(true)
+    try {
+      await printManagerApi.saveEmailTemplate(html)
+      toast.success('Template saved.')
+    } catch {
+      toast.error('Failed to save template.')
+    } finally {
+      setSavingTemplate(false)
+    }
   }
 
   const sendEmail = async () => {
@@ -639,6 +664,10 @@ export function PrintManager() {
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
+                <Button size="sm" variant="outline" onClick={saveTemplate} disabled={savingTemplate}>
+                  {savingTemplate ? <RefreshCw size={13} className="mr-1.5 animate-spin" /> : <Save size={13} className="mr-1.5" />}
+                  {savingTemplate ? 'Saving…' : 'Save Template'}
+                </Button>
                 <Button size="sm" variant="outline" onClick={sendEmail} disabled={sendingEmail || !selectedStudent}>
                   {sendingEmail ? <RefreshCw size={13} className="mr-1.5 animate-spin" /> : <Send size={13} className="mr-1.5" />}
                   {sendingEmail ? 'Sending…' : 'Send via SMTP'}

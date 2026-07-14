@@ -67,6 +67,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/purchases/{id}', [PrintManagerController::class, 'deletePurchase']);
         Route::post('/students/{id}/email', [PrintManagerController::class, 'sendEmail']);
         Route::get('/budget', [PrintManagerController::class, 'budget']);
+        Route::get('/email-template', [PrintManagerController::class, 'getEmailTemplate']);
+        Route::post('/email-template', [PrintManagerController::class, 'saveEmailTemplate']);
     });
 
     Route::prefix('topaccess')->group(function () {

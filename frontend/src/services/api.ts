@@ -112,6 +112,8 @@ export const printManagerApi = {
     api.post(`/print-manager/students/${studentId}/email`, data),
   deletePurchase: (id: number) => api.delete(`/print-manager/purchases/${id}`),
   budget: () => api.get('/print-manager/budget'),
+  getEmailTemplate: () => api.get('/print-manager/email-template'),
+  saveEmailTemplate: (template: string) => api.post('/print-manager/email-template', { template }),
 }
 
 // TopAccess (Toshiba SNMP)
