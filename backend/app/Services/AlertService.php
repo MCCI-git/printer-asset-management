@@ -66,19 +66,23 @@ class AlertService
         }
 
         if (!empty($notif['alert_contract_expiry'])) {
+            // Fetch all active contracts that haven't yet expired
             $contracts = Contract::where('status', 'active')
                 ->where('end_date', '>=', Carbon::today())
-                ->where('end_date', '<=', Carbon::today()->addDays(60))
                 ->get();
             foreach ($contracts as $c) {
-                $daysLeft = (int) Carbon::today()->diffInDays($c->end_date);
+                $daysLeft   = (int) Carbon::today()->diffInDays($c->end_date);
+                $noticeDays = (int) ($c->notice_period_days ?? 30); // fallback 30 days
+                // Only alert if we're within the contract's own notice window
+                if ($daysLeft > $noticeDays) continue;
                 $expiringContracts[] = [
-                    'name'      => $c->name,
-                    'vendor'    => $c->vendor,
-                    'end_date'  => Carbon::parse($c->end_date)->format('d M Y'),
-                    'days_left' => $daysLeft,
-                    'tier'      => $daysLeft <= 30 ? '30' : ($daysLeft <= 45 ? '45' : '60'),
-                    'manager'   => $c->contract_manager,
+                    'name'        => $c->name,
+                    'vendor'      => $c->vendor,
+                    'end_date'    => Carbon::parse($c->end_date)->format('d M Y'),
+                    'days_left'   => $daysLeft,
+                    'notice_days' => $noticeDays,
+                    'tier'        => $daysLeft <= 7 ? 'critical' : ($daysLeft <= 14 ? 'urgent' : 'notice'),
+                    'manager'     => $c->contract_manager,
                 ];
             }
             usort($expiringContracts, fn($a, $b) => $a['days_left'] <=> $b['days_left']);

@@ -37,9 +37,9 @@
 
     @php
       $hasAlerts = count($outOfStock) || count($lowStock) || count($expiringContracts) || count($overdueService);
-      $contracts30 = array_filter($expiringContracts, fn($c) => $c['tier'] === '30');
-      $contracts45 = array_filter($expiringContracts, fn($c) => $c['tier'] === '45');
-      $contracts60 = array_filter($expiringContracts, fn($c) => $c['tier'] === '60');
+      $contractsCritical = array_filter($expiringContracts, fn($c) => $c['tier'] === 'critical');
+      $contractsUrgent   = array_filter($expiringContracts, fn($c) => $c['tier'] === 'urgent');
+      $contractsNotice   = array_filter($expiringContracts, fn($c) => $c['tier'] === 'notice');
     @endphp
 
     @if (!$hasAlerts)
@@ -81,17 +81,18 @@
     </div>
     @endif
 
-    @if (count($contracts30))
+    @if (count($contractsCritical))
     <div class="section">
-      <div class="section-title"><span class="badge badge-red">Expiring in 30 Days</span> &nbsp;Urgent — Renew Immediately</div>
+      <div class="section-title"><span class="badge badge-red">Critical — Expiring Within 7 Days</span> &nbsp;Renew Immediately</div>
       <table>
-        <tr><th>Contract</th><th>Vendor</th><th>Expires</th><th>Days Left</th><th>Manager</th></tr>
-        @foreach ($contracts30 as $c)
+        <tr><th>Contract</th><th>Printer</th><th>Expires</th><th>Days Left</th><th>Notice Period</th><th>Manager</th></tr>
+        @foreach ($contractsCritical as $c)
         <tr>
           <td>{{ $c['name'] }}</td>
           <td>{{ $c['vendor'] }}</td>
           <td>{{ $c['end_date'] }}</td>
           <td><strong>{{ $c['days_left'] }}</strong></td>
+          <td>{{ $c['notice_days'] }} days</td>
           <td>{{ $c['manager'] ?? '—' }}</td>
         </tr>
         @endforeach
@@ -99,17 +100,18 @@
     </div>
     @endif
 
-    @if (count($contracts45))
+    @if (count($contractsUrgent))
     <div class="section">
-      <div class="section-title"><span class="badge badge-orange">Expiring in 45 Days</span> &nbsp;Action Required Soon</div>
+      <div class="section-title"><span class="badge badge-orange">Urgent — Expiring Within 14 Days</span> &nbsp;Action Required</div>
       <table>
-        <tr><th>Contract</th><th>Vendor</th><th>Expires</th><th>Days Left</th><th>Manager</th></tr>
-        @foreach ($contracts45 as $c)
+        <tr><th>Contract</th><th>Printer</th><th>Expires</th><th>Days Left</th><th>Notice Period</th><th>Manager</th></tr>
+        @foreach ($contractsUrgent as $c)
         <tr>
           <td>{{ $c['name'] }}</td>
           <td>{{ $c['vendor'] }}</td>
           <td>{{ $c['end_date'] }}</td>
           <td>{{ $c['days_left'] }}</td>
+          <td>{{ $c['notice_days'] }} days</td>
           <td>{{ $c['manager'] ?? '—' }}</td>
         </tr>
         @endforeach
@@ -117,17 +119,18 @@
     </div>
     @endif
 
-    @if (count($contracts60))
+    @if (count($contractsNotice))
     <div class="section">
-      <div class="section-title"><span class="badge badge-amber">Expiring in 60 Days</span> &nbsp;Plan Renewal</div>
+      <div class="section-title"><span class="badge badge-indigo">Within Notice Period</span> &nbsp;Plan Renewal</div>
       <table>
-        <tr><th>Contract</th><th>Vendor</th><th>Expires</th><th>Days Left</th><th>Manager</th></tr>
-        @foreach ($contracts60 as $c)
+        <tr><th>Contract</th><th>Printer</th><th>Expires</th><th>Days Left</th><th>Notice Period</th><th>Manager</th></tr>
+        @foreach ($contractsNotice as $c)
         <tr>
           <td>{{ $c['name'] }}</td>
           <td>{{ $c['vendor'] }}</td>
           <td>{{ $c['end_date'] }}</td>
           <td>{{ $c['days_left'] }}</td>
+          <td>{{ $c['notice_days'] }} days</td>
           <td>{{ $c['manager'] ?? '—' }}</td>
         </tr>
         @endforeach
