@@ -94,13 +94,15 @@ class PrintManagerController extends Controller
         $newPlanId = $request->input('plan_id');
         if ($newPlanId && (int) $newPlanId !== (int) $student->plan_id) {
             $plan = PrintPlan::findOrFail($newPlanId);
-            PrintPurchase::create([
-                'student_id'   => $student->id,
-                'plan_id'      => $plan->id,
-                'price'        => $plan->price,
-                'type'         => 'purchase',
-                'purchased_at' => now(),
-            ]);
+            if ($plan->price > 0) {
+                PrintPurchase::create([
+                    'student_id'   => $student->id,
+                    'plan_id'      => $plan->id,
+                    'price'        => $plan->price,
+                    'type'         => 'purchase',
+                    'purchased_at' => now(),
+                ]);
+            }
         }
 
         $student->update($request->only('name', 'email', 'plan_id', 'printer_id'));
