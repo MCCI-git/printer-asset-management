@@ -11,7 +11,7 @@ class WorkOrderController extends Controller
 {
     public function index(): JsonResponse
     {
-        $orders = WorkOrder::with('printer')
+        $orders = WorkOrder::with('printer', 'supplier')
             ->orderByRaw("FIELD(status, 'open', 'in-progress', 'scheduled', 'completed', 'cancelled')")
             ->orderByRaw("FIELD(priority, 'high', 'medium', 'low')")
             ->orderBy('scheduled_date')
@@ -32,10 +32,11 @@ class WorkOrderController extends Controller
             'completed_date' => 'nullable|date',
             'notes'          => 'nullable|string',
             'cost'           => 'nullable|numeric|min:0',
+            'supplier_id'    => 'nullable|exists:suppliers,id',
         ]);
 
         $order = WorkOrder::create($data);
-        $order->load('printer');
+        $order->load('printer', 'supplier');
 
         return response()->json($order, 201);
     }
@@ -52,10 +53,11 @@ class WorkOrderController extends Controller
             'completed_date' => 'nullable|date',
             'notes'          => 'nullable|string',
             'cost'           => 'nullable|numeric|min:0',
+            'supplier_id'    => 'nullable|exists:suppliers,id',
         ]);
 
         $workOrder->update($data);
-        $workOrder->load('printer');
+        $workOrder->load('printer', 'supplier');
 
         return response()->json($workOrder);
     }

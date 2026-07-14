@@ -222,6 +222,8 @@ export interface WorkOrder {
   completed_date?: string
   notes?: string
   cost?: number | null
+  supplier_id?: number | null
+  supplier?: { id: number; name: string } | null
   created_at?: string
 }
 

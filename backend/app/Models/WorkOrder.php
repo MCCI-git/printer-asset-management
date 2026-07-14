@@ -9,7 +9,7 @@ class WorkOrder extends Model
 {
     protected $fillable = [
         'printer_id', 'issue', 'priority', 'status',
-        'assignee', 'scheduled_date', 'completed_date', 'notes', 'cost',
+        'assignee', 'scheduled_date', 'completed_date', 'notes', 'cost', 'supplier_id',
     ];
 
     protected $casts = [
@@ -21,6 +21,11 @@ class WorkOrder extends Model
     public function printer(): BelongsTo
     {
         return $this->belongsTo(Printer::class);
+    }
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
     }
 
     public function getWoNumberAttribute(): string

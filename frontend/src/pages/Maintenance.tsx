@@ -28,7 +28,7 @@ import {
 import { toast } from 'sonner'
 import {
   useWorkOrders, useCreateWorkOrder, useUpdateWorkOrder, useDeleteWorkOrder,
-  usePrinters, useUsers,
+  usePrinters, useUsers, useSuppliers,
 } from '@/hooks/useData'
 import type { WorkOrder, WorkOrderStatus, WorkOrderPriority } from '@/types'
 import { WORK_ORDER_STATUSES, WORK_ORDER_PRIORITIES } from '@/lib/constants'
@@ -57,6 +57,7 @@ interface WOForm {
   completed_date: string
   notes: string
   cost: string
+  supplier_id: string
 }
 
 const emptyForm = (): WOForm => ({
@@ -69,12 +70,14 @@ const emptyForm = (): WOForm => ({
   completed_date: '',
   notes: '',
   cost: '',
+  supplier_id: '',
 })
 
 export function Maintenance() {
   const { data: workOrders = [], isLoading } = useWorkOrders()
   const { data: printersData } = usePrinters({ per_page: 500 })
   const { data: usersData } = useUsers()
+  const { data: suppliersData } = useSuppliers({ per_page: 500 })
   const printers = printersData?.data ?? []
 
   const createWO = useCreateWorkOrder()
@@ -145,6 +148,7 @@ export function Maintenance() {
       completed_date: wo.completed_date ? wo.completed_date.slice(0, 10) : '',
       notes: wo.notes ?? '',
       cost: wo.cost != null ? String(wo.cost) : '',
+      supplier_id: wo.supplier_id != null ? String(wo.supplier_id) : '',
     })
     setDialogOpen(true)
   }
@@ -164,6 +168,7 @@ export function Maintenance() {
       completed_date: form.completed_date || null,
       notes: form.notes || null,
       cost: form.cost !== '' ? Number(form.cost) : null,
+      supplier_id: form.supplier_id !== '' ? Number(form.supplier_id) : null,
     }
     try {
       if (editTarget) {
@@ -418,6 +423,7 @@ export function Maintenance() {
                     <TableHead>Status</TableHead>
                     <TableHead>Scheduled</TableHead>
                     <TableHead>Completed</TableHead>
+                    <TableHead>Supplier</TableHead>
                     <TableHead>Cost</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
@@ -425,7 +431,7 @@ export function Maintenance() {
                 <TableBody>
                   {filtered.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                         {workOrders.length === 0 ? 'No work orders yet. Create one to get started.' : 'No results found.'}
                       </TableCell>
                     </TableRow>
@@ -471,6 +477,9 @@ export function Maintenance() {
                           ) : (
                             <span className="text-xs text-muted-foreground/40">–</span>
                           )}
+                        </TableCell>
+                        <TableCell className="align-middle">
+                          <span className="text-xs text-muted-foreground">{wo.supplier?.name ?? '–'}</span>
                         </TableCell>
                         <TableCell className="align-middle">
                           {wo.cost != null ? (
@@ -557,6 +566,21 @@ export function Maintenance() {
                     .map((u: { id: number; name: string }) => (
                       <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>
                     ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Supplier</Label>
+              <Select value={form.supplier_id || '__none__'} onValueChange={v => setForm(f => ({ ...f, supplier_id: v === '__none__' ? '' : v }))}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select supplier" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— None —</SelectItem>
+                  {(suppliersData?.data ?? suppliersData ?? []).map((s: { id: number; name: string }) => (
+                    <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
