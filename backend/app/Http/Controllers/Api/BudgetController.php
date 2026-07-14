@@ -9,6 +9,7 @@ use App\Services\Calendar;
 use App\Models\Consumable;
 use App\Models\Contract;
 use App\Models\Printer;
+use App\Models\WorkOrder;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -59,7 +60,9 @@ class BudgetController extends Controller
 
         $contractSpend = $this->proratedContractSpend($year);
 
-        $opexActual = $leaseActual + $consumableSpend + $contractSpend;
+        $workOrderSpend = $this->completedWorkOrderSpend($year);
+
+        $opexActual = $leaseActual + $consumableSpend + $contractSpend + $workOrderSpend;
 
         return response()->json([
             'year'   => $year,
@@ -92,7 +95,9 @@ class BudgetController extends Controller
 
             $contractSpend = $this->proratedContractSpend($year);
 
-            $opexActual = $leaseActual + $consumableSpend + $contractSpend;
+            $workOrderSpend = $this->completedWorkOrderSpend($year);
+
+            $opexActual = $leaseActual + $consumableSpend + $contractSpend + $workOrderSpend;
 
             return [
                 'year'       => $year,
@@ -125,10 +130,11 @@ class BudgetController extends Controller
             ->selectRaw('SUM(unit_cost * quantity) as total')
             ->value('total') ?? 0);
 
-        $maintenanceActual = $this->proratedContractSpend($year, 'Maintenance');
-        $supportActual     = $this->proratedContractSpend($year, 'Support');
-        $serviceActual     = $this->proratedContractSpend($year, 'Service');
+        $maintenanceActual   = $this->proratedContractSpend($year, 'Maintenance');
+        $supportActual       = $this->proratedContractSpend($year, 'Support');
+        $serviceActual       = $this->proratedContractSpend($year, 'Service');
         $leaseContractActual = $this->proratedContractSpend($year, 'Lease');
+        $workOrderActual     = $this->completedWorkOrderSpend($year);
 
         $capexBudgeted = (float) ($rows['capex']->amount ?? 0);
         $opexBudgeted  = (float) ($rows['opex']->amount ?? 0);
@@ -136,19 +142,29 @@ class BudgetController extends Controller
         return response()->json([
             'year' => $year,
             'capex_actual' => round($capexActual, 2),
-            'opex_actual'  => round($leaseActual + $consumablesActual + $maintenanceActual + $supportActual + $serviceActual + $leaseContractActual, 2),
+            'opex_actual'  => round($leaseActual + $consumablesActual + $maintenanceActual + $supportActual + $serviceActual + $leaseContractActual + $workOrderActual, 2),
             'categories' => [
                 // CAPEX
-                ['category' => 'Printer Purchases', 'group' => 'CAPEX', 'short' => 'Purchases', 'budgeted' => $capexBudgeted, 'actual' => $capexActual],
+                ['category' => 'Printer Purchases',     'group' => 'CAPEX', 'short' => 'Purchases', 'budgeted' => $capexBudgeted, 'actual' => $capexActual],
                 // OPEX
-                ['category' => 'Lease Fees',        'group' => 'OPEX',  'short' => 'Leases',    'budgeted' => 0, 'actual' => $leaseActual],
-                ['category' => 'Consumables',        'group' => 'OPEX',  'short' => 'Consum.',   'budgeted' => 0, 'actual' => $consumablesActual],
-                ['category' => 'Maintenance Contracts', 'group' => 'OPEX', 'short' => 'Maint.', 'budgeted' => 0, 'actual' => $maintenanceActual],
-                ['category' => 'Support Contracts',  'group' => 'OPEX',  'short' => 'Support',   'budgeted' => 0, 'actual' => $supportActual],
-                ['category' => 'Service Contracts',  'group' => 'OPEX',  'short' => 'Service',   'budgeted' => 0, 'actual' => $serviceActual],
-                ['category' => 'Lease Contracts',    'group' => 'OPEX',  'short' => 'Lease',     'budgeted' => $opexBudgeted, 'actual' => $leaseContractActual],
+                ['category' => 'Lease Fees',            'group' => 'OPEX',  'short' => 'Leases',    'budgeted' => 0, 'actual' => $leaseActual],
+                ['category' => 'Consumables',           'group' => 'OPEX',  'short' => 'Consum.',   'budgeted' => 0, 'actual' => $consumablesActual],
+                ['category' => 'Maintenance Contracts', 'group' => 'OPEX',  'short' => 'Maint.',    'budgeted' => 0, 'actual' => $maintenanceActual],
+                ['category' => 'Support Contracts',     'group' => 'OPEX',  'short' => 'Support',   'budgeted' => 0, 'actual' => $supportActual],
+                ['category' => 'Service Contracts',     'group' => 'OPEX',  'short' => 'Service',   'budgeted' => 0, 'actual' => $serviceActual],
+                ['category' => 'Lease Contracts',       'group' => 'OPEX',  'short' => 'Lease',     'budgeted' => $opexBudgeted, 'actual' => $leaseContractActual],
+                ['category' => 'Work Orders',           'group' => 'OPEX',  'short' => 'Work Ord.', 'budgeted' => 0, 'actual' => $workOrderActual],
             ],
         ]);
+    }
+
+    // Sum of costs for completed work orders in a given year (by completed_date)
+    private function completedWorkOrderSpend(int $year): float
+    {
+        return (float) WorkOrder::where('status', 'completed')
+            ->whereNotNull('cost')
+            ->whereYear('completed_date', $year)
+            ->sum('cost');
     }
 
     // Calculates prorated annual contract spend for a given year

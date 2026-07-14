@@ -28,7 +28,7 @@ import {
 import { toast } from 'sonner'
 import {
   useWorkOrders, useCreateWorkOrder, useUpdateWorkOrder, useDeleteWorkOrder,
-  usePrinters,
+  usePrinters, useUsers,
 } from '@/hooks/useData'
 import type { WorkOrder, WorkOrderStatus, WorkOrderPriority } from '@/types'
 import { WORK_ORDER_STATUSES, WORK_ORDER_PRIORITIES } from '@/lib/constants'
@@ -56,6 +56,7 @@ interface WOForm {
   scheduled_date: string
   completed_date: string
   notes: string
+  cost: string
 }
 
 const emptyForm = (): WOForm => ({
@@ -67,11 +68,13 @@ const emptyForm = (): WOForm => ({
   scheduled_date: '',
   completed_date: '',
   notes: '',
+  cost: '',
 })
 
 export function Maintenance() {
   const { data: workOrders = [], isLoading } = useWorkOrders()
   const { data: printersData } = usePrinters({ per_page: 500 })
+  const { data: usersData } = useUsers()
   const printers = printersData?.data ?? []
 
   const createWO = useCreateWorkOrder()
@@ -141,6 +144,7 @@ export function Maintenance() {
       scheduled_date: wo.scheduled_date ? wo.scheduled_date.slice(0, 10) : '',
       completed_date: wo.completed_date ? wo.completed_date.slice(0, 10) : '',
       notes: wo.notes ?? '',
+      cost: wo.cost != null ? String(wo.cost) : '',
     })
     setDialogOpen(true)
   }
@@ -159,6 +163,7 @@ export function Maintenance() {
       scheduled_date: form.scheduled_date || null,
       completed_date: form.completed_date || null,
       notes: form.notes || null,
+      cost: form.cost !== '' ? Number(form.cost) : null,
     }
     try {
       if (editTarget) {
@@ -413,13 +418,14 @@ export function Maintenance() {
                     <TableHead>Status</TableHead>
                     <TableHead>Scheduled</TableHead>
                     <TableHead>Completed</TableHead>
+                    <TableHead>Cost</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                         {workOrders.length === 0 ? 'No work orders yet. Create one to get started.' : 'No results found.'}
                       </TableCell>
                     </TableRow>
@@ -462,6 +468,13 @@ export function Maintenance() {
                             <span className="text-xs text-green-600 font-medium dark:text-green-400">
                               {wo.completed_date ? formatDate(wo.completed_date) : '–'}
                             </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground/40">–</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="align-middle">
+                          {wo.cost != null ? (
+                            <span className="text-xs font-medium text-foreground">Rs {wo.cost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           ) : (
                             <span className="text-xs text-muted-foreground/40">–</span>
                           )}
@@ -533,12 +546,19 @@ export function Maintenance() {
 
             <div className="space-y-1.5">
               <Label>Assignee</Label>
-              <input
-                className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:bg-secondary"
-                value={form.assignee}
-                onChange={e => setForm(f => ({ ...f, assignee: e.target.value }))}
-                placeholder="Name or team"
-              />
+              <Select value={form.assignee || '__none__'} onValueChange={v => setForm(f => ({ ...f, assignee: v === '__none__' ? '' : v }))}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select assignee" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— None —</SelectItem>
+                  {(usersData?.data ?? usersData ?? [])
+                    .filter((u: { status: string }) => u.status === 'active')
+                    .map((u: { id: number; name: string }) => (
+                      <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -570,6 +590,19 @@ export function Maintenance() {
                 value={form.notes}
                 onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                 placeholder="Additional notes..."
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Cost (Rs) <span className="text-xs text-muted-foreground font-normal">— counts toward budget when completed</span></Label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:bg-secondary"
+                value={form.cost}
+                onChange={e => setForm(f => ({ ...f, cost: e.target.value }))}
+                placeholder="0.00"
               />
             </div>
           </div>

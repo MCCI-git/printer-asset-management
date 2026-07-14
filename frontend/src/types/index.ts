@@ -221,6 +221,7 @@ export interface WorkOrder {
   scheduled_date?: string
   completed_date?: string
   notes?: string
+  cost?: number | null
   created_at?: string
 }
 

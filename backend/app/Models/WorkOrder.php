@@ -9,12 +9,13 @@ class WorkOrder extends Model
 {
     protected $fillable = [
         'printer_id', 'issue', 'priority', 'status',
-        'assignee', 'scheduled_date', 'completed_date', 'notes',
+        'assignee', 'scheduled_date', 'completed_date', 'notes', 'cost',
     ];
 
     protected $casts = [
         'scheduled_date'  => 'date',
         'completed_date'  => 'date',
+        'cost'            => 'float',
     ];
 
     public function printer(): BelongsTo

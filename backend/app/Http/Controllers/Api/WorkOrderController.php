@@ -31,6 +31,7 @@ class WorkOrderController extends Controller
             'scheduled_date' => 'nullable|date',
             'completed_date' => 'nullable|date',
             'notes'          => 'nullable|string',
+            'cost'           => 'nullable|numeric|min:0',
         ]);
 
         $order = WorkOrder::create($data);
@@ -50,6 +51,7 @@ class WorkOrderController extends Controller
             'scheduled_date' => 'nullable|date',
             'completed_date' => 'nullable|date',
             'notes'          => 'nullable|string',
+            'cost'           => 'nullable|numeric|min:0',
         ]);
 
         $workOrder->update($data);
