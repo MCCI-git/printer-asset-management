@@ -22,25 +22,29 @@ class TopAccessService
             ->where('ip_address', '!=', '')
             ->get();
 
-        return $printers->map(fn (Printer $p) => $this->queryPrinter($p))->values()->toArray();
+        return $printers->map(fn (Printer $p) => $this->formatPrinter($p))->values()->toArray();
     }
 
-    public function queryPrinter(Printer $printer): array
+    public function formatPrinter(Printer $printer): array
     {
-        $result = [
+        return [
             'printer_id'  => $printer->id,
             'ip'          => $printer->ip_address,
             'name'        => $printer->name,
             'asset_tag'   => $printer->asset_tag,
-            'reachable'   => false,
-            'status'      => 'unknown',
-            'serial'      => null,
-            'model'       => null,
-            'total_pages' => null,
-            'toner'       => [],
-            'error'       => null,
+            'reachable'   => $printer->snmp_status === 'fetched',
+            'status'      => $printer->snmp_printer_status ?? 'unknown',
+            'serial'      => $printer->snmp_serial,
+            'model'       => $printer->snmp_model,
+            'total_pages' => $printer->snmp_total_pages,
+            'toner'       => $printer->snmp_toner ?? [],
+            'fetched_at'  => $printer->snmp_fetched_at?->toDateTimeString(),
+            'error'       => $printer->snmp_status === 'failed' ? 'Last fetch failed.' : null,
         ];
+    }
 
+    public function queryPrinter(Printer $printer): array
+    {
         try {
             snmp_set_valueretrieval(SNMP_VALUE_PLAIN);
             snmp_set_quick_print(true);
@@ -49,25 +53,27 @@ class TopAccessService
 
             $sysDescr = @snmpget($printer->ip_address, $community, self::OID_SYS_DESCR, 1500000, 1);
             if ($sysDescr === false) {
-                $result['error'] = 'Unreachable or SNMP not enabled.';
                 $printer->update(['snmp_status' => 'failed']);
-                return $result;
+                $printer->refresh();
+                return $this->formatPrinter($printer);
             }
 
-            $result['reachable'] = true;
-            $result['model']     = trim($sysDescr);
+            $model = trim($sysDescr);
+            $name  = $printer->name;
 
             $sysName = @snmpget($printer->ip_address, $community, self::OID_SYS_NAME, 1500000, 1);
-            if ($sysName !== false) $result['name'] = trim($sysName);
+            if ($sysName !== false) $name = trim($sysName);
 
-            $serial = @snmpget($printer->ip_address, $community, self::OID_SERIAL, 1500000, 1);
-            if ($serial !== false) $result['serial'] = trim($serial);
+            $serial     = null;
+            $serialRaw  = @snmpget($printer->ip_address, $community, self::OID_SERIAL, 1500000, 1);
+            if ($serialRaw !== false) $serial = trim($serialRaw);
 
-            $totalPages = @snmpget($printer->ip_address, $community, self::OID_TOTAL_PAGES, 1500000, 1);
-            if ($totalPages !== false) $result['total_pages'] = (int) $totalPages;
+            $totalPages = null;
+            $pagesRaw   = @snmpget($printer->ip_address, $community, self::OID_TOTAL_PAGES, 1500000, 1);
+            if ($pagesRaw !== false) $totalPages = (int) $pagesRaw;
 
-            $statusRaw = @snmpget($printer->ip_address, $community, self::OID_PRINTER_STATUS, 1500000, 1);
-            $result['status'] = $this->mapStatus((int) $statusRaw);
+            $statusRaw    = @snmpget($printer->ip_address, $community, self::OID_PRINTER_STATUS, 1500000, 1);
+            $printerStatus = $this->mapStatus((int) $statusRaw);
 
             $toner = [];
             for ($i = 1; $i <= 4; $i++) {
@@ -84,17 +90,26 @@ class TopAccessService
                     'percent' => $maxVal > 0 ? round(($curVal / $maxVal) * 100) : 0,
                 ];
             }
-            $result['toner'] = $toner;
 
-            $printer->update(['snmp_status' => 'fetched']);
+            $printer->update([
+                'snmp_status'         => 'fetched',
+                'snmp_total_pages'    => $totalPages,
+                'snmp_toner'          => $toner,
+                'snmp_model'          => $model,
+                'snmp_serial'         => $serial,
+                'snmp_printer_status' => $printerStatus,
+                'snmp_fetched_at'     => now(),
+            ]);
+
+            $printer->refresh();
+            return $this->formatPrinter($printer);
 
         } catch (\Exception $e) {
             Log::error('SNMP error', ['ip' => $printer->ip_address, 'error' => $e->getMessage()]);
-            $result['error'] = $e->getMessage();
             $printer->update(['snmp_status' => 'failed']);
+            $printer->refresh();
+            return $this->formatPrinter($printer);
         }
-
-        return $result;
     }
 
     public function testConnection(string $ip, string $community = 'public'): array

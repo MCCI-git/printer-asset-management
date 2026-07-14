@@ -15,7 +15,7 @@ interface TonerInfo { name: string; current: number; max: number; percent: numbe
 interface PrinterData {
   ip: string; name: string; reachable: boolean; status: string
   serial: string | null; model: string | null; total_pages: number | null
-  toner: TonerInfo[]; error: string | null
+  toner: TonerInfo[]; error: string | null; fetched_at: string | null
 }
 
 function StatusPill({ status, reachable }: { status: string; reachable: boolean }) {
@@ -91,6 +91,7 @@ function PrinterCard({ data }: { data: PrinterData }) {
               <DetailRow label="Model"       value={data.model} />
               <DetailRow label="Serial"      value={data.serial} />
               <DetailRow label="Total Pages" value={data.total_pages?.toLocaleString()} />
+              <DetailRow label="Last Fetched" value={data.fetched_at ?? 'Never'} />
             </div>
             {data.toner.length > 0 && (
               <div className="space-y-3">

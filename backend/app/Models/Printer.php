@@ -11,7 +11,8 @@ class Printer extends Model
     protected $fillable = [
         'snipeit_id', 'asset_tag', 'serial', 'name', 'model',
         'manufacturer', 'model_number', 'color_capability', 'ip_address',
-        'snmp_community', 'snmp_status',
+        'snmp_community', 'snmp_status', 'snmp_total_pages', 'snmp_toner',
+        'snmp_model', 'snmp_serial', 'snmp_printer_status', 'snmp_fetched_at',
         'cost_type', 'purchase_cost', 'purchase_date',
         'monthly_fixed_cost', 'per_page_cost', 'warranty',
         'department', 'location', 'status', 'assigned_to',
@@ -28,6 +29,8 @@ class Printer extends Model
         'checkout_date'      => 'date',
         'last_service_date'  => 'date',
         'next_service_date'  => 'date',
+        'snmp_toner'         => 'array',
+        'snmp_fetched_at'    => 'datetime',
     ];
 
     public function category(): BelongsTo
