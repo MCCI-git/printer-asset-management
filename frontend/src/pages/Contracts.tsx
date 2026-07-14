@@ -32,7 +32,7 @@ import {
 import {
   useContracts, useCreateContract, useDeleteContract, useUpdateContract,
   useRenewContract, useContractRenewals, useCreateRenewalLog, useDeleteRenewalLog,
-  useSuppliers,
+  useSuppliers, usePrinters,
 } from '@/hooks/useData'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { DatePicker } from '@/components/ui/date-picker'
@@ -98,6 +98,8 @@ function EditContractDialog({ contract, onClose }: { contract: Contract; onClose
   const updateContract = useUpdateContract()
   const { data: suppliersData } = useSuppliers({ per_page: 200 })
   const suppliers: { id: number; name: string }[] = suppliersData?.data ?? []
+  const { data: printersData } = usePrinters({ per_page: 500 })
+  const printersList: { id: number; name: string }[] = printersData?.data ?? []
   const [form, setForm] = useState<FormShape>(() => contractToForm(contract))
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -139,8 +141,13 @@ function EditContractDialog({ contract, onClose }: { contract: Contract; onClose
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Vendor <span className="text-destructive">*</span></Label>
-              <Input value={form.vendor} onChange={e => set('vendor', e.target.value)} />
+              <Label>Printer <span className="text-destructive">*</span></Label>
+              <Select value={form.vendor} onValueChange={v => set('vendor', v)}>
+                <SelectTrigger><SelectValue placeholder="Select printer" /></SelectTrigger>
+                <SelectContent>
+                  {printersList.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Type</Label>
@@ -231,6 +238,8 @@ function AddContractDialog({ onClose }: { onClose: () => void }) {
   const createContract = useCreateContract()
   const { data: suppliersData } = useSuppliers({ per_page: 200 })
   const suppliers: { id: number; name: string }[] = suppliersData?.data ?? []
+  const { data: printersData } = usePrinters({ per_page: 500 })
+  const printersList: { id: number; name: string }[] = printersData?.data ?? []
   const [form, setForm] = useState<FormShape>(EMPTY_FORM)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [submitError, setSubmitError] = useState('')
@@ -282,8 +291,13 @@ function AddContractDialog({ onClose }: { onClose: () => void }) {
             {fieldErrors.name && <p className="text-xs text-destructive">{fieldErrors.name}</p>}
           </div>
           <div className="space-y-1.5">
-            <Label>Vendor <span className="text-destructive">*</span></Label>
-            <Input placeholder="e.g. HP Inc." value={form.vendor} onChange={e => set('vendor', e.target.value)} />
+            <Label>Printer <span className="text-destructive">*</span></Label>
+            <Select value={form.vendor} onValueChange={v => { set('vendor', v) }}>
+              <SelectTrigger><SelectValue placeholder="Select printer" /></SelectTrigger>
+              <SelectContent>
+                {printersList.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
             {fieldErrors.vendor && <p className="text-xs text-destructive">{fieldErrors.vendor}</p>}
           </div>
           <div className="space-y-1.5">
@@ -447,7 +461,7 @@ const ContractsTable = memo(function ContractsTable({
       accessorKey: 'vendor',
       header: ({ column }) => (
         <Button variant="ghost" size="sm" className="-ml-3 h-8" onClick={column.getToggleSortingHandler()}>
-          Vendor <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />
+          Printer <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />
         </Button>
       ),
       cell: ({ getValue }) => <span className="text-sm">{getValue<string>()}</span>,
@@ -598,9 +612,9 @@ const ContractsTable = memo(function ContractsTable({
             </SelectContent>
           </Select>
           <Select value={filterVendor} onValueChange={setFilterVendor}>
-            <SelectTrigger className="h-9 w-[130px] text-xs"><SelectValue placeholder="Vendor" /></SelectTrigger>
+            <SelectTrigger className="h-9 w-[130px] text-xs"><SelectValue placeholder="Printer" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All vendors</SelectItem>
+              <SelectItem value="all">All printers</SelectItem>
               {vendors.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
             </SelectContent>
           </Select>
