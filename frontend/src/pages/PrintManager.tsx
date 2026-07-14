@@ -150,6 +150,7 @@ export function PrintManager() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [emailSubject, setEmailSubject] = useState('Printing Plan Update')
   const bodyRef = useRef<HTMLDivElement>(null)
+  const [emailBodyHtml, setEmailBodyHtml] = useState('')
   const [sendingEmail, setSendingEmail] = useState(false)
   const [emailResult, setEmailResult] = useState<{ success: boolean; message: string } | null>(null)
 
@@ -324,8 +325,9 @@ export function PrintManager() {
        .replace(/"/g, '&quot;').replace(/'/g, '&#039;')
 
   const getPreview = (student: Student | null) => {
-    if (!student || !bodyRef.current) return ''
-    return bodyRef.current.innerHTML
+    if (!student) return ''
+    const html = emailBodyHtml || bodyRef.current?.innerHTML || ''
+    return html
       .replace(/\[STUDENT_NAME\]/g, escapeHtml(student.name))
       .replace(/\[PRINTER_ID\]/g, escapeHtml(student.printer_id ?? 'Not assigned'))
       .replace(/\[PLAN_NAME\]/g, escapeHtml(student.plan_label))
@@ -620,6 +622,7 @@ export function PrintManager() {
                   ref={bodyRef}
                   contentEditable
                   suppressContentEditableWarning
+                  onInput={e => setEmailBodyHtml((e.currentTarget as HTMLDivElement).innerHTML)}
                   className="min-h-[140px] rounded-lg border-2 border-dashed border-border bg-background p-3 text-sm leading-relaxed focus:border-primary focus:outline-none hover:border-primary/60 transition-colors"
                   dangerouslySetInnerHTML={{ __html: defaultEmailBody }}
                 />
