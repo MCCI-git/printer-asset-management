@@ -1,6 +1,6 @@
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useState, useMemo, useCallback, useEffect, memo } from 'react'
+import { useState, useRef, useMemo, useCallback, useEffect, memo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useReactTable,
@@ -99,7 +99,7 @@ function formToPayload(f: FormShape) {
 // ── PDF drop zone ──────────────────────────────────────────────────────────────
 function PdfDropZone({ file, onChange }: { file: File | null; onChange: (f: File | null) => void }) {
   const [dragging, setDragging] = useState(false)
-  const inputRef = useState<HTMLInputElement | null>(null)
+  const inputRef = useRef<HTMLInputElement | null>(null)
 
   const handle = (f: File | null) => {
     if (f && f.type !== 'application/pdf') { toast.error('Only PDF files are allowed.'); return }
@@ -112,9 +112,9 @@ function PdfDropZone({ file, onChange }: { file: File | null; onChange: (f: File
       onDragOver={e => { e.preventDefault(); setDragging(true) }}
       onDragLeave={() => setDragging(false)}
       onDrop={e => { e.preventDefault(); setDragging(false); handle(e.dataTransfer.files[0] ?? null) }}
-      onClick={() => document.getElementById('pdf-upload-input')?.click()}
+      onClick={() => inputRef.current?.click()}
     >
-      <input id="pdf-upload-input" type="file" accept="application/pdf" className="hidden" onChange={e => handle(e.target.files?.[0] ?? null)} />
+      <input ref={inputRef} type="file" accept="application/pdf" className="hidden" onChange={e => { handle(e.target.files?.[0] ?? null); e.target.value = '' }} />
       {file ? (
         <>
           <FileText size={22} className="text-primary" />
