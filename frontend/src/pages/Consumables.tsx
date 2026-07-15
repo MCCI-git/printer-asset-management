@@ -649,7 +649,7 @@ export function Consumables() {
                   <TableHead className="text-xs font-semibold">Type</TableHead>
                   <TableHead className="text-xs font-semibold">Supplier</TableHead>
                   <TableHead className="text-xs font-semibold">Printer</TableHead>
-                  <TableHead className="text-xs font-semibold">Assigned At</TableHead>
+                  <TableHead className="text-xs font-semibold">Assigned Date</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
