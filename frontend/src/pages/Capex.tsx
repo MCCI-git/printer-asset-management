@@ -2,33 +2,21 @@
 import { Skeleton } from '@/components/ui/skeleton'
 import { TablePagination } from '@/components/ui/table-pagination'
 import { useState } from 'react'
-import { TrendingUp, Printer, CreditCard, Trash2, X, Wifi, Loader2, CheckCircle2 } from 'lucide-react'
+import { TrendingUp, Printer, CreditCard, Trash2, X } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { StatCard } from '@/components/ui/stat-card'
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { StatusBadge } from '@/components/ui/status-badge'
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
-} from '@/components/ui/dialog'
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { usePrinters } from '@/hooks/useData'
-import { networkApi } from '@/services/api'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { toast } from 'sonner'
-import { useQueryClient } from '@tanstack/react-query'
 
 export function Capex() {
-  const qc = useQueryClient()
   const { data, isLoading } = usePrinters({ cost_type: 'CAPEX' })
   const printers = data?.data ?? []
   const [rowSelection, setRowSelection] = useState({})
@@ -39,52 +27,6 @@ export function Capex() {
 
   const totalCost = printers.reduce((s: number, p: import('@/types').Printer) => s + (p.purchase_cost ?? 0), 0)
   const selectedCount = Object.keys(rowSelection).length
-
-  // ── Network scan state ───────────────────────────────────────────────────
-  const [scanOpen, setScanOpen] = useState(false)
-  const [startIp, setStartIp] = useState('')
-  const [endIp, setEndIp] = useState('')
-  const [scanning, setScanning] = useState(false)
-  const [scanResults, setScanResults] = useState<{ ip: string; printer: { id: number; name: string; asset_tag: string } | null }[]>([])
-  const [scannedCount, setScannedCount] = useState(0)
-  const [assignments, setAssignments] = useState<Record<string, number | ''>>({})
-  const [assigning, setAssigning] = useState<Record<string, boolean>>({})
-
-  const handleScan = async () => {
-    if (!startIp || !endIp) return toast.error('Enter a start and end IP.')
-    setScanning(true)
-    setScanResults([])
-    setScannedCount(0)
-    setAssignments({})
-    try {
-      const res = await networkApi.scan(startIp, endIp)
-      setScanResults(res.data.results)
-      setScannedCount(res.data.scanned)
-      if (res.data.results.length === 0) toast.info('No printer devices found in range.')
-    } catch (e: any) {
-      toast.error(e?.response?.data?.message ?? 'Scan failed.')
-    } finally {
-      setScanning(false)
-    }
-  }
-
-  const handleAssign = async (ip: string) => {
-    const printerId = assignments[ip]
-    if (!printerId) return toast.error('Select a printer first.')
-    setAssigning(a => ({ ...a, [ip]: true }))
-    try {
-      await networkApi.assignIp(Number(printerId), ip)
-      toast.success(`${ip} assigned.`)
-      qc.invalidateQueries({ queryKey: ['printers'] })
-      // Mark as assigned in results
-      const printer = printers.find((p: any) => p.id === Number(printerId))
-      setScanResults(r => r.map(row => row.ip === ip ? { ...row, printer: { id: Number(printerId), name: printer?.name ?? '', asset_tag: printer?.asset_tag ?? '' } } : row))
-    } catch (e: any) {
-      toast.error(e?.response?.data?.message ?? 'Assignment failed.')
-    } finally {
-      setAssigning(a => ({ ...a, [ip]: false }))
-    }
-  }
 
   if (isLoading) return (
     <div className="space-y-5">
@@ -120,14 +62,9 @@ export function Capex() {
 
   return (
     <div className="space-y-5">
-      <div className="border-b border-border/40 pb-4 flex items-start justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground dark:text-secondary-foreground">CAPEX Assets</h1>
-          <p className="text-sm text-muted-foreground dark:text-muted-foreground/70">Capital expenditure printers — owned assets with depreciation tracking</p>
-        </div>
-        <Button size="sm" variant="outline" onClick={() => { setScanOpen(true); setScanResults([]); setScannedCount(0) }}>
-          <Wifi size={14} /> Scan Network
-        </Button>
+      <div className="border-b border-border/40 pb-4">
+        <h1 className="text-xl font-bold text-foreground dark:text-secondary-foreground">CAPEX Assets</h1>
+        <p className="text-sm text-muted-foreground dark:text-muted-foreground/70">Capital expenditure printers — owned assets with depreciation tracking</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -222,97 +159,6 @@ export function Capex() {
           />
         </CardContent>
       </Card>
-
-      {/* Network Scan Dialog */}
-      <Dialog open={scanOpen} onOpenChange={setScanOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Scan Network for Printers</DialogTitle>
-            <DialogDescription>Enter an IP range to scan. Devices responding on printer ports (9100, 515, 631) will be listed.</DialogDescription>
-          </DialogHeader>
-
-          <div className="flex gap-3 items-end">
-            <div className="space-y-1 flex-1">
-              <Label className="text-xs">Start IP</Label>
-              <Input placeholder="e.g. 192.168.1.1" value={startIp} onChange={e => setStartIp(e.target.value)} />
-            </div>
-            <div className="space-y-1 flex-1">
-              <Label className="text-xs">End IP</Label>
-              <Input placeholder="e.g. 192.168.1.254" value={endIp} onChange={e => setEndIp(e.target.value)} />
-            </div>
-            <Button onClick={handleScan} disabled={scanning} className="gap-1.5">
-              {scanning ? <><Loader2 size={14} className="animate-spin" /> Scanning…</> : <><Wifi size={14} /> Scan</>}
-            </Button>
-          </div>
-
-          {scanning && (
-            <div className="flex items-center gap-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 px-4 py-3 text-sm text-blue-700 dark:text-blue-300">
-              <Loader2 size={14} className="animate-spin shrink-0" />
-              Scanning network, this may take a few seconds…
-            </div>
-          )}
-
-          {!scanning && scannedCount > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">
-                Scanned <span className="font-medium">{scannedCount}</span> addresses — found <span className="font-medium">{scanResults.length}</span> printer{scanResults.length !== 1 ? 's' : ''}.
-              </p>
-
-              {scanResults.length > 0 && (
-                <div className="rounded-lg border max-h-72 overflow-y-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>IP Address</TableHead>
-                        <TableHead>Assigned To</TableHead>
-                        <TableHead>Assign to Printer</TableHead>
-                        <TableHead />
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {scanResults.map(row => (
-                        <TableRow key={row.ip}>
-                          <TableCell className="font-mono text-sm">{row.ip}</TableCell>
-                          <TableCell className="text-sm">
-                            {row.printer ? (
-                              <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                                <CheckCircle2 size={13} /> {row.printer.name}
-                              </span>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">Unassigned</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {!row.printer && (
-                              <Select value={String(assignments[row.ip] ?? '')} onValueChange={v => setAssignments(a => ({ ...a, [row.ip]: v === '' ? '' : Number(v) }))}>
-                                <SelectTrigger className="h-7 text-xs w-44">
-                                  <SelectValue placeholder="Select printer…" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {printers.map((p: any) => (
-                                    <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {!row.printer && (
-                              <Button size="sm" className="h-7 text-xs" disabled={!assignments[row.ip] || assigning[row.ip]} onClick={() => handleAssign(row.ip)}>
-                                {assigning[row.ip] ? <Loader2 size={12} className="animate-spin" /> : 'Assign'}
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
