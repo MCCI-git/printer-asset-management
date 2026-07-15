@@ -188,16 +188,6 @@ function EditContractDialog({ contract, onClose }: { contract: Contract; onClose
               <Input type="number" min="0" value={form.annual_cost} onChange={e => set('annual_cost', e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Covered Printers</Label>
-              <Input type="number" min="0" value={form.covered_printers} onChange={e => set('covered_printers', e.target.value)} />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Notice Period (days)</Label>
-              <Input type="number" min="0" value={form.notice_period_days} onChange={e => set('notice_period_days', e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
               <Label>Status</Label>
               <Select value={form.status} onValueChange={v => set('status', v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -208,6 +198,10 @@ function EditContractDialog({ contract, onClose }: { contract: Contract; onClose
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Notice Period (days)</Label>
+            <Input type="number" min="0" value={form.notice_period_days} onChange={e => set('notice_period_days', e.target.value)} />
           </div>
           <div className="space-y-1.5">
             <Label>Contract Manager</Label>
@@ -338,18 +332,6 @@ function AddContractDialog({ onClose }: { onClose: () => void }) {
             {fieldErrors.annual_cost && <p className="text-xs text-destructive">{fieldErrors.annual_cost}</p>}
           </div>
           <div className="space-y-1.5">
-            <Label>Covered Printers</Label>
-            <Input type="number" min="0" placeholder="0" value={form.covered_printers} onChange={e => set('covered_printers', e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Contract Manager</Label>
-            <Input placeholder="e.g. Jane Smith" value={form.contract_manager} onChange={e => set('contract_manager', e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Notice Period (days)</Label>
-            <Input type="number" min="0" placeholder="e.g. 30" value={form.notice_period_days} onChange={e => set('notice_period_days', e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
             <Label>Status</Label>
             <Select value={form.status} onValueChange={v => set('status', v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -359,6 +341,14 @@ function AddContractDialog({ onClose }: { onClose: () => void }) {
                 <SelectItem value="expired">Expired</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Contract Manager</Label>
+            <Input placeholder="e.g. Jane Smith" value={form.contract_manager} onChange={e => set('contract_manager', e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Notice Period (days)</Label>
+            <Input type="number" min="0" placeholder="e.g. 30" value={form.notice_period_days} onChange={e => set('notice_period_days', e.target.value)} />
           </div>
           <div className="col-span-2 space-y-1.5">
             <Label>Notes</Label>
