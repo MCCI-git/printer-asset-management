@@ -16,7 +16,7 @@ import {
 } from '@tanstack/react-table'
 import { TablePagination } from '@/components/ui/table-pagination'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Package, AlertTriangle, Search, ArrowUpDown, ShoppingCart, Download, Trash2, Plus, Pencil, Printer, Unlink } from 'lucide-react'
+import { Package, AlertTriangle, Search, ArrowUpDown, ShoppingCart, Download, Trash2, Plus, Pencil, Printer, Unlink, List } from 'lucide-react'
 
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -40,7 +40,7 @@ import { X } from 'lucide-react'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { useConsumables, useCreateConsumable, useUpdateConsumable, useDeleteConsumable, useSuppliers, usePrinters, useConsumableAssignments, useAssignConsumable, useUnassignConsumable, useUpdateAssignment } from '@/hooks/useData'
+import { useConsumables, useCreateConsumable, useUpdateConsumable, useDeleteConsumable, useSuppliers, usePrinters, useConsumableAssignments, useAssignConsumable, useUnassignConsumable, useUpdateAssignment, useTonerModels, useCreateTonerModel, useUpdateTonerModel, useDeleteTonerModel } from '@/hooks/useData'
 import { formatCurrency, getConsumableStockStatus } from '@/lib/utils'
 import type { Consumable, ConsumableType, Supplier, ConsumableAssignment } from '@/types'
 import { CONSUMABLE_STATUSES, TONER_COLORS } from '@/lib/constants'
@@ -60,6 +60,48 @@ export function Consumables() {
   const { data: assignments = [] as ConsumableAssignment[] } = useConsumableAssignments()
   const fetchedConsumables: Consumable[] = (rawData as { data: Consumable[] } | undefined)?.data ?? []
   const consumables = fetchedConsumables
+
+  // Toner list
+  const { data: tonerModels = [] } = useTonerModels()
+  const createTonerModel = useCreateTonerModel()
+  const updateTonerModel = useUpdateTonerModel()
+  const deleteTonerModel = useDeleteTonerModel()
+  const [tonerListOpen, setTonerListOpen] = useState(false)
+  const [tonerForm, setTonerForm] = useState({ name: '', model_number: '', low_stock_threshold: '1' })
+  const [tonerEditId, setTonerEditId] = useState<number | null>(null)
+  const [tonerSaving, setTonerSaving] = useState(false)
+
+  const resetTonerForm = () => { setTonerForm({ name: '', model_number: '', low_stock_threshold: '1' }); setTonerEditId(null) }
+
+  const handleTonerSubmit = async () => {
+    if (!tonerForm.name.trim()) return toast.error('Name is required.')
+    setTonerSaving(true)
+    try {
+      const payload = { name: tonerForm.name.trim(), model_number: tonerForm.model_number.trim() || null, low_stock_threshold: Number(tonerForm.low_stock_threshold) }
+      if (tonerEditId) {
+        await updateTonerModel.mutateAsync({ id: tonerEditId, data: payload })
+        toast.success('Toner model updated.')
+      } else {
+        await createTonerModel.mutateAsync(payload)
+        toast.success('Toner model added.')
+      }
+      resetTonerForm()
+    } catch { toast.error('Failed to save toner model.') }
+    finally { setTonerSaving(false) }
+  }
+
+  const handleTonerEdit = (t: typeof tonerModels[0]) => {
+    setTonerEditId(t.id)
+    setTonerForm({ name: t.name, model_number: t.model_number ?? '', low_stock_threshold: String(t.low_stock_threshold) })
+  }
+
+  const handleTonerDelete = async (id: number) => {
+    try {
+      await deleteTonerModel.mutateAsync(id)
+      toast.success('Toner model deleted.')
+      if (tonerEditId === id) resetTonerForm()
+    } catch { toast.error('Failed to delete.') }
+  }
 
   const handleUnassign = async (a: ConsumableAssignment) => {
     try {
@@ -358,11 +400,103 @@ export function Consumables() {
           <p className="text-sm text-muted-foreground dark:text-muted-foreground/70">Track toners, paper, drums and maintenance kits</p>
         </div>
         <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => setTonerListOpen(true)}>
+            <List size={14} /> Toner List
+          </Button>
           <Button size="sm" onClick={() => setAddOpen(true)}>
             <Plus size={14} /> Add Consumable
           </Button>
         </div>
       </div>
+
+      {/* Toner List Dialog */}
+      <Dialog open={tonerListOpen} onOpenChange={open => { setTonerListOpen(open); if (!open) resetTonerForm() }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Toner List</DialogTitle>
+            <DialogDescription>Manage toner models and their minimum stock thresholds for low-stock alerts.</DialogDescription>
+          </DialogHeader>
+
+          {/* Add / Edit form */}
+          <div className="grid grid-cols-[1fr_1fr_auto_auto] gap-2 items-end border rounded-lg p-3 bg-muted/40">
+            <div className="space-y-1">
+              <Label className="text-xs">Toner Name <span className="text-destructive">*</span></Label>
+              <Input placeholder="e.g. HP 26A Black" value={tonerForm.name} onChange={e => setTonerForm(f => ({ ...f, name: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Model Number</Label>
+              <Input placeholder="e.g. CF226A" value={tonerForm.model_number} onChange={e => setTonerForm(f => ({ ...f, model_number: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Min. Threshold</Label>
+              <Input type="number" min={0} className="w-24" value={tonerForm.low_stock_threshold} onChange={e => setTonerForm(f => ({ ...f, low_stock_threshold: e.target.value }))} />
+            </div>
+            <div className="flex gap-1">
+              <Button size="sm" onClick={handleTonerSubmit} disabled={tonerSaving}>
+                {tonerEditId ? 'Update' : 'Add'}
+              </Button>
+              {tonerEditId && (
+                <Button size="sm" variant="ghost" onClick={resetTonerForm}>Cancel</Button>
+              )}
+            </div>
+          </div>
+
+          {/* List */}
+          <div className="max-h-80 overflow-y-auto rounded-lg border">
+            {tonerModels.length === 0 ? (
+              <p className="text-center text-sm text-muted-foreground py-8">No toner models added yet.</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Model Number</TableHead>
+                    <TableHead className="text-center">Min. Threshold</TableHead>
+                    <TableHead />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tonerModels.map(t => (
+                    <TableRow key={t.id} className={tonerEditId === t.id ? 'bg-muted/60' : ''}>
+                      <TableCell className="font-medium text-sm">{t.name}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground font-mono">{t.model_number ?? '–'}</TableCell>
+                      <TableCell className="text-center">
+                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                          {t.low_stock_threshold}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleTonerEdit(t)}>
+                            <Pencil size={12} />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive hover:text-destructive">
+                                <Trash2 size={12} />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete "{t.name}"?</AlertDialogTitle>
+                                <AlertDialogDescription>This will remove it from the toner list. This action cannot be undone.</AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction variant="destructive" onClick={() => handleTonerDelete(t.id)}>Delete</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <AnimatePresence>
         {!alertDismissed && outOfStock.length > 0 && (

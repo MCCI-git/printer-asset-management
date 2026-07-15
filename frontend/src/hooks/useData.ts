@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { dashboardApi, printersApi, consumablesApi, contractsApi, suppliersApi, snipeItApi, budgetsApi, pageCountsApi, usersApi, workOrdersApi, activityLogsApi } from '@/services/api'
+import { dashboardApi, printersApi, consumablesApi, contractsApi, suppliersApi, snipeItApi, budgetsApi, pageCountsApi, usersApi, workOrdersApi, activityLogsApi, tonerModelsApi } from '@/services/api'
 import type { PrinterPageCount, ConsumableAssignment, WorkOrder, ActivityLog } from '@/types'
 
 export function useDashboardStats() {
@@ -499,5 +499,39 @@ export function useAllBudgets() {
     },
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,
+  })
+}
+
+export function useTonerModels() {
+  return useQuery({
+    queryKey: ['toner-models'],
+    queryFn: async () => {
+      const res = await tonerModelsApi.list()
+      return res.data as { id: number; name: string; model_number: string | null; low_stock_threshold: number }[]
+    },
+  })
+}
+
+export function useCreateTonerModel() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: unknown) => tonerModelsApi.create(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['toner-models'] }),
+  })
+}
+
+export function useUpdateTonerModel() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: unknown }) => tonerModelsApi.update(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['toner-models'] }),
+  })
+}
+
+export function useDeleteTonerModel() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => tonerModelsApi.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['toner-models'] }),
   })
 }

@@ -199,3 +199,10 @@ export const usersApi = {
   delete: (id: number) => api.delete(`/users/${id}`),
   toggleStatus: (id: number) => api.patch(`/users/${id}/toggle-status`),
 }
+
+export const tonerModelsApi = {
+  list: () => api.get('/toner-models'),
+  create: (data: unknown) => api.post('/toner-models', data),
+  update: (id: number, data: unknown) => api.put(`/toner-models/${id}`, data),
+  delete: (id: number) => api.delete(`/toner-models/${id}`),
+}
