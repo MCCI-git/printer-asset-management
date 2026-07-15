@@ -928,7 +928,7 @@ export function Consumables() {
 
       {/* Add Consumable Dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="w-[calc(48rem-30px)]">
+        <DialogContent className="w-[calc(48rem-30px)] max-w-none">
           <DialogHeader>
             <DialogTitle>Add Consumable</DialogTitle>
             <DialogDescription>Enter details for the new consumable item.</DialogDescription>
