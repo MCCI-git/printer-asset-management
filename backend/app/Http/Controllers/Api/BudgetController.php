@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Budget;
-use App\Services\ActivityLogger;
 use App\Services\Calendar;
 use App\Models\Consumable;
 use App\Models\Contract;
@@ -211,17 +210,6 @@ class BudgetController extends Controller
                 'start_date' => $validated['start_date'] ?? null,
                 'end_date'   => $validated['end_date'] ?? null,
             ]
-        );
-
-        $verb  = $budget->wasRecentlyCreated ? 'set' : 'updated';
-        $label = ucfirst($validated['type']) . ' budget ' . $validated['year'];
-        ActivityLogger::log(
-            action:      'updated',
-            modelType:   'Budget',
-            modelId:     $budget->id,
-            modelLabel:  $label,
-            description: "{$label} was {$verb} to Rs " . number_format($validated['amount'], 2) . ".",
-            properties:  ['year' => $validated['year'], 'type' => $validated['type'], 'amount' => $validated['amount']],
         );
 
         return response()->json($budget);

@@ -2,15 +2,23 @@
 
 namespace App\Providers;
 
+use App\Models\Budget;
 use App\Models\Consumable;
+use App\Models\ConsumableAssignment;
 use App\Models\Contract;
+use App\Models\ContractRenewal;
 use App\Models\Printer;
 use App\Models\Supplier;
+use App\Models\User;
 use App\Models\WorkOrder;
+use App\Observers\BudgetObserver;
+use App\Observers\ConsumableAssignmentObserver;
 use App\Observers\ConsumableObserver;
 use App\Observers\ContractObserver;
+use App\Observers\ContractRenewalObserver;
 use App\Observers\PrinterObserver;
 use App\Observers\SupplierObserver;
+use App\Observers\UserObserver;
 use App\Observers\WorkOrderObserver;
 use Illuminate\Support\ServiceProvider;
 
@@ -31,9 +39,13 @@ class AppServiceProvider extends ServiceProvider
     {
         Printer::observe(PrinterObserver::class);
         Consumable::observe(ConsumableObserver::class);
+        ConsumableAssignment::observe(ConsumableAssignmentObserver::class);
         WorkOrder::observe(WorkOrderObserver::class);
         Contract::observe(ContractObserver::class);
+        ContractRenewal::observe(ContractRenewalObserver::class);
         Supplier::observe(SupplierObserver::class);
+        Budget::observe(BudgetObserver::class);
+        User::observe(UserObserver::class);
 
         $smtpPath = storage_path('app/smtp_config.json');
         if (file_exists($smtpPath)) {
