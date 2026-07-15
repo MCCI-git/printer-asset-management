@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
@@ -82,7 +83,8 @@ class SmtpController extends Controller
                 $m->to($recipient)->subject('Test Email — Printer Asset Management');
             });
             return response()->json(['message' => "Test email sent to {$recipient}."]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::error('SMTP test failed: ' . $e->getMessage());
             return response()->json(['message' => 'Failed: ' . $e->getMessage()], 500);
         }
     }
@@ -238,6 +240,8 @@ class SmtpController extends Controller
         Config::set('mail.mailers.smtp.password', $config['password'] ?? '');
         Config::set('mail.from.address', $config['from_address'] ?? '');
         Config::set('mail.from.name', $config['from_name'] ?? config('app.name'));
+        // Purge any cached mailer so it rebuilds with the new config
+        Mail::purge('smtp');
     }
 
     private function defaultNotifConfig(): array

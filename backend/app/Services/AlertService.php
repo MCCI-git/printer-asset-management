@@ -9,6 +9,7 @@ use App\Models\Printer;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class AlertService
@@ -122,10 +123,10 @@ class AlertService
                 expiringContracts: $expiringContracts,
                 overdueService: $overdueService,
             ));
-            // Remember this alert state for 24 hours so we don't re-send the same digest
             Cache::put($cacheKey, $alertHash, now()->addHours(24));
             return true;
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            Log::error('Alert digest failed: ' . $e->getMessage());
             return false;
         }
     }
@@ -173,7 +174,9 @@ class AlertService
                 expiringContracts: [],
                 overdueService: [],
             ));
-        } catch (\Throwable) {}
+        } catch (\Throwable $e) {
+            Log::error('Stock alert failed: ' . $e->getMessage());
+        }
     }
 
     private function bootSmtp(array $smtp): void
@@ -188,5 +191,7 @@ class AlertService
         Config::set('mail.mailers.smtp.password',   $smtp['password'] ?? '');
         Config::set('mail.from.address', $smtp['from_address'] ?? $smtp['username'] ?? '');
         Config::set('mail.from.name',    $smtp['from_name']    ?? 'Printer Asset Management');
+        // Purge any cached mailer so it rebuilds with the new config
+        Mail::purge('smtp');
     }
 }
