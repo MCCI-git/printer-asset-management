@@ -66,10 +66,12 @@ class AlertService
         }
 
         if (!empty($notif['alert_contract_expiry'])) {
-            // Fetch all active contracts that haven't yet expired
-            $contracts = Contract::where('status', 'active')
-                ->where('end_date', '>=', Carbon::today())
-                ->get();
+            // Active contracts within notice window + contracts that expired today
+            $contracts = Contract::where(function ($q) {
+                $q->where('status', 'active')->where('end_date', '>=', Carbon::today());
+            })->orWhere(function ($q) {
+                $q->where('status', 'expired')->whereDate('end_date', Carbon::today());
+            })->get();
             foreach ($contracts as $c) {
                 $daysLeft   = (int) Carbon::today()->diffInDays($c->end_date);
                 $noticeDays = (int) ($c->notice_period_days ?? 30); // fallback 30 days

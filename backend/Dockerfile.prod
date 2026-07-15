@@ -13,7 +13,8 @@ RUN apk add --no-cache \
     unzip \
     oniguruma-dev \
     mysql-client \
-    net-snmp-dev
+    net-snmp-dev \
+    supervisor
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
@@ -46,6 +47,8 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Run post-install scripts
 RUN composer dump-autoload --optimize
 
+COPY supervisord.conf /etc/supervisord.conf
+
 EXPOSE 9000
 
-CMD ["php-fpm"]
+CMD ["supervisord", "-c", "/etc/supervisord.conf"]
