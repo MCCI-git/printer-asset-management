@@ -78,6 +78,24 @@ class TopAccessController extends Controller
         return response()->json($this->service->testConnection($ip, $community));
     }
 
+    public function probeIps(Request $request): JsonResponse
+    {
+        $request->validate([
+            'ips'       => 'required|array|max:254',
+            'ips.*'     => 'required|ip',
+            'community' => 'nullable|string',
+        ]);
+
+        $community = $request->input('community', 'public');
+        $results   = [];
+
+        foreach ($request->input('ips') as $ip) {
+            $results[] = $this->service->probeIp($ip, $community);
+        }
+
+        return response()->json($results);
+    }
+
     public function diagnostics(): JsonResponse
     {
         return response()->json([

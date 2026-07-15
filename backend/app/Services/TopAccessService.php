@@ -137,6 +137,67 @@ class TopAccessService
         }
     }
 
+    public function probeIp(string $ip, string $community = 'public'): array
+    {
+        try {
+            snmp_set_valueretrieval(SNMP_VALUE_PLAIN);
+            snmp_set_quick_print(true);
+
+            $sysDescr = @snmpget($ip, $community, self::OID_SYS_DESCR, 1500000, 1);
+            if ($sysDescr === false) {
+                return ['ip' => $ip, 'reachable' => false, 'name' => $ip, 'status' => 'unknown', 'serial' => null, 'model' => null, 'total_pages' => null, 'toner' => [], 'error' => 'SNMP unreachable', 'fetched_at' => now()->toISOString()];
+            }
+
+            $model = trim($sysDescr);
+            $name  = $ip;
+
+            $sysName = @snmpget($ip, $community, self::OID_SYS_NAME, 1500000, 1);
+            if ($sysName !== false) $name = trim($sysName);
+
+            $serial    = null;
+            $serialRaw = @snmpget($ip, $community, self::OID_SERIAL, 1500000, 1);
+            if ($serialRaw !== false) $serial = trim($serialRaw);
+
+            $totalPages = null;
+            $pagesRaw   = @snmpget($ip, $community, self::OID_TOTAL_PAGES, 1500000, 1);
+            if ($pagesRaw !== false) $totalPages = (int) $pagesRaw;
+
+            $statusRaw     = @snmpget($ip, $community, self::OID_PRINTER_STATUS, 1500000, 1);
+            $printerStatus = $this->mapStatus((int) $statusRaw);
+
+            $toner = [];
+            for ($i = 1; $i <= 4; $i++) {
+                $current = @snmpget($ip, $community, self::OID_TONER_CURRENT . $i, 1500000, 1);
+                $max     = @snmpget($ip, $community, self::OID_TONER_MAX . $i, 1500000, 1);
+                if ($current === false || $max === false) continue;
+                $maxVal  = (int) $max;
+                $curVal  = (int) $current;
+                $nameRaw = @snmpget($ip, $community, self::OID_TONER_NAME . $i, 1500000, 1);
+                $toner[] = [
+                    'name'    => ($nameRaw !== false) ? strtolower(trim($nameRaw)) : (['black','cyan','magenta','yellow'][$i - 1] ?? "toner-{$i}"),
+                    'current' => $curVal,
+                    'max'     => $maxVal,
+                    'percent' => $maxVal > 0 ? round(($curVal / $maxVal) * 100) : 0,
+                ];
+            }
+
+            return [
+                'ip'          => $ip,
+                'reachable'   => true,
+                'name'        => $name,
+                'status'      => $printerStatus,
+                'serial'      => $serial,
+                'model'       => $model,
+                'total_pages' => $totalPages,
+                'toner'       => $toner,
+                'error'       => null,
+                'fetched_at'  => now()->toISOString(),
+            ];
+        } catch (\Exception $e) {
+            return ['ip' => $ip, 'reachable' => false, 'name' => $ip, 'status' => 'unknown', 'serial' => null, 'model' => null, 'total_pages' => null, 'toner' => [], 'error' => $e->getMessage(), 'fetched_at' => now()->toISOString()];
+        }
+    }
+
     private function mapStatus(int $code): string
     {
         return match ($code) {

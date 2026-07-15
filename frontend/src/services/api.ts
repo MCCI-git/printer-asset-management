@@ -128,6 +128,7 @@ export const topAccessApi = {
   printer: (id: number) => api.get('/topaccess/printer', { params: { id } }),
   refreshOne: (id: number) => api.post(`/topaccess/refresh/${id}`),
   test: (data: { ip: string; community: string }) => api.post('/topaccess/test', data),
+  probeIps: (ips: string[], community?: string) => api.post('/topaccess/probe', { ips, community: community ?? 'public' }),
 }
 
 // Admin: SMTP + Notifications

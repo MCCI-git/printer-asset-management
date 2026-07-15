@@ -140,9 +140,34 @@ export function TopAccess() {
     setScanning(true); setScanResults([]); setScannedCount(0); setIpAssignments({})
     try {
       const res = await networkApi.scan(startIp, endIp)
-      setScanResults(res.data.results)
+      const results = res.data.results as { ip: string; printer: any }[]
+      setScanResults(results)
       setScannedCount(res.data.scanned)
-      if (res.data.results.length === 0) toast.info('No printer devices found in range.')
+
+      if (results.length === 0) {
+        toast.info('No printer devices found in range.')
+        return
+      }
+
+      // Auto-fetch SNMP data for every discovered IP and show in main tab
+      toast.info(`Found ${results.length} device${results.length !== 1 ? 's' : ''} — fetching SNMP data…`)
+      const ips = results.map(r => r.ip)
+      const probeRes = await topAccessApi.probeIps(ips, testCommunity)
+      const probed = probeRes.data as any[]
+
+      // Merge into printers list: replace existing entry for that IP or prepend
+      setPrinters(prev => {
+        const merged = [...prev]
+        for (const p of probed) {
+          const idx = merged.findIndex(x => x.ip === p.ip)
+          if (idx >= 0) merged[idx] = p
+          else merged.unshift(p)
+        }
+        return merged
+      })
+
+      setScanOpen(false)
+      toast.success(`SNMP data fetched for ${probed.filter(p => p.reachable).length} printer${probed.filter(p => p.reachable).length !== 1 ? 's' : ''}.`)
     } catch (e: any) {
       toast.error(e?.response?.data?.message ?? 'Scan failed.')
     } finally { setScanning(false) }

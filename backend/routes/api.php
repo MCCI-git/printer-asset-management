@@ -80,6 +80,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/refresh-all', [TopAccessController::class, 'refreshAll']);
         Route::post('/refresh/{printer}', [TopAccessController::class, 'refreshOne']);
         Route::post('/test', [TopAccessController::class, 'test']);
+        Route::post('/probe', [TopAccessController::class, 'probeIps']);
         Route::get('/diagnostics', [TopAccessController::class, 'diagnostics']);
     });
 
