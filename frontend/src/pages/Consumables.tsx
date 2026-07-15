@@ -197,6 +197,7 @@ export function Consumables() {
 
   const filteredConsumables = useMemo(() => {
     return consumables.filter(c => {
+      if (c.quantity === 0) return false
       const status = getConsumableStockStatus(c.quantity, c.low_stock_threshold)
       if (statusFilter && status !== statusFilter) return false
       if (qtyMin !== '' && c.quantity < Number(qtyMin)) return false
