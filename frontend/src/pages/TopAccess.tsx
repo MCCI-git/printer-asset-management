@@ -126,14 +126,15 @@ export function TopAccess() {
   const [testing, setTesting]             = useState(false)
 
   // Network scan
-  const [scanOpen, setScanOpen]       = useState(false)
-  const [startIp, setStartIp]         = useState('')
-  const [endIp, setEndIp]             = useState('')
-  const [scanning, setScanning]       = useState(false)
-  const [scanResults, setScanResults] = useState<{ ip: string; printer: { id: number; name: string; asset_tag: string } | null }[]>([])
-  const [scannedCount, setScannedCount] = useState(0)
+  const [scanOpen, setScanOpen]           = useState(false)
+  const [startIp, setStartIp]             = useState('')
+  const [endIp, setEndIp]                 = useState('')
+  const [scanning, setScanning]           = useState(false)
+  const [scanResults, setScanResults]     = useState<{ ip: string; printer: { id: number; name: string; asset_tag: string } | null }[]>([])
+  const [scannedCount, setScannedCount]   = useState(0)
   const [ipAssignments, setIpAssignments] = useState<Record<string, number | ''>>({})
-  const [assigning, setAssigning]     = useState<Record<string, boolean>>({})
+  const [assigning, setAssigning]         = useState<Record<string, boolean>>({})
+  const [discoveredPrinters, setDiscoveredPrinters] = useState<PrinterData[]>([])
 
   const handleScan = async () => {
     if (!startIp || !endIp) return toast.error('Enter a start and end IP.')
@@ -153,21 +154,13 @@ export function TopAccess() {
       toast.info(`Found ${results.length} device${results.length !== 1 ? 's' : ''} — fetching SNMP data…`)
       const ips = results.map(r => r.ip)
       const probeRes = await topAccessApi.probeIps(ips, testCommunity)
-      const probed = probeRes.data as any[]
+      const probed = probeRes.data as PrinterData[]
 
-      // Merge into printers list: replace existing entry for that IP or prepend
-      setPrinters(prev => {
-        const merged = [...prev]
-        for (const p of probed) {
-          const idx = merged.findIndex(x => x.ip === p.ip)
-          if (idx >= 0) merged[idx] = p
-          else merged.unshift(p)
-        }
-        return merged
-      })
-
+      // Keep only IPs not already in the DB-loaded list
+      setDiscoveredPrinters(probed.filter(p => !printers.some(x => x.ip === p.ip)))
       setScanOpen(false)
-      toast.success(`SNMP data fetched for ${probed.filter(p => p.reachable).length} printer${probed.filter(p => p.reachable).length !== 1 ? 's' : ''}.`)
+      const reachable = probed.filter(p => p.reachable).length
+      toast.success(`SNMP data fetched for ${reachable} printer${reachable !== 1 ? 's' : ''}.`)
     } catch (e: any) {
       toast.error(e?.response?.data?.message ?? 'Scan failed.')
     } finally { setScanning(false) }
@@ -231,8 +224,9 @@ export function TopAccess() {
     }
   }
 
-  const onlineCount  = printers.filter(p => p.reachable).length
-  const offlineCount = printers.filter(p => !p.reachable).length
+  const allVisible   = [...printers, ...discoveredPrinters]
+  const onlineCount  = allVisible.filter(p => p.reachable).length
+  const offlineCount = allVisible.filter(p => !p.reachable).length
 
   return (
     <div className="space-y-6 -mt-2">
@@ -259,15 +253,15 @@ export function TopAccess() {
         </div>
       </div>
 
-      {printers.length > 0 && (
+      {allVisible.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="outline">{printers.length} printer{printers.length !== 1 ? 's' : ''}</Badge>
+          <Badge variant="outline">{allVisible.length} printer{allVisible.length !== 1 ? 's' : ''}</Badge>
           {onlineCount > 0  && <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0">{onlineCount} online</Badge>}
           {offlineCount > 0 && <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-0">{offlineCount} offline</Badge>}
         </div>
       )}
 
-      {!loading && printers.length === 0 && (
+      {!loading && allVisible.length === 0 && (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center gap-3">
             <Printer size={40} className="text-muted-foreground/40" />
@@ -282,9 +276,9 @@ export function TopAccess() {
         </Card>
       )}
 
-      {printers.length > 0 && (
+      {allVisible.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {printers.map(p => <PrinterCard key={p.ip} data={p} />)}
+          {allVisible.map(p => <PrinterCard key={p.ip} data={p} />)}
         </div>
       )}
 
