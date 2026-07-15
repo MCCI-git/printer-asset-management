@@ -808,7 +808,7 @@ const ContractsTable = memo(function ContractsTable({
     {/* PDF Viewer Dialog */}
     {pdfViewer && (
       <Dialog open onOpenChange={() => setPdfViewer(null)}>
-        <DialogContent className="!max-w-[calc(95vw-400px)] w-[calc(95vw-400px)] h-[92vh] flex flex-col p-0">
+        <DialogContent className="!max-w-[calc(95vw-600px)] w-[calc(95vw-600px)] h-[92vh] flex flex-col p-0">
           <DialogHeader className="px-6 pt-5 pb-3 border-b border-border/40 shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <FileText size={16} className="text-red-500" /> {pdfViewer.name}
