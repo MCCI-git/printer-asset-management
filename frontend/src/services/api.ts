@@ -76,7 +76,7 @@ export const contractsApi = {
   deleteRenewal: (id: number) => api.delete(`/contract-renewals/${id}`),
   uploadPdf: (id: number, file: File) => {
     const fd = new FormData(); fd.append('pdf', file)
-    return api.post(`/contracts/${id}/upload-pdf`, fd)
+    return api.post(`/contracts/${id}/upload-pdf`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
   },
 }
 
