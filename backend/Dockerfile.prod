@@ -48,7 +48,9 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 RUN composer dump-autoload --optimize
 
 COPY supervisord.conf /etc/supervisord.conf
+# Override PHP-FPM pool to use port 9001 (port 9000 is used by Synology DSM)
+COPY docker/php-fpm-pool.conf /usr/local/etc/php-fpm.d/www.conf
 
-EXPOSE 9000
+EXPOSE 9001
 
 CMD ["supervisord", "-c", "/etc/supervisord.conf"]
