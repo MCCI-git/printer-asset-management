@@ -631,6 +631,7 @@ const ContractsTable = memo(function ContractsTable({
   }
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
@@ -819,6 +820,7 @@ const ContractsTable = memo(function ContractsTable({
         </DialogContent>
       </Dialog>
     )}
+    </>
   )
 })
 
