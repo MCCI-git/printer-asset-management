@@ -84,6 +84,7 @@ export function Consumables() {
   // Edit Consumable dialog
   const [editOpen, setEditOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Consumable | null>(null)
+  const [editSaving, setEditSaving] = useState(false)
   const [editForm, setEditForm] = useState({
     type: 'Toner' as ConsumableType, name: '', color: '' as '' | 'Black' | 'Cyan' | 'Magenta' | 'Yellow',
     unit_cost: '', page_yield: '', quantity: '1', purchase_date: '', invoice_number: '',
@@ -112,6 +113,8 @@ export function Consumables() {
       toast.error('Please fill in all required fields.')
       return
     }
+    if (editSaving) return
+    setEditSaving(true)
 
     const isAssigning = editForm.printer_id !== '__none__'
 
@@ -137,7 +140,7 @@ export function Consumables() {
         await assignConsumable.mutateAsync({ consumableId: editTarget.id, printerId: Number(editForm.printer_id) })
         const newQty = editTarget.quantity - 1
         if (newQty <= 0) {
-          toast.warning(`1 × ${editForm.name.trim()} assigned — now out of stock.`)
+          toast.error(`1 × ${editForm.name.trim()} assigned — now out of stock.`)
         } else if (newQty <= editTarget.low_stock_threshold) {
           toast.warning(`1 × ${editForm.name.trim()} assigned — low stock (${newQty} remaining).`)
         } else {
@@ -149,6 +152,8 @@ export function Consumables() {
       setEditTarget(null)
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? 'Failed to save.')
+    } finally {
+      setEditSaving(false)
     }
   }
 
@@ -781,8 +786,8 @@ export function Consumables() {
           </div>
           <DialogFooter className="flex-row gap-2 sm:justify-between">
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button onClick={handleEditSubmit} disabled={updateConsumable.isPending}>
-              {updateConsumable.isPending ? 'Saving…' : 'Save Changes'}
+            <Button onClick={handleEditSubmit} disabled={editSaving}>
+              {editSaving ? 'Saving…' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </DialogContent>
