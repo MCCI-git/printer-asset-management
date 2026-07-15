@@ -135,7 +135,14 @@ export function Consumables() {
       if (isAssigning) {
         // Assign exactly 1 unit — backend decrements quantity by 1
         await assignConsumable.mutateAsync({ consumableId: editTarget.id, printerId: Number(editForm.printer_id) })
-        toast.success(`1 × ${editForm.name.trim()} assigned. Quantity: ${editTarget.quantity} → ${editTarget.quantity - 1}.`)
+        const newQty = editTarget.quantity - 1
+        if (newQty <= 0) {
+          toast.warning(`1 × ${editForm.name.trim()} assigned — now out of stock.`)
+        } else if (newQty <= editTarget.low_stock_threshold) {
+          toast.warning(`1 × ${editForm.name.trim()} assigned — low stock (${newQty} remaining).`)
+        } else {
+          toast.success(`1 × ${editForm.name.trim()} assigned. Quantity: ${editTarget.quantity} → ${newQty}.`)
+        }
       }
 
       setEditOpen(false)
