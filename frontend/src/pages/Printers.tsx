@@ -574,17 +574,6 @@ export function Printers() {
         enableSorting: false,
       },
       {
-        id: 'ip_address',
-        header: 'IP Address',
-        cell: ({ row }) => {
-          const ip = row.original.ip_address
-          return ip
-            ? <span className="font-mono text-xs text-muted-foreground">{ip}</span>
-            : <span className="text-xs text-muted-foreground">–</span>
-        },
-        enableSorting: false,
-      },
-      {
         id: 'page_count',
         header: 'Page Count',
         cell: ({ row }) => (
