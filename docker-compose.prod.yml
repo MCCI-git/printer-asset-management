@@ -10,8 +10,6 @@ services:
       MYSQL_USER: pam_user
       MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-    ports:
-      - "127.0.0.1:3306:3306"
     volumes:
       - pam_mysql_data:/var/lib/mysql
     networks:
@@ -30,16 +28,13 @@ services:
       dockerfile: Dockerfile.prod
     container_name: pam_backend
     restart: unless-stopped
-    # host network lets the container reach LAN printers for SNMP (UDP 161)
-    # DB is reached via 127.0.0.1 because pam_db also exposes port 3306 on the host
-    network_mode: host
     environment:
       APP_ENV: production
       APP_DEBUG: false
       APP_KEY: ${APP_KEY}
       APP_URL: ${APP_URL}
       DB_CONNECTION: mysql
-      DB_HOST: 127.0.0.1
+      DB_HOST: pam_db
       DB_PORT: 3306
       DB_DATABASE: printer_assets
       DB_USERNAME: pam_user
@@ -53,6 +48,8 @@ services:
     depends_on:
       pam_db:
         condition: service_healthy
+    networks:
+      - pam_net
 
   # ── Nginx (serves frontend + proxies API) ─────────────────────────────────
   pam_nginx:
@@ -61,14 +58,16 @@ services:
       dockerfile: Dockerfile.nginx
     container_name: pam_nginx
     restart: unless-stopped
-    # host network lets nginx reach pam_backend at 127.0.0.1:9000 (which also uses host network)
-    network_mode: host
+    ports:
+      - "${APP_PORT:-8900}:80"
     volumes:
       - pam_storage:/var/www/html/storage/app
     depends_on:
       - pam_backend
+    networks:
+      - pam_net
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8900/"]
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
       interval: 30s
       timeout: 5s
       retries: 3
