@@ -200,6 +200,11 @@ export const usersApi = {
   toggleStatus: (id: number) => api.patch(`/users/${id}/toggle-status`),
 }
 
+export const networkApi = {
+  scan: (start: string, end: string) => api.post('/network/scan', { start, end }),
+  assignIp: (printer_id: number, ip_address: string) => api.post('/network/assign-ip', { printer_id, ip_address }),
+}
+
 export const tonerModelsApi = {
   list: () => api.get('/toner-models'),
   create: (data: unknown) => api.post('/toner-models', data),
