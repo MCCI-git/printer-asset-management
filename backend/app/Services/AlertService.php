@@ -140,7 +140,7 @@ class AlertService
         $smtp  = json_decode(file_get_contents($this->smtpPath), true);
         $notif = json_decode(file_get_contents($this->notifPath), true);
 
-        $isOutOfStock = $consumable->quantity === 0;
+        $isOutOfStock = $consumable->quantity <= 0;
         $isLowStock   = $consumable->quantity > 0 && $consumable->quantity <= $consumable->low_stock_threshold;
 
         if ($isOutOfStock && empty($notif['alert_out_of_stock'])) return;
