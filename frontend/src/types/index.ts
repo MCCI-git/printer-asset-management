@@ -95,7 +95,8 @@ export interface Contract {
   covered_printers: number
   notice_period_days?: number
   contract_manager?: string
-  pdf_path?: string
+  pdf_path?: string | null
+  pdf_url?: string | null
   notes?: string
   status: ContractStatus
   created_at?: string

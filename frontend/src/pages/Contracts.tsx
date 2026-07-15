@@ -14,7 +14,7 @@ import {
   type PaginationState,
 } from '@tanstack/react-table'
 import { TablePagination } from '@/components/ui/table-pagination'
-import { FileText, Plus, Search, ArrowUpDown, RefreshCw, Trash2, X, Pencil } from 'lucide-react'
+import { FileText, Plus, Search, ArrowUpDown, RefreshCw, Trash2, X, Pencil, Upload, Eye } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -37,6 +37,7 @@ import {
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { DatePicker } from '@/components/ui/date-picker'
 import type { Contract } from '@/types'
+import { contractsApi } from '@/services/api'
 
 // ── Shared constants ───────────────────────────────────────────────────────────
 const EMPTY_CONTRACTS: Contract[] = []
@@ -94,6 +95,41 @@ function formToPayload(f: FormShape) {
 }
 
 // ── Edit dialog ────────────────────────────────────────────────────────────────
+// ── PDF drop zone ──────────────────────────────────────────────────────────────
+function PdfDropZone({ file, onChange }: { file: File | null; onChange: (f: File | null) => void }) {
+  const [dragging, setDragging] = useState(false)
+  const inputRef = useState<HTMLInputElement | null>(null)
+
+  const handle = (f: File | null) => {
+    if (f && f.type !== 'application/pdf') { toast.error('Only PDF files are allowed.'); return }
+    onChange(f)
+  }
+
+  return (
+    <div
+      className={`relative flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 text-center transition-colors cursor-pointer ${dragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-muted/30'}`}
+      onDragOver={e => { e.preventDefault(); setDragging(true) }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={e => { e.preventDefault(); setDragging(false); handle(e.dataTransfer.files[0] ?? null) }}
+      onClick={() => document.getElementById('pdf-upload-input')?.click()}
+    >
+      <input id="pdf-upload-input" type="file" accept="application/pdf" className="hidden" onChange={e => handle(e.target.files?.[0] ?? null)} />
+      {file ? (
+        <>
+          <FileText size={22} className="text-primary" />
+          <p className="text-xs font-medium text-foreground truncate max-w-[220px]">{file.name}</p>
+          <button className="text-[11px] text-destructive hover:underline" onClick={e => { e.stopPropagation(); onChange(null) }}>Remove</button>
+        </>
+      ) : (
+        <>
+          <Upload size={20} className="text-muted-foreground" />
+          <p className="text-xs text-muted-foreground">Drag & drop a PDF or <span className="text-primary font-medium">click to browse</span></p>
+        </>
+      )}
+    </div>
+  )
+}
+
 function EditContractDialog({ contract, onClose }: { contract: Contract; onClose: () => void }) {
   const updateContract = useUpdateContract()
   const { data: suppliersData } = useSuppliers({ per_page: 200 })
@@ -101,6 +137,7 @@ function EditContractDialog({ contract, onClose }: { contract: Contract; onClose
   const { data: printersData } = usePrinters({ per_page: 500 })
   const printersList: { id: number; name: string }[] = printersData?.data ?? []
   const [form, setForm] = useState<FormShape>(() => contractToForm(contract))
+  const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -121,6 +158,7 @@ function EditContractDialog({ contract, onClose }: { contract: Contract; onClose
     setSaving(true)
     try {
       await updateContract.mutateAsync({ id: contract.id, data: formToPayload(form) })
+      if (pdfFile) await contractsApi.uploadPdf(contract.id, pdfFile)
       toast.success('Contract updated.')
       onClose()
     } catch (err: any) {
@@ -216,6 +254,10 @@ function EditContractDialog({ contract, onClose }: { contract: Contract; onClose
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
           </div>
+          <div className="space-y-1.5">
+            <Label>Contract PDF {contract.pdf_path && <span className="text-xs text-muted-foreground font-normal ml-1">(already uploaded — drop a new one to replace)</span>}</Label>
+            <PdfDropZone file={pdfFile} onChange={setPdfFile} />
+          </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
         <DialogFooter>
@@ -235,6 +277,7 @@ function AddContractDialog({ onClose }: { onClose: () => void }) {
   const { data: printersData } = usePrinters({ per_page: 500 })
   const printersList: { id: number; name: string }[] = printersData?.data ?? []
   const [form, setForm] = useState<FormShape>(EMPTY_FORM)
+  const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [submitError, setSubmitError] = useState('')
 
@@ -267,7 +310,8 @@ function AddContractDialog({ onClose }: { onClose: () => void }) {
     if (!validate()) return
     setSubmitError('')
     try {
-      await createContract.mutateAsync(formToPayload(form))
+      const res = await createContract.mutateAsync(formToPayload(form))
+      if (pdfFile && res?.data?.id) await contractsApi.uploadPdf(res.data.id, pdfFile)
       onClose()
     } catch (err: any) {
       setSubmitError(err?.response?.data?.message ?? 'Failed to add contract.')
@@ -360,6 +404,10 @@ function AddContractDialog({ onClose }: { onClose: () => void }) {
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground/50 focus:border-blue-500 focus:outline-none resize-none"
             />
           </div>
+          <div className="col-span-2 space-y-1.5">
+            <Label>Contract PDF <span className="text-xs text-muted-foreground font-normal">(optional)</span></Label>
+            <PdfDropZone file={pdfFile} onChange={setPdfFile} />
+          </div>
           {submitError && <p className="col-span-2 text-xs text-destructive">{submitError}</p>}
         </div>
         <DialogFooter>
@@ -392,6 +440,7 @@ const ContractsTable = memo(function ContractsTable({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
   const [renewing, setRenewing] = useState(false)
+  const [pdfViewer, setPdfViewer] = useState<{ name: string; url: string } | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [filterType, setFilterType] = useState<string>('all')
   const [filterVendor, setFilterVendor] = useState<string>('all')
@@ -503,6 +552,22 @@ const ContractsTable = memo(function ContractsTable({
       },
     },
     {
+      id: 'pdf',
+      header: '',
+      enableSorting: false,
+      enableGlobalFilter: false,
+      cell: ({ row }) => {
+        const c = row.original
+        if (!c.pdf_url) return null
+        return (
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-500 hover:text-red-600" title="View PDF"
+            onClick={() => setPdfViewer({ name: c.name, url: c.pdf_url! })}>
+            <FileText size={15} />
+          </Button>
+        )
+      },
+    },
+    {
       id: 'actions',
       header: '',
       enableSorting: false,
@@ -513,7 +578,7 @@ const ContractsTable = memo(function ContractsTable({
         </Button>
       ),
     },
-  ], [onEdit])
+  ], [onEdit, setPdfViewer])
 
   const table = useReactTable({
     data: filteredContracts,
@@ -729,6 +794,22 @@ const ContractsTable = memo(function ContractsTable({
         )}
       </CardContent>
     </Card>
+
+    {/* PDF Viewer Dialog */}
+    {pdfViewer && (
+      <Dialog open onOpenChange={() => setPdfViewer(null)}>
+        <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-5 pb-3 border-b border-border/40 shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <FileText size={16} className="text-red-500" /> {pdfViewer.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            <iframe src={pdfViewer.url} className="w-full h-full border-0" title={pdfViewer.name} />
+          </div>
+        </DialogContent>
+      </Dialog>
+    )}
   )
 })
 
