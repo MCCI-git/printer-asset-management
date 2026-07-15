@@ -429,7 +429,7 @@ export function Consumables() {
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Min. Threshold</Label>
-              <Input type="number" min={0} className="w-24" value={tonerForm.low_stock_threshold} onChange={e => setTonerForm(f => ({ ...f, low_stock_threshold: e.target.value }))} />
+              <Input type="number" min={0} className="w-16" value={tonerForm.low_stock_threshold} onChange={e => setTonerForm(f => ({ ...f, low_stock_threshold: e.target.value }))} />
             </div>
             <div className="flex gap-1">
               <Button size="sm" onClick={handleTonerSubmit} disabled={tonerSaving}>
