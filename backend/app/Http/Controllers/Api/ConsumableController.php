@@ -155,10 +155,6 @@ class ConsumableController extends Controller
             'printer_id' => 'required|exists:printers,id',
         ]);
 
-        if ($consumable->quantity <= 0) {
-            return response()->json(['message' => 'Cannot assign — this consumable is out of stock.'], 422);
-        }
-
         $assignment = DB::transaction(function () use ($consumable, $validated) {
             $consumable->decrement('quantity');
             return ConsumableAssignment::create([

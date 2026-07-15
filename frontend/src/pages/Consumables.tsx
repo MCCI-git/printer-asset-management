@@ -115,11 +115,6 @@ export function Consumables() {
 
     const isAssigning = editForm.printer_id !== '__none__'
 
-    if (isAssigning && editTarget.quantity <= 0) {
-      toast.error('Cannot assign — this consumable is out of stock.')
-      return
-    }
-
     try {
       // Update consumable details. When assigning, never override quantity — the assign endpoint owns that.
       await updateConsumable.mutateAsync({
