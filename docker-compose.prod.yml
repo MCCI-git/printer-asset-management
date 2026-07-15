@@ -21,13 +21,15 @@ services:
       retries: 30
       start_period: 300s
 
-  # ── Laravel Backend (PHP-FPM) ──────────────────────────────────────────────
-  pam_backend:
+  # ── App (Laravel + Nginx + React, all in one container) ────────────────────
+  pam_app:
     build:
-      context: ./backend
-      dockerfile: Dockerfile.prod
-    container_name: pam_backend
+      context: .
+      dockerfile: backend/Dockerfile.prod
+    container_name: pam_app
     restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8900}:8900"
     environment:
       APP_ENV: production
       APP_DEBUG: false
@@ -50,27 +52,6 @@ services:
         condition: service_healthy
     networks:
       - pam_net
-
-  # ── Nginx (serves frontend + proxies API) ─────────────────────────────────
-  pam_nginx:
-    build:
-      context: .
-      dockerfile: Dockerfile.nginx
-    container_name: pam_nginx
-    restart: unless-stopped
-    ports:
-      - "${APP_PORT:-8900}:80"
-    volumes:
-      - pam_storage:/var/www/html/storage/app
-    depends_on:
-      - pam_backend
-    networks:
-      - pam_net
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost/"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
 
   # ── phpMyAdmin ────────────────────────────────────────────────────────────────
   pam_phpmyadmin:
