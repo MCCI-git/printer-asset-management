@@ -132,6 +132,7 @@ export function Capex() {
                 </TableHead>
                 <TableHead>Asset Tag</TableHead>
                 <TableHead>Name</TableHead>
+                <TableHead>Department</TableHead>
                 <TableHead>IP Address</TableHead>
                 <TableHead>Purchase Date</TableHead>
                 <TableHead>Warranty</TableHead>
@@ -146,6 +147,7 @@ export function Capex() {
                   </TableCell>
                   <TableCell className="align-middle"><span className="inline-flex items-center rounded-md px-1.5 py-0.5 font-mono text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{p.asset_tag}</span></TableCell>
                   <TableCell className="align-middle"><p className="font-medium">{p.name}</p></TableCell>
+                  <TableCell className="align-middle text-xs text-muted-foreground">{p.department ?? '–'}</TableCell>
                   <TableCell className="align-middle"><span className="font-mono text-xs text-muted-foreground">{p.ip_address ?? '–'}</span></TableCell>
                   <TableCell className="align-middle text-xs">{p.purchase_date ? formatDate(p.purchase_date) : '–'}</TableCell>
                   <TableCell className="align-middle text-xs text-muted-foreground">{p.warranty ?? '–'}</TableCell>
