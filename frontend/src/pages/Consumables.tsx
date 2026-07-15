@@ -411,7 +411,7 @@ export function Consumables() {
 
       {/* Toner List Dialog */}
       <Dialog open={tonerListOpen} onOpenChange={open => { setTonerListOpen(open); if (!open) resetTonerForm() }}>
-        <DialogContent className="w-[95vw] max-w-none">
+        <DialogContent className="w-[38vw] max-w-none">
           <DialogHeader>
             <DialogTitle>Toner List</DialogTitle>
             <DialogDescription>Manage toner models and their minimum stock thresholds for low-stock alerts.</DialogDescription>
