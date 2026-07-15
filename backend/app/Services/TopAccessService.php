@@ -139,15 +139,35 @@ class TopAccessService
 
     public function probeIp(string $ip, string $community = 'public'): array
     {
+        $base = ['ip' => $ip, 'name' => $ip, 'status' => 'unknown', 'serial' => null, 'model' => null, 'total_pages' => null, 'toner' => [], 'fetched_at' => now()->toISOString()];
+
+        // Step 1 — TCP reachability on printer ports
+        $tcpReachable = false;
+        foreach ([9100, 515, 631] as $port) {
+            $sock = @fsockopen($ip, $port, $errno, $errstr, 1);
+            if ($sock) { fclose($sock); $tcpReachable = true; break; }
+        }
+
+        if (!$tcpReachable) {
+            return array_merge($base, ['reachable' => false, 'error' => "Not reachable — device at {$ip} did not respond on printer ports 9100, 515, or 631. It may be offline or not a printer."]);
+        }
+
+        // Step 2 — SNMP basic connectivity (sysDescr)
+        if (!extension_loaded('snmp')) {
+            return array_merge($base, ['reachable' => false, 'error' => 'SNMP PHP extension is not loaded in this container. Run: apk add net-snmp-tools && docker-php-ext-enable snmp']);
+        }
+
         try {
             snmp_set_valueretrieval(SNMP_VALUE_PLAIN);
             snmp_set_quick_print(true);
 
-            $sysDescr = @snmpget($ip, $community, self::OID_SYS_DESCR, 1500000, 1);
+            $sysDescr = @snmpget($ip, $community, self::OID_SYS_DESCR, 2000000, 1);
+
             if ($sysDescr === false) {
-                return ['ip' => $ip, 'reachable' => false, 'name' => $ip, 'status' => 'unknown', 'serial' => null, 'model' => null, 'total_pages' => null, 'toner' => [], 'error' => 'SNMP unreachable', 'fetched_at' => now()->toISOString()];
+                return array_merge($base, ['reachable' => false, 'error' => "Device is reachable on TCP (port 9100/515/631) but did not respond to SNMP. Likely cause: SNMP is disabled on the printer, or the community string \"{$community}\" is wrong. Fix: open the printer web interface → Network → SNMP → enable SNMPv1/v2c, set community to \"{$community}\"."]);
             }
 
+            // Step 3 — full data collection
             $model = trim($sysDescr);
             $name  = $ip;
 
@@ -181,8 +201,12 @@ class TopAccessService
                 ];
             }
 
-            return [
-                'ip'          => $ip,
+            // Warn if SNMP responded but no printer-specific OIDs answered
+            $warning = ($totalPages === null && empty($toner))
+                ? 'SNMP responded but no printer OIDs were found. This device may not support standard printer MIBs (RFC 3805).'
+                : null;
+
+            return array_merge($base, [
                 'reachable'   => true,
                 'name'        => $name,
                 'status'      => $printerStatus,
@@ -190,11 +214,11 @@ class TopAccessService
                 'model'       => $model,
                 'total_pages' => $totalPages,
                 'toner'       => $toner,
-                'error'       => null,
-                'fetched_at'  => now()->toISOString(),
-            ];
+                'error'       => $warning,
+            ]);
+
         } catch (\Exception $e) {
-            return ['ip' => $ip, 'reachable' => false, 'name' => $ip, 'status' => 'unknown', 'serial' => null, 'model' => null, 'total_pages' => null, 'toner' => [], 'error' => $e->getMessage(), 'fetched_at' => now()->toISOString()];
+            return array_merge($base, ['reachable' => false, 'error' => 'SNMP error: ' . $e->getMessage()]);
         }
     }
 

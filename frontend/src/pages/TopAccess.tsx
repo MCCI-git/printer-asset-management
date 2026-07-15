@@ -87,12 +87,18 @@ function PrinterCard({ data }: { data: PrinterData }) {
       </CardHeader>
       <CardContent className="space-y-4">
         {data.error && !data.reachable && (
-          <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive">
-            {data.error}
+          <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 space-y-1">
+            <p className="text-xs font-semibold text-destructive">Why it failed</p>
+            <p className="text-xs text-destructive leading-relaxed">{data.error}</p>
           </div>
         )}
         {data.reachable && (
           <>
+            {data.error && (
+              <div className="rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3 text-xs text-amber-700 dark:text-amber-400">
+                {data.error}
+              </div>
+            )}
             <div className="rounded-lg border border-border bg-card/60 p-3 space-y-0.5">
               <DetailRow label="Model"       value={data.model} />
               <DetailRow label="Serial"      value={data.serial} />
