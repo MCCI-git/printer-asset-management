@@ -156,9 +156,10 @@ export function TopAccess() {
       const probeRes = await topAccessApi.probeIps(ips, testCommunity)
       const probed = probeRes.data as PrinterData[]
 
-      // Keep only IPs not already in the DB-loaded list
-      setDiscoveredPrinters(probed.filter(p => !printers.some(x => x.ip === p.ip)))
+      // Close dialog first, then update state in next tick so React doesn't batch them away
       setScanOpen(false)
+      await new Promise(r => setTimeout(r, 50))
+      setDiscoveredPrinters(probed)
       const reachable = probed.filter(p => p.reachable).length
       toast.success(`SNMP data fetched for ${reachable} printer${reachable !== 1 ? 's' : ''}.`)
     } catch (e: any) {
@@ -224,7 +225,10 @@ export function TopAccess() {
     }
   }
 
-  const allVisible   = [...printers, ...discoveredPrinters]
+  const allVisible   = [
+    ...printers,
+    ...discoveredPrinters.filter(d => !printers.some(p => p.ip === d.ip)),
+  ]
   const onlineCount  = allVisible.filter(p => p.reachable).length
   const offlineCount = allVisible.filter(p => !p.reachable).length
 
