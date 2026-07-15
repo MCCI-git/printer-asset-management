@@ -174,6 +174,15 @@ export function useUnassignConsumable() {
   })
 }
 
+export function useUpdateAssignment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, assigned_at }: { id: number; assigned_at: string }) =>
+      consumablesApi.updateAssignment(id, assigned_at),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['consumable-assignments'] }),
+  })
+}
+
 export function useCreateContract() {
   const qc = useQueryClient()
   return useMutation({

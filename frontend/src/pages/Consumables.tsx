@@ -40,7 +40,7 @@ import { X } from 'lucide-react'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { useConsumables, useCreateConsumable, useUpdateConsumable, useDeleteConsumable, useSuppliers, usePrinters, useConsumableAssignments, useAssignConsumable, useUnassignConsumable } from '@/hooks/useData'
+import { useConsumables, useCreateConsumable, useUpdateConsumable, useDeleteConsumable, useSuppliers, usePrinters, useConsumableAssignments, useAssignConsumable, useUnassignConsumable, useUpdateAssignment } from '@/hooks/useData'
 import { formatCurrency, getConsumableStockStatus } from '@/lib/utils'
 import type { Consumable, ConsumableType, Supplier, ConsumableAssignment } from '@/types'
 import { CONSUMABLE_STATUSES, TONER_COLORS } from '@/lib/constants'
@@ -52,6 +52,7 @@ export function Consumables() {
   const deleteConsumable = useDeleteConsumable()
   const assignConsumable = useAssignConsumable()
   const unassignConsumable = useUnassignConsumable()
+  const updateAssignment = useUpdateAssignment()
   const { data: suppliersRaw } = useSuppliers({ per_page: 500 })
   const suppliers: Supplier[] = (suppliersRaw as { data: Supplier[] } | undefined)?.data ?? []
   const { data: printersRaw } = usePrinters({ per_page: 500 })
@@ -663,7 +664,20 @@ export function Consumables() {
                     <TableCell><span className="text-xs text-muted-foreground">{a.consumable?.type}</span></TableCell>
                     <TableCell><span className="text-xs text-muted-foreground">{a.consumable?.supplier?.name ?? '—'}</span></TableCell>
                     <TableCell><span className="text-xs text-muted-foreground">{a.printer?.name} <span className="opacity-50">({a.printer?.asset_tag})</span></span></TableCell>
-                    <TableCell><span className="text-xs text-muted-foreground">{new Date(a.assigned_at).toLocaleDateString()}</span></TableCell>
+                    <TableCell>
+                      <DatePicker
+                        value={a.assigned_at ? new Date(a.assigned_at).toISOString().slice(0, 10) : ''}
+                        onChange={async (val) => {
+                          if (!val) return
+                          try {
+                            await updateAssignment.mutateAsync({ id: a.id, assigned_at: val })
+                            toast.success('Assigned date updated.')
+                          } catch {
+                            toast.error('Failed to update date.')
+                          }
+                        }}
+                      />
+                    </TableCell>
                     <TableCell>
                       <button
                         onClick={() => handleUnassign(a)}

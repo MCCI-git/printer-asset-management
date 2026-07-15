@@ -210,4 +210,12 @@ class ConsumableController extends Controller
 
         return response()->json(['message' => 'Unassigned successfully.']);
     }
+
+    public function updateAssignment(Request $request, ConsumableAssignment $assignment): JsonResponse
+    {
+        $validated = $request->validate(['assigned_at' => 'required|date']);
+        $assignment->update(['assigned_at' => Carbon::parse($validated['assigned_at'])]);
+        $assignment->load(['consumable.supplier', 'printer']);
+        return response()->json($assignment);
+    }
 }

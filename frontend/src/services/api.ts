@@ -61,6 +61,7 @@ export const consumablesApi = {
   assign: (id: number, printer_id: number) => api.post(`/consumables/${id}/assign`, { printer_id }),
   assignments: () => api.get('/consumable-assignments'),
   unassign: (assignmentId: number) => api.delete(`/consumable-assignments/${assignmentId}`),
+  updateAssignment: (assignmentId: number, assigned_at: string) => api.patch(`/consumable-assignments/${assignmentId}`, { assigned_at }),
 }
 
 // Contracts
