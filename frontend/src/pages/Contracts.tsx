@@ -1,6 +1,7 @@
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useState, useMemo, useCallback, useEffect, memo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   useReactTable,
   getCoreRowModel,
@@ -131,6 +132,7 @@ function PdfDropZone({ file, onChange }: { file: File | null; onChange: (f: File
 }
 
 function EditContractDialog({ contract, onClose }: { contract: Contract; onClose: () => void }) {
+  const qc = useQueryClient()
   const updateContract = useUpdateContract()
   const { data: suppliersData } = useSuppliers({ per_page: 200 })
   const suppliers: { id: number; name: string }[] = suppliersData?.data ?? []
@@ -158,7 +160,10 @@ function EditContractDialog({ contract, onClose }: { contract: Contract; onClose
     setSaving(true)
     try {
       await updateContract.mutateAsync({ id: contract.id, data: formToPayload(form) })
-      if (pdfFile) await contractsApi.uploadPdf(contract.id, pdfFile)
+      if (pdfFile) {
+        await contractsApi.uploadPdf(contract.id, pdfFile)
+        await qc.invalidateQueries({ queryKey: ['contracts'] })
+      }
       toast.success('Contract updated.')
       onClose()
     } catch (err: any) {
@@ -271,6 +276,7 @@ function EditContractDialog({ contract, onClose }: { contract: Contract; onClose
 
 // ── Add dialog (isolated so form state changes don't re-render the table) ──────
 function AddContractDialog({ onClose }: { onClose: () => void }) {
+  const qc = useQueryClient()
   const createContract = useCreateContract()
   const { data: suppliersData } = useSuppliers({ per_page: 200 })
   const suppliers: { id: number; name: string }[] = suppliersData?.data ?? []
@@ -311,7 +317,10 @@ function AddContractDialog({ onClose }: { onClose: () => void }) {
     setSubmitError('')
     try {
       const res = await createContract.mutateAsync(formToPayload(form))
-      if (pdfFile && res?.data?.id) await contractsApi.uploadPdf(res.data.id, pdfFile)
+      if (pdfFile && res?.data?.id) {
+        await contractsApi.uploadPdf(res.data.id, pdfFile)
+        await qc.invalidateQueries({ queryKey: ['contracts'] })
+      }
       onClose()
     } catch (err: any) {
       setSubmitError(err?.response?.data?.message ?? 'Failed to add contract.')
