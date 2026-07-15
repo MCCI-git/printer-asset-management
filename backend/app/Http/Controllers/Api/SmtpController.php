@@ -149,7 +149,7 @@ class SmtpController extends Controller
                     'threshold'=> $c->low_stock_threshold,
                     'printer'  => $c->printer?->name,
                 ];
-                if (!empty($notif['alert_out_of_stock']) && $c->quantity === 0) {
+                if (!empty($notif['alert_out_of_stock']) && $c->quantity <= 0) {
                     $outOfStock[] = $row;
                 } elseif (!empty($notif['alert_low_stock']) && $c->quantity > 0 && $c->quantity <= $c->low_stock_threshold) {
                     $lowStock[] = $row;

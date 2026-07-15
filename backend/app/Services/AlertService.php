@@ -19,7 +19,7 @@ class AlertService
     public function __construct()
     {
         $this->smtpPath  = storage_path('app/smtp_config.json');
-        $this->notifPath = storage_path('app/notif_config.json');
+        $this->notifPath = storage_path('app/notification_config.json');
     }
 
     /**
@@ -178,14 +178,14 @@ class AlertService
 
     private function bootSmtp(array $smtp): void
     {
-        Config::set('mail.mailers.smtp', [
-            'transport'  => 'smtp',
-            'host'       => $smtp['host']       ?? 'smtp.gmail.com',
-            'port'       => $smtp['port']       ?? 587,
-            'encryption' => $smtp['encryption'] ?? 'tls',
-            'username'   => $smtp['username']   ?? '',
-            'password'   => $smtp['password']   ?? '',
-        ]);
+        $encryption = ($smtp['encryption'] ?? 'tls') === 'none' ? null : ($smtp['encryption'] ?? 'tls');
+        Config::set('mail.default', 'smtp');
+        Config::set('mail.mailers.smtp.transport',  'smtp');
+        Config::set('mail.mailers.smtp.host',       $smtp['host']     ?? '');
+        Config::set('mail.mailers.smtp.port',       (int) ($smtp['port'] ?? 587));
+        Config::set('mail.mailers.smtp.encryption', $encryption);
+        Config::set('mail.mailers.smtp.username',   $smtp['username'] ?? '');
+        Config::set('mail.mailers.smtp.password',   $smtp['password'] ?? '');
         Config::set('mail.from.address', $smtp['from_address'] ?? $smtp['username'] ?? '');
         Config::set('mail.from.name',    $smtp['from_name']    ?? 'Printer Asset Management');
     }
