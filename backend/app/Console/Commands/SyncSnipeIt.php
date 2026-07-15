@@ -81,6 +81,7 @@ class SyncSnipeIt extends Command
                     'cost_type'     => 'CAPEX',
                     'category_id'   => $categoryId,
                     'location_id'   => $locationId,
+                    'ip_address'    => $this->extractIp($asset),
                 ]
             );
 
@@ -89,5 +90,16 @@ class SyncSnipeIt extends Command
 
         $this->info("Snipe-IT sync complete — created: {$created}, updated: {$updated}, skipped: {$skipped}.");
         return self::SUCCESS;
+    }
+
+    private function extractIp(array $asset): ?string
+    {
+        foreach ($asset['custom_fields'] ?? [] as $field) {
+            $label = strtolower($field['field'] ?? '');
+            if (str_contains($label, 'ip') && filter_var($field['value'] ?? '', FILTER_VALIDATE_IP)) {
+                return $field['value'];
+            }
+        }
+        return null;
     }
 }
