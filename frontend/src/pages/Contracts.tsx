@@ -329,7 +329,7 @@ function AddContractDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <Dialog open onOpenChange={open => { if (!open) onClose() }}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="w-[calc(36rem-160px)] max-w-none sm:max-w-none">
         <DialogHeader><DialogTitle>Add Contract</DialogTitle></DialogHeader>
         <div className="grid grid-cols-2 gap-4 py-2">
           <div className="col-span-2 space-y-1.5">
