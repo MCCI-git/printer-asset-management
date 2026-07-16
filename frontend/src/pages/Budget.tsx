@@ -33,15 +33,8 @@ export function Budget() {
     ...extraYears,
   ])).sort((a, b) => b - a)
 
-  const [selectedYear, setSelectedYear] = useState<number | null>(null)
+  const [selectedYear, setSelectedYear] = useState<number>(CURRENT_YEAR)
   const [addYearInput, setAddYearInput] = useState('')
-
-  // Auto-select most recent year once history loads
-  useEffect(() => {
-    if (yearOptions.length > 0 && selectedYear === null) {
-      setSelectedYear(yearOptions[0])
-    }
-  }, [yearOptions.length])
   const [showAddYear, setShowAddYear] = useState(false)
 
   const handleAddYear = () => {
@@ -53,7 +46,7 @@ export function Budget() {
     setShowAddYear(false)
   }
 
-  const activeYear = selectedYear ?? CURRENT_YEAR
+  const activeYear = selectedYear
   const { data: dbBudget } = useBudget(activeYear)
   const upsertBudget = useUpsertBudget()
   const { data: allBudgets = [] } = useAllBudgets()
