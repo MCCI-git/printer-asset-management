@@ -53,7 +53,7 @@ class BudgetController extends Controller
             ->whereYear('purchase_date', '<=', $year)
             ->sum('monthly_fixed_cost') * 12;
 
-        $consumableSpend = (float) (Consumable::whereYear('purchase_date', $year)
+        $consumableSpend = (float) (Consumable::whereRaw('YEAR(COALESCE(purchase_date, created_at)) = ?', [$year])
             ->selectRaw('SUM(unit_cost * quantity) as total')
             ->value('total') ?? 0);
 
@@ -125,7 +125,7 @@ class BudgetController extends Controller
             ->whereYear('purchase_date', '<=', $year)
             ->sum('monthly_fixed_cost') * 12;
 
-        $consumablesActual = (float) (Consumable::whereYear('purchase_date', $year)
+        $consumablesActual = (float) (Consumable::whereRaw('YEAR(COALESCE(purchase_date, created_at)) = ?', [$year])
             ->selectRaw('SUM(unit_cost * quantity) as total')
             ->value('total') ?? 0);
 
