@@ -504,7 +504,7 @@ export function Maintenance() {
 
       {/* Create / Edit dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="w-[calc(36rem-260px)] max-w-none sm:max-w-none">
+        <DialogContent className="w-[316px] max-w-none sm:max-w-none">
           <DialogHeader>
             <DialogTitle>{editTarget ? `Edit ${editTarget.wo_number}` : 'New Work Order'}</DialogTitle>
           </DialogHeader>

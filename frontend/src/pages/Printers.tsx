@@ -673,7 +673,7 @@ export function Printers() {
 
       {/* Add Printer Dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="w-[calc(28rem-30px)] max-w-none sm:max-w-none max-h-[75vh] overflow-y-auto">
+        <DialogContent className="w-[418px] max-w-none sm:max-w-none max-h-[75vh] overflow-y-auto">
           <DialogHeader className="pr-8">
             <DialogTitle className="flex items-center gap-2">
               <Plus size={15} /> Add Printer
@@ -1391,7 +1391,7 @@ export function Printers() {
 
       {/* Page Count Dialog */}
       <Dialog open={pcOpen} onOpenChange={o => { if (!o) setPcOpen(false) }}>
-        <DialogContent className="flex max-h-[85vh] w-[calc(28rem-30px)] max-w-none sm:max-w-none flex-col overflow-hidden p-6">
+        <DialogContent className="flex max-h-[85vh] w-[418px] max-w-none sm:max-w-none flex-col overflow-hidden p-6">
           <DialogHeader>
             <DialogTitle className="flex items-start gap-2">
               <GaugeCircle size={16} className="mt-0.5 shrink-0" />
