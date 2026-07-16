@@ -14,7 +14,7 @@ const variantStyles: Record<string, string> = {
   orange:      'bg-[#fef3c7] text-[#92400e] dark:bg-[#78350f]/40 dark:text-[#fcd34d]',
   teal:        'bg-[#dcfce7] text-[#166534] dark:bg-[#14532d]/40 dark:text-[#86efac]',
   outline:     'bg-transparent text-foreground border border-border',
-  'role-superadmin': 'bg-[#f3e8ff] text-[#6b21a8] dark:bg-[#581c87]/40 dark:text-[#d8b4fe]',
+  'role-superadmin': 'bg-[#ffe0ed] text-[#800040] dark:bg-[#800040]/40 dark:text-[#ffadd1]',
   'role-admin':      'bg-[#dbeafe] text-[#1e40af] dark:bg-[#1e3a8a]/40 dark:text-[#93c5fd]',
   'role-reports':    'bg-[#fef3c7] text-[#92400e] dark:bg-[#78350f]/40 dark:text-[#fcd34d]',
   'role-view':       'bg-[#dcfce7] text-[#166534] dark:bg-[#14532d]/40 dark:text-[#86efac]',

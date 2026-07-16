@@ -79,7 +79,7 @@ export function Sidebar() {
   const initials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) ?? 'U'
 
   const roleActiveStyle: Record<string, { bg: string; text: string; pill: string; iconBg: string; iconText: string }> = {
-    'super-admin': { bg: 'bg-[#f3e8ff] dark:bg-[#581c87]/40', text: 'text-[#6b21a8] dark:text-[#d8b4fe]', pill: 'bg-[#f3e8ff] dark:bg-[#581c87]/40', iconBg: 'bg-[#6b21a8] dark:bg-[#581c87]', iconText: 'text-white' },
+    'super-admin': { bg: 'bg-[#ffe0ed] dark:bg-[#800040]/40', text: 'text-[#800040] dark:text-[#ffadd1]', pill: 'bg-[#ffe0ed] dark:bg-[#800040]/40', iconBg: 'bg-[#800040] dark:bg-[#800040]', iconText: 'text-white' },
     'admin':       { bg: 'bg-[#dbeafe] dark:bg-[#1e3a8a]/40', text: 'text-[#1e40af] dark:text-[#93c5fd]', pill: 'bg-[#dbeafe] dark:bg-[#1e3a8a]/40', iconBg: 'bg-[#1e40af] dark:bg-[#1e3a8a]', iconText: 'text-white' },
     'reports':     { bg: 'bg-[#fef3c7] dark:bg-[#78350f]/40', text: 'text-[#92400e] dark:text-[#fcd34d]', pill: 'bg-[#fef3c7] dark:bg-[#78350f]/40', iconBg: 'bg-[#92400e] dark:bg-[#78350f]', iconText: 'text-white' },
     'view':        { bg: 'bg-[#dcfce7] dark:bg-[#14532d]/40', text: 'text-[#166534] dark:text-[#86efac]', pill: 'bg-[#dcfce7] dark:bg-[#14532d]/40', iconBg: 'bg-[#166534] dark:bg-[#14532d]', iconText: 'text-white' },
