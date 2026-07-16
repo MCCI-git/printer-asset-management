@@ -998,7 +998,7 @@ export function Contracts() {
       {/* Add Log Dialog */}
       {addLogOpen && (
         <Dialog open onOpenChange={open => { if (!open) setAddLogOpen(false) }}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="w-[280px] max-w-none sm:max-w-none">
             <DialogHeader><DialogTitle>Add Log Entry</DialogTitle></DialogHeader>
             <div className="space-y-4 py-2">
               <div className="space-y-1.5">
