@@ -486,7 +486,13 @@ export function useDeleteWorkOrder() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => workOrdersApi.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['work-orders'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['work-orders'] })
+      // Invalidate budget so deleted completed work orders are excluded from spend totals
+      qc.invalidateQueries({ queryKey: ['budgets-actual'] })
+      qc.invalidateQueries({ queryKey: ['budgets-breakdown'] })
+      qc.invalidateQueries({ queryKey: ['budgets-all'] })
+    },
   })
 }
 
