@@ -147,12 +147,13 @@ export function PrintManager() {
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; student: Student | null }>({ open: false, student: null })
   const [deleteLogModal, setDeleteLogModal] = useState<{ open: boolean; purchaseId: number | null }>({ open: false, purchaseId: null })
 
-  // email
+  // email — bodyRef points to the contentEditable div (only in DOM when students tab is active)
+  // emailBodyHtml mirrors its content so getPreview works even before the tab is rendered
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [emailSubject, setEmailSubject] = useState('Printing Plan Update')
   const bodyRef = useRef<HTMLDivElement>(null)
   const [emailBodyHtml, setEmailBodyHtml] = useState('')
-  const savedTemplateRef = useRef<string>('')
+  const savedTemplateRef = useRef<string>('')  // holds template across tab switches without triggering re-renders
   const [savingTemplate, setSavingTemplate] = useState(false)
   const [emailAttachments, setEmailAttachments] = useState<File[]>([])
   const [sendingEmail, setSendingEmail] = useState(false)
@@ -349,6 +350,7 @@ export function PrintManager() {
     str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
        .replace(/"/g, '&quot;').replace(/'/g, '&#039;')
 
+  // Replaces [STUDENT_NAME], [PRINTER_ID], [PLAN_NAME] placeholders for the live preview
   const getPreview = (student: Student | null) => {
     if (!student) return ''
     const html = emailBodyHtml || bodyRef.current?.innerHTML || ''

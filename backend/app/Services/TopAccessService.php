@@ -7,15 +7,18 @@ use Illuminate\Support\Facades\Log;
 
 class TopAccessService
 {
+    // Standard printer MIB-II OIDs (RFC 3805 / Printer-MIB)
     private const OID_SYS_DESCR      = '1.3.6.1.2.1.1.1.0';
     private const OID_SYS_NAME       = '1.3.6.1.2.1.1.5.0';
     private const OID_PRINTER_STATUS = '1.3.6.1.2.1.25.3.5.1.1.1';
     private const OID_SERIAL         = '1.3.6.1.2.1.43.5.1.1.17.1';
     private const OID_TOTAL_PAGES    = '1.3.6.1.2.1.43.10.2.1.4.1.1';
+    // Toner OIDs are indexed (append slot number 1–4)
     private const OID_TONER_CURRENT  = '1.3.6.1.2.1.43.11.1.1.9.1.';
     private const OID_TONER_MAX      = '1.3.6.1.2.1.43.11.1.1.8.1.';
     private const OID_TONER_NAME     = '1.3.6.1.2.1.43.12.1.1.4.1.';
 
+    // Returns last-cached SNMP data from the DB — no live network call
     public function getPrinters(): array
     {
         $printers = Printer::whereNotNull('ip_address')
@@ -25,6 +28,7 @@ class TopAccessService
         return $printers->map(fn (Printer $p) => $this->formatPrinter($p))->values()->toArray();
     }
 
+    // Queries every IP-assigned printer live and writes results back to DB
     public function fetchAllLive(): array
     {
         $printers = Printer::whereNotNull('ip_address')
@@ -55,11 +59,13 @@ class TopAccessService
     public function queryPrinter(Printer $printer): array
     {
         try {
+            // SNMP_VALUE_PLAIN + quick_print strips type prefixes from returned values
             snmp_set_valueretrieval(SNMP_VALUE_PLAIN);
             snmp_set_quick_print(true);
 
             $community = $printer->snmp_community ?: 'public';
 
+            // sysDescr is the cheapest OID to test reachability; timeout 1.5 s, 1 retry
             $sysDescr = @snmpget($printer->ip_address, $community, self::OID_SYS_DESCR, 1500000, 1);
             if ($sysDescr === false) {
                 $printer->update(['snmp_status' => 'failed']);
@@ -84,6 +90,7 @@ class TopAccessService
             $statusRaw    = @snmpget($printer->ip_address, $community, self::OID_PRINTER_STATUS, 1500000, 1);
             $printerStatus = $this->mapStatus((int) $statusRaw);
 
+            // Poll up to 4 toner slots; missing slots return false and are skipped
             $toner = [];
             for ($i = 1; $i <= 4; $i++) {
                 $current = @snmpget($printer->ip_address, $community, self::OID_TONER_CURRENT . $i, 1500000, 1);
@@ -222,6 +229,7 @@ class TopAccessService
         }
     }
 
+    // hrPrinterStatus values per RFC 2790 Host Resources MIB
     private function mapStatus(int $code): string
     {
         return match ($code) {

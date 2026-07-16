@@ -53,6 +53,7 @@ class BudgetController extends Controller
             ->whereYear('purchase_date', '<=', $year)
             ->sum('monthly_fixed_cost') * 12;
 
+        // COALESCE so consumables without a purchase_date still count in the year they were added
         $consumableSpend = (float) (Consumable::whereRaw('YEAR(COALESCE(purchase_date, created_at)) = ?', [$year])
             ->selectRaw('SUM(unit_cost * quantity) as total')
             ->value('total') ?? 0);
@@ -180,6 +181,7 @@ class BudgetController extends Controller
             $query->where('type', $type);
         }
 
+        // Prorate each contract's annual cost to the days it was active within the requested year
         return $query->get()->sum(function (Contract $c) use ($yearStart, $yearEnd) {
             $start    = Carbon::parse($c->start_date)->max($yearStart);
             $end      = Carbon::parse($c->end_date)->min($yearEnd);
