@@ -1391,7 +1391,7 @@ export function Printers() {
 
       {/* Page Count Dialog */}
       <Dialog open={pcOpen} onOpenChange={o => { if (!o) setPcOpen(false) }}>
-        <DialogContent className="flex max-h-[85vh] max-w-2xl flex-col overflow-hidden p-6">
+        <DialogContent className="flex max-h-[85vh] w-[calc(42rem-30px)] max-w-none flex-col overflow-hidden p-6">
           <DialogHeader>
             <DialogTitle className="flex items-start gap-2">
               <GaugeCircle size={16} className="mt-0.5 shrink-0" />
