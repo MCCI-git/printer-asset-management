@@ -13,8 +13,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { usePrinters } from '@/hooks/useData'
+import { usePrinters, useDeletePrinter } from '@/hooks/useData'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { toast } from 'sonner'
 
 export function Capex() {
   const { data, isLoading } = usePrinters({ cost_type: 'CAPEX' })
@@ -24,9 +25,21 @@ export function Capex() {
   const [pageSize, setPageSize] = useState(10)
   const pageCount = Math.ceil(printers.length / pageSize)
   const pagedPrinters = printers.slice(page * pageSize, (page + 1) * pageSize)
+  const deletePrinter = useDeletePrinter()
 
   const totalCost = printers.reduce((s: number, p: import('@/types').Printer) => s + (p.purchase_cost ?? 0), 0)
   const selectedCount = Object.keys(rowSelection).length
+
+  const handleDeleteSelected = async () => {
+    const ids = Object.keys(rowSelection).map(i => pagedPrinters[Number(i)]?.id).filter(Boolean)
+    try {
+      await Promise.all(ids.map(id => deletePrinter.mutateAsync(id)))
+      toast.success(`${ids.length} printer${ids.length > 1 ? 's' : ''} deleted.`)
+    } catch {
+      toast.error('Failed to delete one or more printers.')
+    }
+    setRowSelection({})
+  }
 
   if (isLoading) return (
     <div className="space-y-5">
@@ -98,7 +111,7 @@ export function Capex() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction variant="destructive" onClick={() => setRowSelection({})}>Delete</AlertDialogAction>
+                      <AlertDialogAction variant="destructive" onClick={handleDeleteSelected}>Delete</AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
