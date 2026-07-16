@@ -411,7 +411,7 @@ export function Consumables() {
 
       {/* Toner List Dialog */}
       <Dialog open={tonerListOpen} onOpenChange={open => { setTonerListOpen(open); if (!open) resetTonerForm() }}>
-        <DialogContent className="w-[calc(36rem-30px)] max-w-none">
+        <DialogContent className="w-[calc(36rem-30px)] max-w-none sm:max-w-none">
           <DialogHeader>
             <DialogTitle>Toner List</DialogTitle>
             <DialogDescription>Manage toner models and their minimum stock thresholds for low-stock alerts.</DialogDescription>
@@ -838,7 +838,7 @@ export function Consumables() {
 
       {/* Edit Consumable Dialog */}
       <Dialog open={editOpen} onOpenChange={o => { if (!o) setEditOpen(false) }}>
-        <DialogContent className="w-[calc(48rem-30px)] max-w-none">
+        <DialogContent className="w-[calc(48rem-30px)] max-w-none sm:max-w-none">
           <DialogHeader>
             <DialogTitle>Edit Consumable</DialogTitle>
             <DialogDescription>Update the details for this consumable.</DialogDescription>
@@ -928,7 +928,7 @@ export function Consumables() {
 
       {/* Add Consumable Dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="w-[calc(36rem-60px)] max-w-none">
+        <DialogContent className="w-[calc(36rem-60px)] max-w-none sm:max-w-none">
           <DialogHeader>
             <DialogTitle>Add Consumable</DialogTitle>
             <DialogDescription>Enter details for the new consumable item.</DialogDescription>
