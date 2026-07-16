@@ -200,19 +200,24 @@ export function PrintManager() {
     printManagerApi.getEmailTemplate().then(res => {
       const saved = res.data.template || defaultEmailBody
       savedTemplateRef.current = saved
+      setEmailBodyHtml(saved)
       if (bodyRef.current) {
         bodyRef.current.innerHTML = saved
-        setEmailBodyHtml(saved)
       }
     })
   }, [fetchAll, fetchBudget]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (activeTab === 'plans') fetchBudget()
-    if (activeTab === 'students' && bodyRef.current && !emailBodyHtml) {
+    if (activeTab === 'students') {
+      // bodyRef is only mounted when the students tab is active — populate it now
       const html = savedTemplateRef.current || defaultEmailBody
-      bodyRef.current.innerHTML = html
-      setEmailBodyHtml(html)
+      if (!emailBodyHtml) setEmailBodyHtml(html)
+      setTimeout(() => {
+        if (bodyRef.current && !bodyRef.current.innerHTML.trim()) {
+          bodyRef.current.innerHTML = emailBodyHtml || html
+        }
+      }, 0)
     }
   }, [activeTab, fetchBudget]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -369,7 +374,7 @@ export function PrintManager() {
 
   const sendEmail = async () => {
     if (!selectedStudent) { toast.error('Select a student first (click Compose).'); return }
-    const body = bodyRef.current?.innerHTML ?? ''
+    const body = bodyRef.current?.innerHTML || emailBodyHtml
     if (!emailSubject || !body) { toast.error('Subject and body cannot be empty.'); return }
     setSendingEmail(true)
     setEmailResult(null)
