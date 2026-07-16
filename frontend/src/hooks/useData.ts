@@ -190,6 +190,9 @@ export function useCreateContract() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['contracts'] })
       qc.invalidateQueries({ queryKey: ['contract-renewals'] })
+      qc.invalidateQueries({ queryKey: ['budgets-actual'] })
+      qc.invalidateQueries({ queryKey: ['budgets-breakdown'] })
+      qc.invalidateQueries({ queryKey: ['budgets-all'] })
     },
   })
 }
@@ -201,6 +204,9 @@ export function useUpdateContract() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['contracts'] })
       qc.invalidateQueries({ queryKey: ['contract-renewals'] })
+      qc.invalidateQueries({ queryKey: ['budgets-actual'] })
+      qc.invalidateQueries({ queryKey: ['budgets-breakdown'] })
+      qc.invalidateQueries({ queryKey: ['budgets-all'] })
     },
   })
 }
@@ -212,6 +218,9 @@ export function useDeleteContract() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['contracts'] })
       qc.invalidateQueries({ queryKey: ['contract-renewals'] })
+      qc.invalidateQueries({ queryKey: ['budgets-actual'] })
+      qc.invalidateQueries({ queryKey: ['budgets-breakdown'] })
+      qc.invalidateQueries({ queryKey: ['budgets-all'] })
     },
   })
 }
