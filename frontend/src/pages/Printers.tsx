@@ -673,7 +673,7 @@ export function Printers() {
 
       {/* Add Printer Dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="max-w-md max-h-[75vh] overflow-y-auto">
+        <DialogContent className="w-[calc(28rem-30px)] max-w-none max-h-[75vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Plus size={15} /> Add Printer
