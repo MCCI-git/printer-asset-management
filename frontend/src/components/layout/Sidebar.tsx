@@ -43,10 +43,10 @@ const allNavItems = [
   { path: '/consumables', icon: Package,          label: 'Consumables', roles: ['super-admin','admin','reports','view'] },
   { path: '/contracts',   icon: FileText,         label: 'Contracts',   roles: ['super-admin','admin','reports','view'] },
   { path: '/suppliers',   icon: Building2,        label: 'Suppliers',   roles: ['super-admin','admin','reports','view'] },
-  { path: '/reports',     icon: BarChart3,        label: 'Reports',     roles: ['super-admin','admin','reports'], accent: 'violet' },
   { path: '/maintenance', icon: Wrench,           label: 'Maintenance', roles: ['super-admin','admin','reports','view'] },
   { path: '/topaccess',     icon: Printer,         label: 'TopAccess',     roles: ['super-admin', 'admin', 'reports', 'view'], accent: 'violet' },
   { path: '/print-manager', icon: BookOpen,        label: 'Print Manager', roles: ['super-admin', 'admin'], accent: 'violet' },
+  { path: '/reports',     icon: BarChart3,        label: 'Reports',     roles: ['super-admin','admin','reports'], accent: 'violet' },
   { path: '/snipeit',     icon: Link,             label: 'Snipe-IT',    roles: ['super-admin'], accent: 'violet', separator: true },
   { path: '/admin',       icon: Shield,           label: 'Admin',       roles: ['super-admin'], accent: 'violet' },
 ]
