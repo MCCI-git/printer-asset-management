@@ -838,7 +838,7 @@ export function Consumables() {
 
       {/* Edit Consumable Dialog */}
       <Dialog open={editOpen} onOpenChange={o => { if (!o) setEditOpen(false) }}>
-        <DialogContent className="w-[calc(48rem-30px)] max-w-none sm:max-w-none">
+        <DialogContent className="w-[calc(36rem-160px)] max-w-none sm:max-w-none">
           <DialogHeader>
             <DialogTitle>Edit Consumable</DialogTitle>
             <DialogDescription>Update the details for this consumable.</DialogDescription>
