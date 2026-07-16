@@ -97,8 +97,8 @@ export function Sidebar() {
         {/* Logo header */}
         <SidebarHeader className="h-16 justify-center border-b border-border/40 px-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary transition-all duration-200 group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:w-6 group-data-[collapsible=icon]:rounded-md">
-              <Printer className="text-primary-foreground transition-all duration-200 group-data-[collapsible=icon]:size-3.5" size={15} />
+            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-200 group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:w-6 group-data-[collapsible=icon]:rounded-md ${roleStyle.iconBg}`}>
+              <Printer className={`transition-all duration-200 group-data-[collapsible=icon]:size-3.5 ${roleStyle.iconText}`} size={15} />
             </div>
             {!collapsed && (
               <span className="whitespace-nowrap text-sm font-bold text-foreground">
