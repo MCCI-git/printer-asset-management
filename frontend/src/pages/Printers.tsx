@@ -673,14 +673,14 @@ export function Printers() {
 
       {/* Add Printer Dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="w-[38rem] max-w-none sm:max-w-none max-h-[75vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="w-[calc(28rem-30px)] max-w-none sm:max-w-none max-h-[75vh] overflow-y-auto">
+          <DialogHeader className="pr-8">
             <DialogTitle className="flex items-center gap-2">
               <Plus size={15} /> Add Printer
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-1">
+          <div className="space-y-4 py-1 pr-2">
             {addError && (
               <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">{addError}</p>
             )}
