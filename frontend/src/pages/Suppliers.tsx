@@ -284,6 +284,8 @@ export function Suppliers() {
                   <TableHead className="w-8"></TableHead>
                   <TableHead>Supplier</TableHead>
                   <TableHead>Contact</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Salesperson</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -309,6 +311,12 @@ export function Suppliers() {
                     <TableCell className="align-middle">
                       <p className="text-sm">{s.contact_name}</p>
                       <p className="text-xs text-muted-foreground/70">{s.email}</p>
+                    </TableCell>
+                    <TableCell className="align-middle">
+                      <p className="text-sm">{s.phone || <span className="text-muted-foreground/40">—</span>}</p>
+                    </TableCell>
+                    <TableCell className="align-middle">
+                      <p className="text-sm">{s.salesperson_name || <span className="text-muted-foreground/40">—</span>}</p>
                     </TableCell>
                   </TableRow>
                 ))}
