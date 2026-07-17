@@ -5,8 +5,13 @@ import { CURRENT_YEAR, CURRENT_MONTH, NEXT_YEAR } from '@/lib/timeline'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
+// PDF display: currency with $ symbol and thousands separator
 const fmt = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+// CSV: plain number so Excel/Sheets treats it as numeric
+const csvFmt = (n: number) => n.toFixed(2)
 const pct = (a: number, b: number) => b === 0 ? 'N/A' : `${((a / b) * 100).toFixed(1)}%`
+// CSV: percentage as plain decimal string without % symbol
+const csvPct = (a: number, b: number) => b === 0 ? '' : ((a / b) * 100).toFixed(1)
 const today = () => new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 const thisYear = CURRENT_YEAR
 const nextYear = NEXT_YEAR
@@ -191,12 +196,12 @@ export function exportAssetInventory(format: 'csv' | 'pdf', printers: Printer[])
       ['Active', String(active.length)],
       ['In Maintenance', String(maintenance.length)],
       ['Retired / Lost', String(retired.length)],
-      ['Fleet Utilisation', pct(active.length, printers.length)],
+      ['Fleet Utilisation (%)', csvPct(active.length, printers.length)],
       ['CAPEX Assets', String(capex.length)],
       ['OPEX Assets', String(opex.length)],
-      ['Total CAPEX Book Value', fmt(totalCapexCost)],
-      ['Monthly OPEX Commitment', fmt(totalOpexMonthly)],
-      ['Annualised OPEX Cost', fmt(totalOpexMonthly * 12)],
+      ['Total CAPEX Book Value', csvFmt(totalCapexCost)],
+      ['Monthly OPEX Commitment', csvFmt(totalOpexMonthly)],
+      ['Annualised OPEX Cost', csvFmt(totalOpexMonthly * 12)],
       ['Assets Overdue Service', String(overdueService.length)],
     ])
     csv += csvSection('MANAGEMENT FLAGS', ['Type', 'Finding'], [
@@ -206,13 +211,13 @@ export function exportAssetInventory(format: 'csv' | 'pdf', printers: Printer[])
     csv += csvSection('FULL ASSET REGISTER', ['Asset Tag','Name','Model','Serial','Status','Cost Type','Department','Location','Assigned To','Purchase Cost','Purchase Date','Warranty','Last Service','Next Service','Service Count','Notes'], printers.map(p => [
       p.asset_tag, p.name, p.model ?? '', p.serial ?? '', p.status, p.cost_type,
       p.department ?? '', p.location ?? '', p.assigned_to ?? '',
-      p.purchase_cost != null ? fmt(p.purchase_cost) : '',
+      p.purchase_cost != null ? csvFmt(p.purchase_cost) : '',
       p.purchase_date ?? '', p.warranty ?? '',
       p.last_service_date ?? '', p.next_service_date ?? '',
       String(p.service_count), p.notes ?? '',
     ]))
     if (overdueService.length > 0) {
-      csv += csvSection('OVERDUE SERVICE — ACTION REQUIRED', ['Asset Tag','Name','Next Service Due','Service Count'], overdueService.map(p => [p.asset_tag, p.name, p.next_service_date ?? '', String(p.service_count)]))
+      csv += csvSection('OVERDUE SERVICE', ['Asset Tag','Name','Next Service Due','Service Count'], overdueService.map(p => [p.asset_tag, p.name, p.next_service_date ?? '', String(p.service_count)]))
     }
     downloadFile('Asset_Inventory_Report.csv', csv, 'text/csv;charset=utf-8;')
     return
@@ -285,23 +290,26 @@ export function exportOpexMonthly(format: 'csv' | 'pdf', printers: Printer[]) {
     let csv = csvHeader('OPEX Monthly Report', `Generated: ${today()} | Review Period: ${thisYear}`)
     csv += csvSection('FINANCIAL SUMMARY', ['Metric','Value'], [
       ['OPEX Devices', String(opex.length)],
-      ['Total Monthly Cost', fmt(totalMonthly)],
-      [`${thisYear} Annualised Cost`, fmt(totalAnnual)],
-      [`${nextYear} Forecast (+5% CPI)`, fmt(forecast)],
-      ['Avg Monthly Cost / Device', fmt(totalMonthly / (opex.length || 1))],
-      ['Fleet Avg Per-Page Cost', avgPerPage > 0 ? `$${avgPerPage.toFixed(4)}` : 'Incomplete data'],
+      ['Total Monthly Cost', csvFmt(totalMonthly)],
+      [`${thisYear} Annualised Cost`, csvFmt(totalAnnual)],
+      [`${nextYear} Forecast (+5% CPI)`, csvFmt(forecast)],
+      ['Avg Monthly Cost / Device', csvFmt(totalMonthly / (opex.length || 1))],
+      ['Fleet Avg Per-Page Cost', avgPerPage > 0 ? avgPerPage.toFixed(4) : ''],
       ['Devices Missing Page Cost', String(noPageCost.length)],
     ])
     csv += csvSection('MANAGEMENT FLAGS', ['Type','Finding'], [
       ...flaws.map(f => ['ACTION REQUIRED', f]),
       ...strengths.map(s => ['STRENGTH', s]),
-      ['BUDGET GUIDANCE', `Recommend provisioning ${fmt(forecast)} for ${nextYear} OPEX managed print budget, factoring 5% contract uplift.`],
     ])
     csv += csvSection('OPEX DEVICE DETAIL', ['Asset Tag','Name','Location','Monthly Cost','Annual Cost','Per-Page Cost','Status'], opex.map(p => [
-      p.asset_tag, p.name, p.location ?? '', p.monthly_fixed_cost ? fmt(p.monthly_fixed_cost) : 'MISSING', p.monthly_fixed_cost ? fmt(p.monthly_fixed_cost * 12) : 'MISSING', p.per_page_cost ? `$${p.per_page_cost.toFixed(4)}` : 'MISSING', p.status,
+      p.asset_tag, p.name, p.location ?? '',
+      p.monthly_fixed_cost ? csvFmt(p.monthly_fixed_cost) : '',
+      p.monthly_fixed_cost ? csvFmt(p.monthly_fixed_cost * 12) : '',
+      p.per_page_cost ? p.per_page_cost.toFixed(4) : '',
+      p.status,
     ]))
     if (highCost.length > 0) {
-      csv += csvSection('HIGH-COST OUTLIERS — REVIEW FOR RENEGOTIATION', ['Asset Tag','Printer Name','Monthly Cost','Premium vs Fleet Average'], highCost.map(p => [p.asset_tag, p.name, fmt(p.monthly_fixed_cost ?? 0), `+${(((p.monthly_fixed_cost ?? 0) / (totalMonthly / opex.length) - 1) * 100).toFixed(0)}%`]))
+      csv += csvSection('HIGH-COST OUTLIERS', ['Asset Tag','Printer Name','Monthly Cost','Premium vs Fleet Average (%)'], highCost.map(p => [p.asset_tag, p.name, csvFmt(p.monthly_fixed_cost ?? 0), (((p.monthly_fixed_cost ?? 0) / (totalMonthly / opex.length) - 1) * 100).toFixed(1)]))
     }
     downloadFile('OPEX_Monthly_Report.csv', csv, 'text/csv;charset=utf-8;')
     return
@@ -369,18 +377,18 @@ export function exportConsumableUsage(format: 'csv' | 'pdf', consumables: Consum
       ['Total SKUs', String(consumables.length)],
       ['Out of Stock', String(outOfStock.length)],
       ['Low Stock (Below Threshold)', String(lowStock.length)],
-      ['Total Stock Value on Hand', fmt(totalValue)],
+      ['Total Stock Value on Hand', csvFmt(totalValue)],
       ['Unassigned to Printer', String(unassigned.length)],
       ['No Supplier Linked', String(noSupplier.length)],
     ])
-    csv += csvSection('STOCK BY TYPE', ['Type','SKUs','Stock Value'], byType.map(b => [b.type, String(b.count), fmt(b.value)]))
+    csv += csvSection('STOCK BY TYPE', ['Type','SKUs','Stock Value'], byType.map(b => [b.type, String(b.count), csvFmt(b.value)]))
     csv += csvSection('MANAGEMENT FLAGS', ['Type','Finding'], [
       ...flaws.map(f => ['ACTION REQUIRED', f]),
       ...strengths.map(s => ['STRENGTH', s]),
     ])
-    if (outOfStock.length > 0) csv += csvSection('OUT OF STOCK — IMMEDIATE ACTION', ['SKU','Name','Type','Unit Cost','Assigned Printer'], outOfStock.map(c => [c.sku, c.name, c.type, fmt(c.unit_cost), c.printer?.name ?? 'Unassigned']))
-    if (lowStock.length > 0) csv += csvSection('LOW STOCK — ORDER WITHIN 5 DAYS', ['SKU','Consumable Name','Type','Current Quantity','Reorder Threshold','Unit Cost'], lowStock.map(c => [c.sku, c.name, c.type, String(c.quantity), String(c.low_stock_threshold), fmt(c.unit_cost)]))
-    csv += csvSection('FULL CONSUMABLE REGISTER', ['SKU','Consumable Name','Type','Unit Cost','Quantity on Hand','Reorder Threshold','Total Stock Value','Supplier','Assigned Printer'], consumables.map(c => [c.sku, c.name, c.type, fmt(c.unit_cost), String(c.quantity), String(c.low_stock_threshold), fmt(c.unit_cost * c.quantity), c.supplier?.name ?? 'UNLINKED', c.printer?.name ?? 'Unassigned']))
+    if (outOfStock.length > 0) csv += csvSection('OUT OF STOCK', ['SKU','Name','Type','Unit Cost','Assigned Printer'], outOfStock.map(c => [c.sku, c.name, c.type, csvFmt(c.unit_cost), c.printer?.name ?? '']))
+    if (lowStock.length > 0) csv += csvSection('LOW STOCK', ['SKU','Consumable Name','Type','Current Quantity','Reorder Threshold','Unit Cost'], lowStock.map(c => [c.sku, c.name, c.type, String(c.quantity), String(c.low_stock_threshold), csvFmt(c.unit_cost)]))
+    csv += csvSection('FULL CONSUMABLE REGISTER', ['SKU','Consumable Name','Type','Unit Cost','Quantity on Hand','Reorder Threshold','Total Stock Value','Supplier','Assigned Printer'], consumables.map(c => [c.sku, c.name, c.type, csvFmt(c.unit_cost), String(c.quantity), String(c.low_stock_threshold), csvFmt(c.unit_cost * c.quantity), c.supplier?.name ?? '', c.printer?.name ?? '']))
     downloadFile('Consumable_Usage_Report.csv', csv, 'text/csv;charset=utf-8;')
     return
   }
@@ -456,23 +464,22 @@ export function exportSupplierSpend(format: 'csv' | 'pdf', suppliers: Supplier[]
     let csv = csvHeader('Supplier Spend Report', `Generated: ${today()} | Review Period: ${thisYear}`)
     csv += csvSection('SPEND SUMMARY', ['Metric','Value'], [
       ['Total Suppliers', String(suppliers.length)],
-      ['YTD Spend', fmt(totalYtd)],
-      [`${thisYear} Budget`, fmt(totalBudget)],
-      ['Budget Consumed', pct(totalYtd, totalBudget)],
-      [`${thisYear} Full-Year Forecast`, fmt(forecastFY)],
-      [`${nextYear} Budget Recommendation`, fmt(nextYearForecast)],
+      ['YTD Spend', csvFmt(totalYtd)],
+      [`${thisYear} Budget`, csvFmt(totalBudget)],
+      ['Budget Consumed (%)', csvPct(totalYtd, totalBudget)],
+      [`${thisYear} Full-Year Forecast`, csvFmt(forecastFY)],
+      [`${nextYear} Budget Recommendation`, csvFmt(nextYearForecast)],
       ['Suppliers Over Budget', String(overBudget.length)],
-      ['Suppliers Rated <3/5', String(underRated.length)],
-      ['2023 Total Spend', fmt(total2023)],
-      ['2024 Total Spend', fmt(total2024)],
-      ['YoY Change (2023→2024)', `${yoyChange > 0 ? '+' : ''}${yoyChange.toFixed(1)}%`],
+      ['Suppliers Rated Below 3', String(underRated.length)],
+      ['2023 Total Spend', csvFmt(total2023)],
+      ['2024 Total Spend', csvFmt(total2024)],
+      ['YoY Change 2023 to 2024 (%)', yoyChange.toFixed(1)],
     ])
     csv += csvSection('MANAGEMENT FLAGS', ['Type','Finding'], [
       ...flaws.map(f => ['ACTION REQUIRED', f]),
       ...strengths.map(s => ['STRENGTH', s]),
-      ['BUDGET GUIDANCE', `Recommend ${nextYear} supplier spend budget of ${fmt(nextYearForecast)} (+4% on ${thisYear} forecast). Re-tender suppliers rated <3 before contract renewal.`],
     ])
-    csv += csvSection('SUPPLIER SPEND REGISTER (RANKED BY YTD SPEND)', ['Supplier Name','Performance Rating','Spend FY2023','Spend FY2024','YTD Spend 2025','Approved Budget 2025','Budget Variance','Full-Year Forecast 2025'], rows.map(s => [s.name, `${s.rating}/5`, fmt(s.spend_2023), fmt(s.spend_2024), fmt(s.spend_2025_ytd), fmt(s.budget_2025), fmt(s.spend_2025_ytd - s.budget_2025), fmt(s.spend_2025_ytd / monthsElapsed * 12)]))
+    csv += csvSection('SUPPLIER SPEND REGISTER', ['Supplier Name','Rating','Spend FY2023','Spend FY2024','YTD Spend','Approved Budget','Budget Variance','Full-Year Forecast'], rows.map(s => [s.name, String(s.rating), csvFmt(s.spend_2023), csvFmt(s.spend_2024), csvFmt(s.spend_2025_ytd), csvFmt(s.budget_2025), csvFmt(s.spend_2025_ytd - s.budget_2025), csvFmt(s.spend_2025_ytd / monthsElapsed * 12)]))
     downloadFile('Supplier_Spend_Report.csv', csv, 'text/csv;charset=utf-8;')
     return
   }
@@ -547,8 +554,8 @@ export function exportMaintenanceHistory(format: 'csv' | 'pdf', printers: Printe
       ...flaws.map(f => ['ACTION REQUIRED', f]),
       ...strengths.map(s => ['STRENGTH', s]),
     ])
-    if (overdue.length > 0) csv += csvSection('OVERDUE SERVICE — ACTION REQUIRED', ['Asset Tag','Name','Next Service Due','Last Serviced','Service Count'], overdue.map(p => [p.asset_tag, p.name, p.next_service_date ?? '', p.last_service_date ?? 'Never', String(p.service_count)]))
-    csv += csvSection('FULL MAINTENANCE REGISTER (SORTED BY SERVICE COUNT)', ['Asset Tag','Printer Name','Operational Status','Last Service Date','Next Scheduled Service','Total Service Events','Notes'], sorted.map(p => [p.asset_tag, p.name, p.status, p.last_service_date ?? 'Never', p.next_service_date ?? 'Not scheduled', String(p.service_count), p.notes ?? '']))
+    if (overdue.length > 0) csv += csvSection('OVERDUE SERVICE', ['Asset Tag','Name','Next Service Due','Last Serviced','Service Count'], overdue.map(p => [p.asset_tag, p.name, p.next_service_date ?? '', p.last_service_date ?? '', String(p.service_count)]))
+    csv += csvSection('FULL MAINTENANCE REGISTER', ['Asset Tag','Printer Name','Operational Status','Last Service Date','Next Scheduled Service','Total Service Events','Notes'], sorted.map(p => [p.asset_tag, p.name, p.status, p.last_service_date ?? '', p.next_service_date ?? '', String(p.service_count), p.notes ?? '']))
     downloadFile('Maintenance_History_Report.csv', csv, 'text/csv;charset=utf-8;')
     return
   }
@@ -624,26 +631,25 @@ export function exportOpexYtd(
   if (format === 'csv') {
     let csv = csvHeader('OPEX Report (Year-to-Date)', `Generated: ${today()} | Review Period: ${thisYear} | Forecast: ${nextYear}`)
     csv += csvSection('FINANCIAL POSITION', ['Component','Value'], [
-      [`Active Contracts (${thisYear} Annual)`, fmt(totalContractCost)],
-      [`Managed Print OPEX (${monthsElapsed}m YTD)`, fmt(ytdOpex)],
-      ['Consumable Inventory Value', fmt(consumableValue)],
-      ['Combined YTD OPEX Exposure', fmt(totalYtdOpex)],
+      [`Active Contracts (${thisYear} Annual)`, csvFmt(totalContractCost)],
+      [`Managed Print OPEX (${monthsElapsed}m YTD)`, csvFmt(ytdOpex)],
+      ['Consumable Inventory Value', csvFmt(consumableValue)],
+      ['Combined YTD OPEX Exposure', csvFmt(totalYtdOpex)],
       ...(currentBudget ? [
-        [`${thisYear} Approved Budget`, fmt(currentBudget.budget)],
-        [`${thisYear} Actual Spend`, fmt(currentBudget.actual)],
-        ['Budget Variance', fmt((currentBudget.budget ?? 0) - (currentBudget.actual ?? 0))],
+        [`${thisYear} Approved Budget`, csvFmt(currentBudget.budget)],
+        [`${thisYear} Actual Spend`, csvFmt(currentBudget.actual)],
+        ['Budget Variance', csvFmt((currentBudget.budget ?? 0) - (currentBudget.actual ?? 0))],
       ] : []),
-      [`${thisYear} Full-Year Forecast`, fmt(forecastFY)],
-      [`${nextYear} Budget Recommendation`, fmt(nextYearForecast)],
+      [`${thisYear} Full-Year Forecast`, csvFmt(forecastFY)],
+      [`${nextYear} Budget Recommendation`, csvFmt(nextYearForecast)],
     ])
     csv += csvSection('MANAGEMENT FLAGS', ['Type','Finding'], [
       ...flaws.map(f => ['ACTION REQUIRED', f]),
       ...strengths.map(s => ['STRENGTH', s]),
-      ['BUDGET GUIDANCE', `Recommended ${nextYear} OPEX budget: ${fmt(nextYearForecast)}. Includes 5% uplift for inflation and contract renewals. Contracts expiring within 90 days should be re-tendered before ${nextYear} budget is finalised.`],
     ])
-    csv += csvSection('BUDGET HISTORY & ACTUALS', ['Year','Approved Budget','Actual Spend','Variance','Variance %'], sortedBudgets.map(b => [String(b.year), fmt(b.budget), fmt(b.actual), fmt(b.budget - b.actual), pct(Math.abs(b.budget - b.actual), b.budget)]))
-    csv += csvSection('ACTIVE CONTRACTS', ['Contract','Vendor','Type','Annual Cost','Start Date','End Date','Status'], activeContracts.map(c => [c.name, c.vendor, c.type, fmt(c.annual_cost), c.start_date, c.end_date, c.status]))
-    if (expiringContracts.length > 0) csv += csvSection('EXPIRING WITHIN 90 DAYS — RENEW IMMEDIATELY', ['Contract','Vendor','Annual Cost','Expiry Date'], expiringContracts.map(c => [c.name, c.vendor, fmt(c.annual_cost), c.end_date]))
+    csv += csvSection('BUDGET HISTORY', ['Year','Approved Budget','Actual Spend','Variance','Variance (%)'], sortedBudgets.map(b => [String(b.year), csvFmt(b.budget), csvFmt(b.actual), csvFmt(b.budget - b.actual), csvPct(Math.abs(b.budget - b.actual), b.budget)]))
+    csv += csvSection('ACTIVE CONTRACTS', ['Contract','Vendor','Type','Annual Cost','Start Date','End Date','Status'], activeContracts.map(c => [c.name, c.vendor, c.type, csvFmt(c.annual_cost), c.start_date, c.end_date, c.status]))
+    if (expiringContracts.length > 0) csv += csvSection('EXPIRING WITHIN 90 DAYS', ['Contract','Vendor','Annual Cost','Expiry Date'], expiringContracts.map(c => [c.name, c.vendor, csvFmt(c.annual_cost), c.end_date]))
     downloadFile('OPEX_YTD_Report.csv', csv, 'text/csv;charset=utf-8;')
     return
   }
