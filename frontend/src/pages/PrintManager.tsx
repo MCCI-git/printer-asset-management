@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import DOMPurify from 'dompurify'
 import { toast } from 'sonner'
 import {
   GraduationCap, DollarSign, BookOpen, Plus, Trash2,
@@ -199,7 +200,7 @@ export function PrintManager() {
     fetchAll()
     fetchBudget()
     printManagerApi.getEmailTemplate().then(res => {
-      const saved = res.data.template || defaultEmailBody
+      const saved = DOMPurify.sanitize(res.data.template || defaultEmailBody)
       savedTemplateRef.current = saved
       setEmailBodyHtml(saved)
       if (bodyRef.current) {
@@ -715,7 +716,7 @@ export function PrintManager() {
                 <Label className="text-xs">Live Preview</Label>
                 <div
                   className="min-h-[80px] rounded-lg border border-border bg-background/60 p-3 text-sm leading-relaxed text-muted-foreground"
-                  dangerouslySetInnerHTML={{ __html: selectedStudent ? getPreview(selectedStudent) : '<em>Select a student (click Compose) to see preview.</em>' }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedStudent ? getPreview(selectedStudent) : '<em>Select a student (click Compose) to see preview.</em>') }}
                 />
               </div>
 

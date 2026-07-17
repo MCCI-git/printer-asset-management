@@ -63,7 +63,6 @@ class SnipeItService
             try {
                 $response = Http::withHeaders($this->headers())
                     ->timeout(20)
-                    ->withoutVerifying()
                     ->get("{$base}/api/v1/hardware", $params);
 
                 if ($response->successful()) {
@@ -92,12 +91,10 @@ class SnipeItService
     private function buildCandidates(string $url): array
     {
         $url = rtrim($url, '/');
-        $alt = str_starts_with($url, 'http://') ? str_replace('http://', 'https://', $url) : str_replace('https://', 'http://', $url);
+        // Only probe path variants — never downgrade from https to http
         return array_unique([
             $url,
-            $alt,
             $url . '/public',
-            $alt . '/public',
             $url . '/snipeit',
             $url . '/snipe-it',
         ]);
@@ -211,7 +208,6 @@ class SnipeItService
             try {
                 $response = Http::withHeaders($headers)
                     ->timeout(10)
-                    ->withoutVerifying()
                     ->get($endpoint);
 
                 $lastStatus = $response->status();

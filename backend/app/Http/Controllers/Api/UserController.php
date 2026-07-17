@@ -17,6 +17,10 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        if (!$request->user()->isSuperAdmin()) {
+            abort(403, 'Only a super admin can create users.');
+        }
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
@@ -39,6 +43,10 @@ class UserController extends Controller
     {
         $target = User::findOrFail($id);
         $actor = $request->user();
+
+        if (!$actor->isSuperAdmin()) {
+            abort(403, 'Only a super admin can modify user accounts.');
+        }
 
         $data = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
@@ -80,6 +88,10 @@ class UserController extends Controller
         $target = User::findOrFail($id);
         $actor = request()->user();
 
+        if (!$actor->isSuperAdmin()) {
+            abort(403, 'Only a super admin can delete user accounts.');
+        }
+
         if ($target->isSuperAdmin() && $target->id !== $actor->id) {
             throw ValidationException::withMessages([
                 'role' => 'A super admin cannot delete another super admin account.',
@@ -95,6 +107,10 @@ class UserController extends Controller
     {
         $target = User::findOrFail($id);
         $actor = request()->user();
+
+        if (!$actor->isSuperAdmin()) {
+            abort(403, 'Only a super admin can change user status.');
+        }
 
         if ($target->id === $actor->id) {
             throw ValidationException::withMessages([

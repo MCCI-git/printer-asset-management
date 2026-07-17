@@ -41,6 +41,10 @@ class SmtpController extends Controller
 
     public function save(Request $request): JsonResponse
     {
+        if (!$request->user()->isSuperAdmin()) {
+            abort(403, 'Only a super admin can modify SMTP settings.');
+        }
+
         $validator = Validator::make($request->all(), [
             'host'         => 'required|string',
             'port'         => 'required|integer|min:1|max:65535',
@@ -74,6 +78,10 @@ class SmtpController extends Controller
 
     public function test(Request $request): JsonResponse
     {
+        if (!$request->user()->isSuperAdmin()) {
+            abort(403, 'Only a super admin can send test emails.');
+        }
+
         $this->bootSmtp();
 
         $recipient = $request->input('to') ?: (auth()->user()?->email ?? config('mail.from.address'));
@@ -101,6 +109,10 @@ class SmtpController extends Controller
 
     public function saveNotifications(Request $request): JsonResponse
     {
+        if (!$request->user()->isSuperAdmin()) {
+            abort(403, 'Only a super admin can modify notification settings.');
+        }
+
         $validator = Validator::make($request->all(), [
             'recipients'             => 'required|string',
             'alert_low_stock'        => 'boolean',
@@ -122,8 +134,12 @@ class SmtpController extends Controller
 
     // ── SEND ALERTS ───────────────────────────────────────────────────────
 
-    public function sendAlerts(): JsonResponse
+    public function sendAlerts(Request $request): JsonResponse
     {
+        if (!$request->user()->isSuperAdmin()) {
+            abort(403, 'Only a super admin can send alert digests.');
+        }
+
         $this->bootSmtp();
 
         $notif = file_exists($this->notifPath)
