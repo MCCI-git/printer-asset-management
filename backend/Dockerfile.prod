@@ -47,7 +47,7 @@ COPY backend/ .
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-RUN composer dump-autoload --optimize
+RUN composer dump-autoload --optimize --no-scripts
 
 # Copy built frontend into nginx html root
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
