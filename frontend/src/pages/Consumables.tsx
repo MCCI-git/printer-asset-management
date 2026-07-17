@@ -200,6 +200,7 @@ export function Consumables() {
 
   // Add Consumable popover
   const [addOpen, setAddOpen] = useState(false)
+  const [addPresetName, setAddPresetName] = useState<string | null>(null)
   const [typeSelectOpen, setTypeSelectOpen] = useState(false)
   const [openSelectCount, setOpenSelectCount] = useState(0)
   const onSelectOpen  = () => setOpenSelectCount(n => n + 1)
@@ -208,12 +209,19 @@ export function Consumables() {
   const [addForm, setAddForm] = useState({
     type: 'Toner' as ConsumableType, name: '', color: '' as '' | 'Black' | 'Cyan' | 'Magenta' | 'Yellow',
     unit_cost: '', quantity: '1', purchase_date: new Date().toISOString().slice(0, 10), invoice_number: '',
-    supplier_id: '__none__', printer_id: '__none__',
+    supplier_id: '__none__', printer_id: '__none__', low_stock_threshold: '1',
   })
   const EMPTY_ADD_FORM = {
     type: 'Toner' as ConsumableType, name: '', color: '' as '' | 'Black' | 'Cyan' | 'Magenta' | 'Yellow',
     unit_cost: '', quantity: '1', purchase_date: new Date().toISOString().slice(0, 10), invoice_number: '',
-    supplier_id: '__none__', printer_id: '__none__',
+    supplier_id: '__none__', printer_id: '__none__', low_stock_threshold: '1',
+  }
+
+  const applyTonerPreset = (t: typeof tonerModels[0]) => {
+    setAddForm(f => ({ ...f, type: 'Toner', name: t.name, low_stock_threshold: String(t.low_stock_threshold) }))
+    setAddPresetName(t.name)
+    setTonerListOpen(false)
+    setAddOpen(true)
   }
 
   const handleAddSubmit = async () => {
@@ -230,11 +238,12 @@ export function Consumables() {
         quantity:       addForm.quantity !== '' ? Number(addForm.quantity) : 1,
         purchase_date:  addForm.purchase_date || undefined,
         invoice_number: addForm.invoice_number.trim() || undefined,
-        low_stock_threshold: 1,
+        low_stock_threshold: addForm.low_stock_threshold !== '' ? Number(addForm.low_stock_threshold) : 1,
         supplier_id: addForm.supplier_id !== '__none__' ? Number(addForm.supplier_id) : null,
         printer_id:  addForm.printer_id !== '__none__' ? Number(addForm.printer_id) : null,
       })
       setAddForm(EMPTY_ADD_FORM)
+      setAddPresetName(null)
       setAddOpen(false)
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? 'Failed to add consumable.')
@@ -467,6 +476,9 @@ export function Consumables() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
+                          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => applyTonerPreset(t)}>
+                            Use
+                          </Button>
                           <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleTonerEdit(t)}>
                             <Pencil size={12} />
                           </Button>
@@ -927,11 +939,15 @@ export function Consumables() {
       </Dialog>
 
       {/* Add Consumable Dialog */}
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+      <Dialog open={addOpen} onOpenChange={o => { setAddOpen(o); if (!o) { setAddForm(EMPTY_ADD_FORM); setAddPresetName(null) } }}>
         <DialogContent className="w-[416px] max-w-none sm:max-w-none">
           <DialogHeader>
             <DialogTitle>Add Consumable</DialogTitle>
-            <DialogDescription>Enter details for the new consumable item.</DialogDescription>
+            <DialogDescription>
+              {addPresetName
+                ? <>Preset from toner list: <span className="font-medium text-foreground">{addPresetName}</span>. Fill in cost and colour to complete.</>
+                : 'Enter details for the new consumable item.'}
+            </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-x-4 gap-y-3 py-1">
             <div className="space-y-1.5">
