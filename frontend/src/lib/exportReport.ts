@@ -5,8 +5,8 @@ import { CURRENT_YEAR, CURRENT_MONTH, NEXT_YEAR } from '@/lib/timeline'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-// PDF display: currency with $ symbol and thousands separator
-const fmt = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+// PDF display: currency with Rs symbol and thousands separator
+const fmt = (n: number) => `Rs ${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 // CSV: plain number so Excel/Sheets treats it as numeric
 const csvFmt = (n: number) => n.toFixed(2)
 const pct = (a: number, b: number) => b === 0 ? 'N/A' : `${((a / b) * 100).toFixed(1)}%`

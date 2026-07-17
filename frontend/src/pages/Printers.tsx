@@ -1026,8 +1026,8 @@ export function Printers() {
                               </defs>
                               <CartesianGrid vertical={false} />
                               <XAxis dataKey="label" tickLine={false} tickMargin={8} axisLine={false} interval={0} tickFormatter={(v) => v.slice(0, 3)} tick={{ fontSize: 10 }} />
-                              <YAxis tickLine={false} axisLine={false} tickMargin={6} tick={{ fontSize: 10 }} tickFormatter={(v) => `$${v}`} />
-                              <ChartTooltip cursor={false} content={<ChartTooltipContent formatter={(v) => [`$${Number(v).toFixed(2)}`, 'Toner Cost']} />} />
+                              <YAxis tickLine={false} axisLine={false} tickMargin={6} tick={{ fontSize: 10 }} tickFormatter={(v) => `Rs ${v}`} />
+                              <ChartTooltip cursor={false} content={<ChartTooltipContent formatter={(v) => [`Rs ${Number(v).toFixed(2)}`, 'Toner Cost']} />} />
                               <Area dataKey="cost" type="monotone" fill="url(#costGradient)" stroke="var(--color-cost)" strokeWidth={2} dot={{ r: 3, fill: 'var(--color-cost)' }} connectNulls={false} />
                             </AreaChart>
                           </ChartContainer>

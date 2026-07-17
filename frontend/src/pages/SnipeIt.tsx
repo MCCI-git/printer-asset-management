@@ -484,7 +484,7 @@ export function SnipeIt() {
                       <DetailRow label="Supplier"      value={asset.supplier?.name} />
                       <DetailRow label="Location"      value={asset.location?.name} />
                       <DetailRow label="Purchase Date" value={asset.purchase_date?.formatted} />
-                      <DetailRow label="Purchase Cost" value={asset.purchase_cost != null ? `${Number(asset.purchase_cost).toLocaleString()}` : null} />
+                      <DetailRow label="Purchase Cost" value={asset.purchase_cost != null ? `Rs ${Number(asset.purchase_cost).toLocaleString()}` : null} />
                       <DetailRow label="Warranty"      value={asset.warranty_months ? `${asset.warranty_months} months` : null} />
                     </Section>
 
