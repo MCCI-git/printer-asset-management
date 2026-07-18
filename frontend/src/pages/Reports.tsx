@@ -140,7 +140,7 @@ export function Reports() {
     new Date(d).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 page-enter">
       {/* Header */}
       <div className="border-b border-border/40 pb-4">
         <h1 className="text-xl font-bold text-foreground dark:text-secondary-foreground">Reports</h1>

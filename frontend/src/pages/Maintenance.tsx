@@ -244,7 +244,7 @@ export function Maintenance() {
   )
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 page-enter">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border/40 pb-4">
         <div>
@@ -439,7 +439,7 @@ export function Maintenance() {
                     filtered.map((wo, i) => (
                       <TableRow
                         key={wo.id}
-                        className="h-14 hover:bg-muted/50 transition-colors border-b border-border/60 bg-white dark:border-border dark:bg-card dark:hover:bg-secondary/50"
+                        className="h-14 hover:bg-muted/50 transition-colors border-b border-border/60 bg-white dark:border-border dark:bg-card dark:hover:bg-secondary/50 cursor-pointer"
                         data-state={rowSelection[i] ? 'selected' : undefined}
                       >
                         <TableCell className="align-middle">
@@ -489,7 +489,7 @@ export function Maintenance() {
                           )}
                         </TableCell>
                         <TableCell className="align-middle">
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(wo)}>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" aria-label="Edit work order" onClick={() => openEdit(wo)}>
                             <Pencil size={13} />
                           </Button>
                         </TableCell>

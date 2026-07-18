@@ -1,15 +1,15 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/inter";
+@import "@fontsource-variable/plus-jakarta-sans";
 @import "@fontsource-variable/geist";
 
 @custom-variant dark (&:is(.dark *));
 
 /* ── Theme token → Tailwind utility mapping (Nova preset structure) ─────── */
 @theme inline {
-  --font-sans:    'Geist Variable', 'Inter Variable', sans-serif;
-  --font-heading: var(--font-sans);
+  --font-sans:    'Plus Jakarta Sans Variable', 'Geist Variable', sans-serif;
+  --font-heading: 'Plus Jakarta Sans Variable', 'Geist Variable', sans-serif;
   --font-mono:    'Geist Mono', monospace;
 
   --color-background:         var(--background);
@@ -173,3 +173,77 @@
 ::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
 
 @keyframes fadeIn { to { opacity: 1; } }
+
+/* ── Cursor affordance ───────────────────────────────────────────────────── */
+/* Any table row or card that has an onClick should feel clickable */
+[role="button"],
+button:not(:disabled),
+[data-clickable],
+.clickable-row {
+  cursor: pointer;
+}
+
+/* ── Touch target minimum 44px ───────────────────────────────────────────── */
+/* Icon-only action buttons get a minimum tap area */
+.icon-btn {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Card hover elevation ────────────────────────────────────────────────── */
+.card-hover {
+  transition: box-shadow 200ms ease, transform 200ms ease;
+}
+.card-hover:hover {
+  box-shadow: 0 4px 20px -4px hsl(var(--primary) / 0.12), 0 1px 4px -1px hsl(var(--primary) / 0.08);
+  transform: translateY(-1px);
+}
+
+/* ── Table row hover ─────────────────────────────────────────────────────── */
+tbody tr {
+  transition: background-color 150ms ease;
+}
+
+/* ── Smooth focus ring ───────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: calc(var(--radius) * 0.5);
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Typography refinements ──────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+/* Stat card values */
+.stat-value {
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Page fade-in ────────────────────────────────────────────────────────── */
+.page-enter {
+  animation: pageEnter 220ms ease both;
+}
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

@@ -108,7 +108,7 @@ export function Opex() {
   )
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 page-enter">
       <div className="border-b border-border/40 pb-4">
         <h1 className="text-xl font-bold text-foreground">OPEX Assets</h1>
         <p className="text-sm text-muted-foreground">

@@ -187,7 +187,7 @@ export function Suppliers() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 page-enter">
       <div className="border-b border-border/40 pb-4 flex items-start justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground dark:text-secondary-foreground">Suppliers</h1>

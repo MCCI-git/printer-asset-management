@@ -74,7 +74,7 @@ export function Capex() {
   )
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 page-enter">
       <div className="border-b border-border/40 pb-4">
         <h1 className="text-xl font-bold text-foreground dark:text-secondary-foreground">CAPEX Assets</h1>
         <p className="text-sm text-muted-foreground dark:text-muted-foreground/70">Capital expenditure printers — owned assets with depreciation tracking</p>

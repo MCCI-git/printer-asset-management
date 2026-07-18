@@ -239,7 +239,7 @@ export function TopAccess() {
   const offlineCount = allVisible.filter(p => !p.reachable).length
 
   return (
-    <div className="space-y-6 -mt-2">
+    <div className="space-y-6 -mt-2 page-enter">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-foreground dark:text-secondary-foreground flex items-center gap-2">

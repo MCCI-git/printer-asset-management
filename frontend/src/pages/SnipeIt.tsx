@@ -319,7 +319,7 @@ export function SnipeIt() {
 
   /* ── connected view ─────────────────────────────────────────────── */
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 page-enter">
 
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 pb-4">

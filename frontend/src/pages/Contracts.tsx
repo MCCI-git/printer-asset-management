@@ -569,7 +569,7 @@ const ContractsTable = memo(function ContractsTable({
         const c = row.original
         if (!c.pdf_url) return null
         return (
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-500 hover:text-red-600" title="View PDF"
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-500 hover:text-red-600" aria-label="View PDF" title="View PDF"
             onClick={() => setPdfViewer({ name: c.name, url: c.pdf_url! })}>
             <FileText size={15} />
           </Button>
@@ -582,7 +582,7 @@ const ContractsTable = memo(function ContractsTable({
       enableSorting: false,
       enableGlobalFilter: false,
       cell: ({ row }) => (
-        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => onEdit(row.original)}>
+        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" aria-label="Edit contract" onClick={() => onEdit(row.original)}>
           <Pencil size={13} />
         </Button>
       ),
@@ -779,7 +779,7 @@ const ContractsTable = memo(function ContractsTable({
                   table.getRowModel().rows.map(row => (
                     <TableRow
                       key={row.id}
-                      className="h-14 hover:bg-muted/50 transition-colors border-b border-border/60 bg-white dark:border-border dark:bg-card dark:hover:bg-secondary/50"
+                      className="h-14 hover:bg-muted/50 transition-colors border-b border-border/60 bg-white dark:border-border dark:bg-card dark:hover:bg-secondary/50 cursor-pointer"
                       data-state={row.getIsSelected() ? 'selected' : undefined}
                     >
                       {row.getVisibleCells().map(cell => (
@@ -874,7 +874,7 @@ export function Contracts() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 page-enter">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border/40 pb-4">
         <div>

@@ -464,7 +464,7 @@ export function Admin() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 page-enter">
       <div className="border-b border-border/40 pb-4">
         <h1 className="text-xl font-bold text-foreground dark:text-secondary-foreground">Admin</h1>
         <p className="text-sm text-muted-foreground dark:text-muted-foreground/70">User management, system configuration and integrations</p>

@@ -658,7 +658,7 @@ export function Printers() {
   const selectedCount = Object.keys(rowSelection).length
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 page-enter">
       <div className="flex items-center justify-between border-b border-border/40 pb-4">
         <div>
           <h1 className="text-xl font-bold text-foreground dark:text-secondary-foreground">Printers</h1>
@@ -1363,7 +1363,7 @@ export function Printers() {
                   table.getRowModel().rows.map(row => (
                     <TableRow
                       key={row.id}
-                      className="h-14 hover:bg-muted/50 transition-colors border-b border-border/60 bg-white dark:border-border dark:bg-card dark:hover:bg-secondary/50"
+                      className="h-14 hover:bg-muted/50 transition-colors border-b border-border/60 bg-white dark:border-border dark:bg-card dark:hover:bg-secondary/50 cursor-pointer"
                       data-state={row.getIsSelected() ? 'selected' : undefined}
                     >
                       {row.getVisibleCells().map(cell => (
