@@ -201,9 +201,35 @@ export function Dashboard() {
 
       {/* Charts + Stats row */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Left column: Fleet Breakdown + Yearly Budget stacked */}
+        {/* Left column: Yearly Budget + Fleet Breakdown stacked */}
         <div className="flex flex-col gap-4">
-        {/* Radial stacked chart */}
+        {/* Yearly Budget (OPEX) — inside left column */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+          <Card className="relative overflow-hidden">
+            <div className="absolute left-0 top-0 h-full w-1 bg-amber-500" />
+            <div className="pl-3 py-3 pr-3">
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-muted-foreground">Yearly Budget (OPEX)</p>
+                  <p className="mt-1 text-2xl font-bold">{opexBudget ? formatCurrency(opexBudget) : '—'}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
+                    {opexBudget ? `${((totalActual / opexBudget) * 100).toFixed(1)}% spent · ${(Math.max(0, (opexBudget - totalActual) / opexBudget) * 100).toFixed(1)}% remaining` : 'No budget set'}
+                  </p>
+                </div>
+                <div className="shrink-0 rounded-lg bg-muted p-2.5 text-muted-foreground"><DollarSign size={18} /></div>
+              </div>
+              <div className="mt-3">
+                {opexBudget ? (
+                  <div className="h-1.5 overflow-hidden rounded-full bg-muted dark:bg-secondary">
+                    <div className={`h-full rounded-full transition-all ${(totalActual / opexBudget) >= 0.9 ? 'bg-red-500' : (totalActual / opexBudget) >= 0.75 ? 'bg-amber-500' : 'bg-green-500'}`} style={{ width: `${Math.min(100, (totalActual / opexBudget) * 100).toFixed(1)}%` }} />
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* Radial stacked chart — Fleet Breakdown */}
         <Card className="flex flex-col max-h-[220px]">
           <CardHeader className="items-center py-1">
             <CardTitle>Fleet Breakdown</CardTitle>
@@ -236,32 +262,6 @@ export function Dashboard() {
             </ChartContainer>
           </CardContent>
         </Card>
-
-        {/* Yearly Budget (OPEX) — inside left column */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-          <Card className="relative overflow-hidden">
-            <div className="absolute left-0 top-0 h-full w-1 bg-amber-500" />
-            <div className="pl-3 py-3 pr-3">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-muted-foreground">Yearly Budget (OPEX)</p>
-                  <p className="mt-1 text-2xl font-bold">{opexBudget ? formatCurrency(opexBudget) : '—'}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
-                    {opexBudget ? `${((totalActual / opexBudget) * 100).toFixed(1)}% spent · ${(Math.max(0, (opexBudget - totalActual) / opexBudget) * 100).toFixed(1)}% remaining` : 'No budget set'}
-                  </p>
-                </div>
-                <div className="shrink-0 rounded-lg bg-muted p-2.5 text-muted-foreground"><DollarSign size={18} /></div>
-              </div>
-              <div className="mt-3">
-                {opexBudget ? (
-                  <div className="h-1.5 overflow-hidden rounded-full bg-muted dark:bg-secondary">
-                    <div className={`h-full rounded-full transition-all ${(totalActual / opexBudget) >= 0.9 ? 'bg-red-500' : (totalActual / opexBudget) >= 0.75 ? 'bg-amber-500' : 'bg-green-500'}`} style={{ width: `${Math.min(100, (totalActual / opexBudget) * 100).toFixed(1)}%` }} />
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </Card>
-        </motion.div>
         </div>{/* end left column */}
 
         {/* Monthly Print Volume — bar chart with labels */}
