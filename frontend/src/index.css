@@ -2,15 +2,14 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/plus-jakarta-sans";
-@import "@fontsource-variable/geist";
 
 @custom-variant dark (&:is(.dark *));
 
 /* ── Theme token → Tailwind utility mapping (Nova preset structure) ─────── */
 @theme inline {
-  --font-sans:    'Plus Jakarta Sans Variable', 'Geist Variable', sans-serif;
-  --font-heading: 'Plus Jakarta Sans Variable', 'Geist Variable', sans-serif;
-  --font-mono:    'Geist Mono', monospace;
+  --font-sans:    'Plus Jakarta Sans Variable', sans-serif;
+  --font-heading: 'Plus Jakarta Sans Variable', sans-serif;
+  --font-mono:    ui-monospace, 'Cascadia Code', monospace;
 
   --color-background:         var(--background);
   --color-foreground:         var(--foreground);
