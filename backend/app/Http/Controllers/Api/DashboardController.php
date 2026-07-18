@@ -8,6 +8,7 @@ use App\Models\Contract;
 use App\Models\Printer;
 use App\Models\PrinterPageCount;
 use App\Models\Supplier;
+use App\Models\WorkOrder;
 use App\Services\Calendar;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -41,7 +42,34 @@ class DashboardController extends Controller
                 ->count();
 
             $suppliersCount = Supplier::count();
-            $totalYtdSpend = Supplier::sum('spend_2025_ytd');
+
+            // Compute actual YTD spend for the current year (same logic as BudgetController::actual)
+            $currentYear = Calendar::currentYear();
+            $capexYtd = (float) Printer::where('cost_type', 'CAPEX')
+                ->whereYear('purchase_date', $currentYear)
+                ->sum('purchase_cost');
+            $leaseYtd = (float) Printer::where('cost_type', 'OPEX')
+                ->where('status', 'active')
+                ->whereYear('purchase_date', '<=', $currentYear)
+                ->sum('monthly_fixed_cost') * 12;
+            $consumableYtd = (float) (Consumable::whereRaw('YEAR(COALESCE(purchase_date, created_at)) = ?', [$currentYear])
+                ->selectRaw('SUM(unit_cost * quantity) as total')
+                ->value('total') ?? 0);
+            $yearStart = Carbon::create($currentYear, 1, 1)->startOfDay();
+            $yearEnd   = Carbon::create($currentYear, 12, 31)->endOfDay();
+            $contractYtd = Contract::whereDate('start_date', '<=', $yearEnd)
+                ->whereDate('end_date', '>=', $yearStart)
+                ->get()
+                ->sum(function (Contract $c) use ($yearStart, $yearEnd) {
+                    $start = Carbon::parse($c->start_date)->max($yearStart);
+                    $end   = Carbon::parse($c->end_date)->min($yearEnd);
+                    return round(($c->annual_cost / 365) * ($start->diffInDays($end) + 1), 2);
+                });
+            $workOrderYtd = (float) WorkOrder::where('status', 'completed')
+                ->whereNotNull('cost')
+                ->whereRaw('YEAR(COALESCE(completed_date, updated_at)) = ?', [$currentYear])
+                ->sum('cost');
+            $totalYtdSpend = round($capexYtd + $leaseYtd + $consumableYtd + $contractYtd + $workOrderYtd, 2);
 
             $criticalAlerts = [];
 

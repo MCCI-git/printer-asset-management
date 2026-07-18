@@ -158,23 +158,25 @@ class BudgetController extends Controller
         ]);
     }
 
-    // Sum of costs for completed work orders in a given year (by completed_date)
+    // Sum of costs for completed work orders in a given year.
+    // COALESCE so orders with no completed_date fall back to updated_at (when they were last saved as completed).
     private function completedWorkOrderSpend(int $year): float
     {
         return (float) WorkOrder::where('status', 'completed')
             ->whereNotNull('cost')
-            ->whereYear('completed_date', $year)
+            ->whereRaw('YEAR(COALESCE(completed_date, updated_at)) = ?', [$year])
             ->sum('cost');
     }
 
-    // Calculates prorated annual contract spend for a given year
+    // Calculates prorated annual contract spend for a given year.
+    // Status filter intentionally omitted — the date range already scopes which contracts
+    // overlapped with the year, and expired contracts should still contribute to historical spend.
     private function proratedContractSpend(int $year, ?string $type = null): float
     {
         $yearStart = Carbon::create($year, 1, 1)->startOfDay();
         $yearEnd   = Carbon::create($year, 12, 31)->endOfDay();
 
-        $query = Contract::where('status', 'active')
-            ->whereDate('start_date', '<=', $yearEnd)
+        $query = Contract::whereDate('start_date', '<=', $yearEnd)
             ->whereDate('end_date', '>=', $yearStart);
 
         if ($type) {
